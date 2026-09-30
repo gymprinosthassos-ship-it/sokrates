@@ -18,15 +18,24 @@ st.set_page_config(
 # Προσαρμοσμένο CSS - 2 τόνους πιο σκούρο γαλάζιο
 st.markdown("""
 <style>
+    /* Κλείδωμα σε Light Mode για όλες τις συσκευές ανεξαρτήτως λειτουργικού */
+    :root {
+        color-scheme: light !important;
+    }
+    
     /* Ολόκληρη η σελίδα σε 2 τόνους πιο σκούρο γαλάζιο */
     .stApp {
         background: linear-gradient(180deg, #d3e6fa 0%, #bddcf7 100%) !important;
+        color: #0f172a !important;
     }
     
     /* Πλαϊνή στήλη */
     [data-testid="stSidebar"] {
         background-color: #b0d3f4 !important;
         border-right: 1px solid #90bfe9 !important;
+    }
+    [data-testid="stSidebar"] label, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: #0f172a !important;
     }
     [data-testid="stSidebar"] > div:first-child {
         padding-top: 1rem;
@@ -37,13 +46,35 @@ st.markdown("""
         background: transparent !important;
     }
     
-    /* Πλαίσια μηνυμάτων συνομιλίας */
-    .stChatMessage {
+    /* Πλαίσια μηνυμάτων συνομιλίας (Μαθητή & Σωκράτη) */
+    .stChatMessage, [data-testid="stChatMessage"] {
         background-color: #ffffff !important;
         border: 1px solid #a8cfee !important;
         box-shadow: 0 4px 12px rgba(15, 60, 120, 0.08) !important;
         border-radius: 12px;
         margin-bottom: 0.5rem;
+    }
+    
+    /* Έντονα σκούρα γράμματα & μαθηματικά παντού */
+    .stChatMessage *, [data-testid="stChatMessage"] *, .katex, .katex * {
+        color: #0f172a !important;
+    }
+    
+    /* Κάτω μπάρα πληκτρολόγησης */
+    [data-testid="stBottom"], [data-testid="stBottom"] > div {
+        background: transparent !important;
+    }
+    [data-testid="stChatInput"] {
+        background-color: #ffffff !important;
+        border: 1px solid #90bfe9 !important;
+        border-radius: 12px !important;
+    }
+    [data-testid="stChatInput"] textarea {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+    }
+    [data-testid="stChatInput"] textarea::placeholder {
+        color: #64748b !important;
     }
     
     .main-header {
