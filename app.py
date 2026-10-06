@@ -40,83 +40,84 @@ GYMNASIO_DATA = {
         "guideline": "Ο μαθητής είναι στην Α' Γυμνασίου (12-13 ετών). Χρησιμοποίησε πολύ απλή, φιλική γλώσσα, εισαγωγικές έννοιες, επιβράβευση σε κάθε προσπάθεια και απόφυγε προχωρημένη ορολογία.",
         "subjects": {
             "🌟 Όλα τα μαθήματα (Γενικό)": {
-                "url": "http://ebooks.edu.gr/ebooks/course-list.php?category=1&grade=6",
-                "topics": "Γενική μελέτη και υποστήριξη σε όλα τα μαθήματα της Α' Γυμνασίου."
+                "url": "http://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K07",
+                "topics": "Γενική μελέτη και υποστήριξη σε όλα τα μαθήματα και ψηφιακά βιβλία της Α' Γυμνασίου."
             },
             "📐 Μαθηματικά (Άλγεβρα & Γεωμετρία)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2180/Mathimatika_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2748/Mathimatika_A-Gymnasiou_html-empl/",
                 "topics": "Μέρος Α' (Αριθμητική - Άλγεβρα): Φυσικοί αριθμοί, Ευκλείδεια διαίρεση, Δυνάμεις, Κλάσματα (πράξεις, σύνθετα), Δεκαδικοί αριθμοί, Εξισώσεις 1ου βαθμού, Ποσοστά, Ανάλογα & Αντιστρόφως ανάλογα ποσά, Θετικοί και Αρνητικοί αριθμοί. Μέρος Β' (Γεωμετρία): Σημείο, Ευθύγραμμο τμήμα, Γωνίες (είδη, μέτρηση, διχοτόμος), Συμμετρία (ως προς άξονα & κέντρο), Παράλληλες ευθείες, Τρίγωνα (είδη, στοιχεία), Κύκλος."
             },
             "📖 Νεοελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2172/Neoelliniki-Glossa_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2256/Neoelliniki-Glossa_A-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-10: Επικοινωνία, Παράγραφος (πλαγιότιτλος, δομή), Περιγραφή (χώρου, προσώπου), Αφήγηση, Ονοματολογία (ουσιαστικά, επίθετα, αντωνυμίες), Ρήματα (χρόνοι, εγκλίσεις, φωνές), Σύνταξη (κύριοι όροι πρότασης), Σημεία στίξης, Παραγωγή και Σύνθεση λέξεων."
             },
             "📚 Νεοελληνική Λογοτεχνία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2174/Keimena-Neoellinikis-Logotechnias_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2228/Keimena-Neoellinikis-Logotechnias_A-Gymnasiou_html-empl/",
                 "topics": "Κείμενα Νεοελληνικής Λογοτεχνίας: Ποίηση και Πεζογραφία, Αφηγηματικές τεχνικές, Χαρακτηρισμός προσώπων, Μεταφορές, Παρομοιώσεις, Εικόνες, Θέματα: Η οικογένεια, Το σχολείο, Η φύση και το περιβάλλον, Η παιδική ηλικία."
             },
             "🏛️ Αρχαία Ελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2170/Archaia-Elliniki-Glossa_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2244/Archaia-Elliniki-Glossa_A-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-18: Εισαγωγή, Τονισμός, Πνεύματα, Ουσιαστικά α' και β' κλίσης, Επίθετα β' κλίσης, Προσωπικές αντωνυμίες, Ρήματα βαρύτονα (Ενεστώτας, Παρατατικός, Αόριστος, Μέλλοντας Ενεργητικής Φωνής), Σύνταξη (Υποκείμενο, Αντικείμενο, Κατηγορούμενο), Ετυμολογία και ομόρριζα."
             },
             "🏺 Αρχαία Μετάφραση (Ομήρου Οδύσσεια)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2176/Omiroy-Odysseia_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2232/Omirika-Epi-Odysseia_A-Gymnasiou_html-empl/",
                 "topics": "Ομηρικά Έπη: Εισαγωγή στο έπος, Προοίμιο, Τηλεμάχεια (ραψωδίες α-δ), Νόστος (ε-ν: Καλυψώ, Φαίακες, Κύκλωπας Πολύφημος), Μνηστηροφονία (ξ-ω), Αφηγηματικές τεχνικές, Τυπικά επίθετα, Παρομοιώσεις, Ο θεσμός της φιλοξενίας, Ύβρις και νέμεσις."
             },
             "📜 Ιστορία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2178/Istoria_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2290/Istoria_A-Gymnasiou_html-empl/",
                 "topics": "Η Εποχή του Λίθου (Παλαιολιθική, Νεολιθική), Η Εποχή του Χαλκού (Κυκλαδικός, Μινωικός, Μυκηναϊκός πολιτισμός), Αρχαϊκή Εποχή (Πόλη-κράτος, Αποικισμός, Σπάρτη, Αθήνα), Κλασική Εποχή (Περσικοί Πόλεμοι, Χρυσούς Αιών Περικλέους, Πελοποννησιακός Πόλεμος, Μακεδονία - Μέγας Αλέξανδρος), Ελληνιστικοί Χρόνοι."
             },
             "⚡ Φυσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2182/Fysiki_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2314/Fysiki_A-Gymnasiou_html-empl/",
                 "topics": "Η Επιστημονική μέθοδος, Μετρήσεις και μονάδες (Μήκος, Χρόνος, Μάζα, Εμβαδόν, Όγκος, Πυκνότητα), Θερμοκρασία, Θερμότητα και Θερμική ισορροπία, Καταστάσεις της ύλης και αλλαγές φάσης."
             },
             "🧬 Βιολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2182/Viologia_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2250/Biologia_A-Gymnasiou_html-empl/",
                 "topics": "Η οργάνωση της ζωής: Το κύτταρο (προκαρυωτικό, ευκαρυωτικό, φυτικό, ζωικό), Μονοκύτταροι & Πολυκύτταροι οργανισμοί, Πρόσληψη ουσιών και πέψη, Μεταφορά και αποβολή ουσιών, Αναπνοή στους ζωντανούς οργανισμούς."
             },
             "🌍 Γεωλογία - Γεωγραφία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2184/Geologia-Geografia_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2286/Geografia_A-Gymnasiou_html-empl/",
                 "topics": "Χάρτες και προσανατολισμός, Το σχήμα και οι κινήσεις της Γης, Λιθόσφαιρα (ηφαίστεια, σεισμοί), Υδρόσφαιρα (ωκεανοί, θάλασσες, ποτάμια), Ατμόσφαιρα και καιρικά φαινόμενα, Οι ήπειροι της Γης."
             },
             "🕊️ Θρησκευτικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2168/Thriskeytika_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/handle/8547/120",
                 "topics": "Η πορεία και η αναζήτηση του ανθρώπου, Η Παλαιά Διαθήκη: Δημιουργία, Πατριάρχες (Αβραάμ, Ισαάκ, Ιακώβ), Μωυσής και Έξοδος, Προφήτες και η προσμονή του Μεσσία."
             },
             "💻 Πληροφορική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2214/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
                 "topics": "Γνωριμία με το υλικό (hardware) και το λογισμικό (software), Αρχεία και φάκελοι, Επεξεργασία Κειμένου, Ασφαλής πλοήγηση στο Διαδίκτυο, Εισαγωγή στον οπτικό προγραμματισμό (Scratch)."
             },
             "🔧 Τεχνολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2216/Technologia_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2248/Technologia_A-Gymnasiou_html-empl/",
                 "topics": "Η μέθοδος της ατομικής εργασίας: Εργαλεία και μηχανές, Υλικά, Ενέργεια, Μεταφορές, Επικοινωνίες, Σύνταξη γραπτής τεχνολογικής μελέτης και κατασκευή μακέτας."
             },
             "🏡 Οικιακή Οικονομία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2218/Oikiaki-Oikonomia_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2328/Oikiaki-Oikonomia_A-Gymnasiou_html-apli/",
                 "topics": "Η οικογένεια και η κοινωνία, Διαχείριση των οικονομικών του νοικοκυριού, Αγωγή καταναλωτή, Διατροφή και υγεία (μεσογειακή διατροφή), Πρόληψη ατυχημάτων στο σπίτι."
             },
             "🏃‍♂️ Φυσική Αγωγή (Νέο Βιβλίο - Μελίσπη)": {
-                "url": "https://ebooksdl.cti.gr/",
-                "topics": "Νέο Πρόγραμμα Σπουδών & Ψηφιακό Βιβλίο Φυσικής Αγωγής (Μελίσπη / ebooksdl.cti.gr): Σωματική άσκηση και υγεία, Καρδιοαναπνευστική ευρωστία, Διατροφή και σωματικό βάρος, Ολυμπισμός & Αθλητικό Ήθος (Fair Play), Δεξιότητες ομαδικών αθλημάτων (Πετοσφαίριση, Καλαθοσφαίριση, Ποδόσφαιρο, Χειροσφαίριση), Κλασικός Αθλητισμός (Στίβος), Ελληνικοί Παραδοσιακοί Χοροί, Πρόληψη αθλητικών τραυματισμών και Πρώτες Βοήθειες."
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2252/Fysiki-Agogi_A-B-G-Gymnasiou_html-empl/",
+                "melispi_url": "https://ebooksdl.cti.gr/",
+                "topics": "Νέο Πρόγραμμα Σπουδών & Ψηφιακό Βιβλίο Φυσικής Αγωγής (Μελίσπη / ebooksdl.cti.gr & ebooks.edu.gr): Σωματική άσκηση και υγεία, Καρδιοαναπνευστική ευρωστία, Διατροφή και σωματικό βάρος, Ολυμπισμός & Αθλητικό Ήθος (Fair Play), Δεξιότητες ομαδικών αθλημάτων (Πετοσφαίριση, Καλαθοσφαίριση, Ποδόσφαιρο, Χειροσφαίριση), Κλασικός Αθλητισμός (Στίβος), Ελληνικοί Παραδοσιακοί Χοροί, Πρόληψη αθλητικών τραυματισμών και Πρώτες Βοήθειες."
             },
             "🎨 Καλλιτεχνικά (Εικαστικά)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2220/Eikastika_A-B-G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2288/Eikastika_A-Gymnasiou_html-empl/",
                 "topics": "Σχέδιο, Χρώμα (βασικά, συμπληρωματικά, θερμά, ψυχρά), Σύνθεση, Υλικά και τεχνικές ζωγραφικής, Στοιχεία ιστορίας της τέχνης."
             },
             "🎵 Μουσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2222/Moysiki_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2258/Mousiki_A-Gymnasiou_html-empl/",
                 "topics": "Βασικές μουσικές έννοιες, Ρυθμός, Μελωδία, Μουσικά όργανα (οικογένειες οργάνων συμφωνικής ορχήστρας), Ελληνική παραδοσιακή μουσική."
             },
             "🇬🇧 Αγγλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2224/Think-Teen_A-Gymnasiou-Advanced_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2322/Agglika_A-Gymnasiou-Prochorimenon_html-empl/",
                 "topics": "Think Teen 1: Reading comprehension, Writing descriptions and letters, Grammar (Present Simple & Continuous, Past Simple, Countable/Uncountable, Modals), Vocabulary."
             },
             "🇫🇷 Γαλλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2228/Action-Fr-A1_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2312/Gallika_A-Gymnasiou_html-empl/",
                 "topics": "Action Fr! A1: Χαιρετισμοί, Παρουσίαση του εαυτού μας, Οικογένεια, Σχολείο, Βασική γραμματική (άρθρα, ρήματα être & avoir, ενεστώτας α' συζυγίας)."
             },
             "🇩🇪 Γερμανικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2232/Deutsch-ein-Hit-1_A-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2254/Germanika_A-Gymnasiou_html-empl/",
                 "topics": "Deutsch - ein Hit! 1: Χαιρετισμοί, Γνωριμία, Αριθμοί, Σχολικά είδη, Βασική γραμματική (άρθρα der, die, das, ρήματα sein & haben, ενεστώτας)."
             }
         }
@@ -125,83 +126,84 @@ GYMNASIO_DATA = {
         "guideline": "Ο μαθητής είναι στη Β' Γυμνασίου (13-14 ετών). Ενθάρρυνε τη λογική σύνδεση με προηγούμενες γνώσεις, βαθύτερους συλλογισμούς και χρήση των κατάλληλων όρων.",
         "subjects": {
             "🌟 Όλα τα μαθήματα (Γενικό)": {
-                "url": "http://ebooks.edu.gr/ebooks/course-list.php?category=1&grade=7",
-                "topics": "Γενική μελέτη και υποστήριξη σε όλα τα μαθήματα της Β' Γυμνασίου."
+                "url": "http://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K08",
+                "topics": "Γενική μελέτη και υποστήριξη σε όλα τα μαθήματα και ψηφιακά βιβλία της Β' Γυμνασίου."
             },
             "📐 Μαθηματικά (Άλγεβρα & Γεωμετρία)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2192/Mathimatika_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2196/Mathimatika_B-Gymnasiou_html-empl/",
                 "topics": "Μέρος Α' (Άλγεβρα): Εξισώσεις 1ου βαθμού, Ανισώσεις 1ου βαθμού, Συναρτήσεις (έννοια, γραφική παράσταση, y=ax, y=ax+b), Στατιστική. Μέρος Β' (Γεωμετρία): Εμβαδά επίπεδων σχημάτων, Πυθαγόρειο Θεώρημα, Εφαπτομένη, Ημίτονο και Συνημίτονο οξείας γωνίας, Τριγωνομετρία, Εγγεγραμμένες γωνίες, Κανονικά πολύγωνα, Μήκος κύκλου & Εμβαδόν κυκλικού δίσκου."
             },
             "📖 Νεοελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2184/Neoelliniki-Glossa_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2298/Neoelliniki-Glossa_B-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-9: Ταξίδια και τόποι, ΜΜΕ και επικοινωνία, Ονοματική και Ρηματική φράση, Εγκλίσεις και σημασίες τους, Σύνθετες προτάσεις, Παρατακτική & Υποτακτική σύνδεση, Δευτερεύουσες προτάσεις, Περίληψη κειμένου."
             },
             "📚 Νεοελληνική Λογοτεχνία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2186/Keimena-Neoellinikis-Logotechnias_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2246/Keimena-Neoellinikis-Logotechnias_B-Gymnasiou_html-empl/",
                 "topics": "Κείμενα Νεοελληνικής Λογοτεχνίας: Ανάλυση πεζών και ποιητικών κειμένων, Ιστορικά και κοινωνικά θέματα, Αφηγητής και εστίαση, Τεχνικές πλοκής, Σύμβολα και αλληγορία."
             },
             "🏛️ Αρχαία Ελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2182/Archaia-Elliniki-Glossa_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2234/Archaia-Elliniki-Glossa_B-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-18: Ουσιαστικά γ' κλίσης (φωνηεντόληκτα, συμφωνόληκτα), Επίθετα γ' κλίσης, Παραθετικά επιθέτων και επιρρημάτων, Μέση Φωνή ρημάτων (Ενεστώτας, Παρατατικός, Αόριστος), Σύνταξη (εμπρόθετοι προσδιορισμοί, δοτική προσωπική, παθητική σύνταξη)."
             },
             "🏺 Αρχαία Μετάφραση (Ομήρου Ιλιάδα)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2188/Omiroy-Iliada_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2296/Omirika-Epi-Iliada_B-Gymnasiou_html-empl/",
                 "topics": "Ομηρικά Έπη: Εισαγωγή στην Ιλιάδα, Η Μήνις του Αχιλλέα (ραψωδία Α), Σκηνές μάχης, Έκτορας και Ανδρομάχη (Ζ), Πρεσβεία προς τον Αχιλλέα (Ι), Πατρόκλεια (Π), Οπλοποιία (Σ), Έκτορος αναίρεσις (Χ), Λύτρα και ταφή του Έκτορα (Ω), Το ηρωικό ιδεώδες, Η μοίρα και οι θεοί."
             },
             "📜 Ιστορία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2186/Istoria_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2198/Istoria_B-Gymnasiou_html-empl/",
                 "topics": "Μεσαιωνική και Βυζαντινή Ιστορία: Ίδρυση Κωνσταντινούπολης, Ιουστινιανός, Ηράκλειος και Άραβες, Εικονομαχία, Μακεδονική Δυναστεία (ακμή), Σταυροφορίες (1204 - Άλωση από Λατίνους), Δυναστεία Παλαιολόγων, Άλωση της Κωνσταντινούπολης (1453), Η Μεσαιωνική Δύση (Φεουδαρχία, Καρλομάγνος)."
             },
             "⚡ Φυσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2194/Fysiki_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2204/Fysiki_B-Gymnasiou_html-empl/",
                 "topics": "Κινήσεις (Ευθύγραμμη ομαλή κίνηση, ταχύτητα, διαγράμματα), Δυνάμεις (Νόμοι του Νεύτωνα, Βάρος, Τριβή), Πίεση (Υδροστατική πίεση, Ατμοσφαιρική πίεση, Αρχή του Αρχιμήδη, Άνωση), Ενέργεια (Έργο, Κινητική & Δυναμική ενέργεια, Διατήρηση Μηχανικής Ενέργειας), Θερμότητα και Θερμοκρασία."
             },
             "🧪 Χημεία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2196/Chimeia_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2206/Chimeia_B-Gymnasiou_html-empl/",
                 "topics": "Εισαγωγή στη Χημεία: Ύλη και σώματα, Καταστάσεις ύλης, Φυσικές και χημικές ιδιότητες, Μείγματα (ομογενή, ετερογενή), Μέθοδοι διαχωρισμού μειγμάτων, Διαλύματα (περιεκτικότητες % w/w, % w/v, % v/v), Άτομα, Μόρια, Υποατομικά σωματίδια (πρωτόνια, νετρόνια, ηλεκτρόνια), Χημικά στοιχεία και Χημικές ενώσεις, Χημικοί τύποι."
             },
             "🧬 Βιολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2198/Viologia_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2210/Biologia_B-G-Gymnasiou_html-empl/",
                 "topics": "Συστήματα υποστήριξης και κίνησης (ερειστικό & μυϊκό σύστημα), Κυκλοφορικό σύστημα (καρδιά, αίμα, αγγεία), Αναπνευστικό σύστημα, Πεπτικό σύστημα, Νευρικό σύστημα και αισθητήρια όργανα."
             },
             "🌍 Γεωλογία - Γεωγραφία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2190/Geologia-Geografia_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2294/Geografia_B-Gymnasiou_html-empl/",
                 "topics": "Η Ευρώπη: Γεωγραφική θέση, Ανάγλυφο, Κλίμα, Ποτάμια και λίμνες, Χώρες και πληθυσμός της Ευρώπης, Η Ευρωπαϊκή Ένωση."
             },
             "🕊️ Θρησκευτικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2180/Thriskeytika_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/handle/8547/5212",
                 "topics": "Η Καινή Διαθήκη: Η ζωή και η διδασκαλία του Ιησού Χριστού, Παραβολές, Θαύματα, Το Πάθος και η Ανάσταση, Η Εκκλησία και οι Απόστολοι."
             },
             "💻 Πληροφορική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2214/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
                 "topics": "Υπολογιστικά Φύλλα (Excel / Calc - συναρτήσεις, γραφήματα), Πολυμέσα και Παρουσιάσεις, Προγραμματισμός και αλγοριθμική σκέψη (μεταβλητές, δομές επιλογής)."
             },
             "🔧 Τεχνολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2216/Technologia_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2194/Technologia_B-Gymnasiou_html-empl/",
                 "topics": "Η μέθοδος της ομαδικής εργασίας: Προσομοίωση βιομηχανικής επιχείρησης, Οργανόγραμμα επιχείρησης, Ρόλοι (Διευθυντής, Μηχανικός, Μάρκετινγκ), Μαζική παραγωγή προϊόντος."
             },
             "🏃‍♂️ Φυσική Αγωγή (Νέο Βιβλίο - Μελίσπη)": {
-                "url": "https://ebooksdl.cti.gr/",
-                "topics": "Νέο Πρόγραμμα Σπουδών & Ψηφιακό Βιβλίο Φυσικής Αγωγής (Μελίσπη / ebooksdl.cti.gr): Φυσική κατάσταση και υγεία, Προπονητικές αρχές, Τακτική ομαδικών αθλημάτων (Μπάσκετ, Βόλεϊ, Ποδόσφαιρο), Στίβος (άλματα, ρίψεις, δρόμοι), Παραδοσιακοί χοροί ανά γεωγραφικό διαμέρισμα, Αθλητικό ήθος."
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2252/Fysiki-Agogi_A-B-G-Gymnasiou_html-empl/",
+                "melispi_url": "https://ebooksdl.cti.gr/",
+                "topics": "Νέο Πρόγραμμα Σπουδών & Ψηφιακό Βιβλίο Φυσικής Αγωγής (Μελίσπη / ebooksdl.cti.gr & ebooks.edu.gr): Φυσική κατάσταση και υγεία, Προπονητικές αρχές, Τακτική ομαδικών αθλημάτων (Μπάσκετ, Βόλεϊ, Ποδόσφαιρο), Στίβος (άλματα, ρίψεις, δρόμοι), Παραδοσιακοί χοροί ανά γεωγραφικό διαμέρισμα, Αθλητικό ήθος."
             },
             "🎨 Καλλιτεχνικά (Εικαστικά)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2220/Eikastika_A-B-G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2200/Eikastika_B-Gymnasiou_html-empl/",
                 "topics": "Προοπτική (γραμμική και ατμοσφαιρική), Φως και σκιά, Γλυπτική και τρισδιάστατες κατασκευές, Ιστορία της Τέχνης (Αναγέννηση, Μπαρόκ)."
             },
             "🎵 Μουσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2222/Moysiki_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2300/Mousiki_B-Gymnasiou_html-empl/",
                 "topics": "Μουσικές μορφές (κανόνας, φούγκα, συμφωνία), Μουσικές εποχές (Μπαρόκ, Κλασικισμός, Ρομαντισμός), Σύγχρονη ελληνική μουσική."
             },
             "🇬🇧 Αγγλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2226/Think-Teen_B-Gymnasiou-Advanced_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2320/Agglika_B-Gymnasiou-Prochorimenon_html-empl/",
                 "topics": "Think Teen 2: Reading essays, Writing opinion articles and stories, Grammar (Past Continuous, Present Perfect Simple/Continuous, Conditionals Types 1 & 2, Passive Voice)."
             },
             "🇫🇷 Γαλλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2230/Action-Fr-A2_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2316/Gallika_B-Gymnasiou_html-empl/",
                 "topics": "Action Fr! A2: Καθημερινότητα, Διατροφή, Ψώνια, Χρόνοι (Passé Composé, Futur Proche), Αντωνυμίες, Συγκριτικός βαθμός."
             },
             "🇩🇪 Γερμανικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2234/Deutsch-ein-Hit-2_B-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2202/Germanika_B-Gymnasiou_html-empl/",
                 "topics": "Deutsch - ein Hit! 2: Καθημερινές δραστηριότητες, Ελεύθερος χρόνος, Χρόνοι (Perfekt), Τροπικά ρήματα (können, müssen, wollen), Αιτιατική πτώση."
             }
         }
@@ -210,83 +212,80 @@ GYMNASIO_DATA = {
         "guideline": "Ο μαθητής είναι στη Γ' Γυμνασίου (14-15 ετών). Προετοιμάζεται για το Λύκειο. Χρησιμοποίησε ακριβή επιστημονική και φιλολογική ορολογία, αυστηρότερη μεθοδολογία και βαθύτερη ανάλυση.",
         "subjects": {
             "🌟 Όλα τα μαθήματα (Γενικό)": {
-                "url": "http://ebooks.edu.gr/ebooks/course-list.php?category=1&grade=8",
-                "topics": "Γενική μελέτη και προετοιμασία για το Λύκειο σε όλα τα μαθήματα της Γ' Γυμνασίου."
+                "url": "http://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K09",
+                "topics": "Γενική μελέτη και προετοιμασία για το Λύκειο σε όλα τα μαθήματα και ψηφιακά βιβλία της Γ' Γυμνασίου."
             },
             "📐 Μαθηματικά (Άλγεβρα & Γεωμετρία)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2202/Mathimatika_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2212/Mathimatika_G-Gymnasiou_html-empl/",
                 "topics": "Μέρος Α' (Άλγεβρα): Πράξεις με πραγματικούς αριθμούς, Μονώνυμα, Πολυώνυμα, Αξιοσημείωτες Ταυτότητες, Παραγοντοποίηση, Ρητές αλγεβρικές παραστάσεις, Εξισώσεις 2ου βαθμού (Διακρίνουσα, τύποι Vieta), Κλασματικές εξισώσεις, Γραμμικά Συστήματα 2 εξισώσεων με 2 αγνώστους, Πιθανότητες. Μέρος Β' (Γεωμετρία): Ισότητα τριγώνων, Θεώρημα Θαλή, Ομοιότητα τριγώνων (λόγος ομοιότητας, εμβαδών), Τριγωνομετρικοί αριθμοί γωνιών 0°-180° (ημ(180-ω), συν(180-ω)), Νόμος ημιτόνων & συνημιτόνων."
             },
             "📖 Νεοελληνική Γλώσσα & Έκθεση": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2196/Neoelliniki-Glossa_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2216/Neoelliniki-Glossa_G-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-8: Η Ελλάδα και ο κόσμος, Ειρήνη και πόλεμος, Εργασία και επάγγελμα, Επιστήμη και τεχνολογία, Δευτερεύουσες ονοματικές προτάσεις (ειδικές, βουλητικές, ενδοιαστικές), Δευτερεύουσες επιρρηματικές προτάσεις (αιτιολογικές, τελικές, χρονικές, υποθετικές, αποτελεσματικές, εναντιωματικές), Ευθύς και πλάγιος λόγος, Παραγωγή πειστικού λόγου (επιχειρηματολογία)."
             },
             "📚 Νεοελληνική Λογοτεχνία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2198/Keimena-Neoellinikis-Logotechnias_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2218/Keimena-Neoellinikis-Logotechnias_G-Gymnasiou_html-empl/",
                 "topics": "Κείμενα Νεοελληνικής Λογοτεχνίας: Νεότερη και σύγχρονη ελληνική ποίηση (Σολωμός, Καβάφης, Σεφέρης, Ελύτης, Ρίτσος) και πεζογραφία, Παγκόσμια λογοτεχνία, Λογοτεχνικά ρεύματα, Κοινωνικοί και υπαρξιακοί προβληματισμοί."
             },
             "🏛️ Αρχαία Ελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2194/Archaia-Elliniki-Glossa_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2238/Archaia-Elliniki-Glossa_G-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-12: Ρήματα συμβολής και συνηρημένα σε -άω, -έω, -όω, Χρόνοι Μέσης Φωνής, Αόριστος β', Ευκτική και Υποτακτική έγκλιση, Απαρέμφατα και Μετοχές (είδη, σύνταξη, απόλυτες μετοχές), Υποθετικοί λόγοι."
             },
             "🏺 Αρχαία Μετάφραση (Ευριπίδη Ελένη)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2198/Eyripidi-Eleni_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2342/Dramatiki-Poiisi-Evripidi-Eleni_G-Gymnasiou_html-empl/",
                 "topics": "Αρχαίο Δράμα: Εισαγωγή στην τραγωδία, Δομή (Πρόλογος, Πάροδος, Επεισόδια, Στάσιμα, Έξοδος), Ευριπίδη Ελένη: Ο μύθος του ειδώλου, Σκηνή αναγνώρισης Μενελάου - Ελένης, Σχέδιο απόδρασης, Θεοκλύμενος, Θεοί από μηχανής (Διόσκουροι), Τραγική ειρωνεία, Αντιπολεμικά μηνύματα."
             },
             "📜 Ιστορία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2200/Istoria_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/5204/Istoria_G-Gymnasiou_html-empl/",
                 "topics": "Νεότερη και Σύγχρονη Ιστορία: Διαφωτισμός, Αμερικανική & Γαλλική Επανάσταση, Η Ελληνική Επανάσταση του 1821 (Φιλική Εταιρεία, αγώνες, ναυμαχία Ναβαρίνου), Ίδρυση του Ελληνικού Κράτους (Καποδίστριας, Όθωνας), Χαρίλαος Τρικούπης και εκσυγχρονισμός, Βαλκανικοί Πόλεμοι, Α' Παγκόσμιος Πόλεμος, Μικρασιατική Καταστροφή (1922), Μεσοπόλεμος, Β' Παγκόσμιος Πόλεμος και Εθνική Αντίσταση."
             },
             "⚡ Φυσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2204/Fysiki_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2226/Fysiki_G-Gymnasiou_html-empl/",
                 "topics": "Ηλεκτρισμός (Ηλεκτρικό φορτίο, Νόμος Coulomb, Ηλεκτρικό ρεύμα, Ένταση, Ηλεκτρική τάση, Νόμος του Ohm, Αντίσταση, Σύνδεση αντιστατών σε σειρά και παράλληλα, Ενέργεια & Ισχύς ηλεκτρικού ρεύματος, Νόμος Joule), Μηχανικές Ταλαντώσεις (περίοδος, συχνότητα, πλάτος), Μηχανικά Κύματα (διάδοση, μήκος κύματος, θεμελιώδης εξίσωση κυματικής), Ήχος, Οπτική (Ανάκλαση, Διάθλαση του φωτός, Φακοί)."
             },
             "🧪 Χημεία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2206/Chimeia_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2208/Chimeia_G-Gymnasiou_html-empl/",
                 "topics": "Περιοδικός Πίνακας (ομάδες, περίοδοι, μέταλλα, αμέταλλα), Οξέα (ιδιότητες, pH), Βάσεις (ιδιότητες, pH), Εξουδετέρωση, Άλατα, Οργανική Χημεία (Υδρογονάνθρακες - αλκάνια, αλκένια, αλκίνια, καύση, πετρέλαιο, φυσικό αέριο, πολυμερή - πλαστικά)."
             },
             "🧬 Βιολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2208/Viologia_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2210/Biologia_B-G-Gymnasiou_html-empl/",
                 "topics": "Γενετική και Κληρονομικότητα: DNA, RNA, Γονίδια, Χρωμοσώματα, Κυτταρική διαίρεση (Μίτωση, Μείωση), Νόμοι του Mendel, Μεταλλάξεις, Βιοτεχνολογία και Γενετική Μηχανική, Εξέλιξη των ειδών (Δαρβίνος, Φυσική επιλογή), Οικολογία και Οικοσυστήματα."
             },
-            "⚖️ Κοινωνική & Πολιτική Αγωγή (ΚΠΑ)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2210/Koinoniki-kai-Politiki-Agogi_G-Gymnasiou_html-empl/",
-                "topics": "Το άτομο και η κοινωνία, Κοινωνικοποίηση, Κοινωνικοί ρόλοι, Το Κράτος και το Πολίτευμα (Δημοκρατία, Σύνταγμα, Διάκριση των εξουσιών: Νομοθετική, Εκτελεστική, Δικαστική), Εκλογές και κόμματα, Ανθρώπινα Δικαιώματα και υποχρεώσεις του πολίτη, Η Ευρωπαϊκή Ένωση και οι θεσμοί της, Διεθνείς οργανισμοί (ΟΗΕ)."
+            "⚖️ Κοινωνική & Πολιτική Αγωγή": {
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/4720/Koinoniki-kai-Politiki-Agogi_G-Gymnasiou_html-empl/",
+                "topics": "Το άτομο και η κοινωνία, Κοινωνικοί θεσμοί, Το κράτος, Το Σύνταγμα, Πολίτευμα (Κοινοβουλευτική Δημοκρατία), Δικαιώματα και υποχρεώσεις, Η Ευρωπαϊκή Ένωση και οι διεθνείς οργανισμοί."
             },
             "🕊️ Θρησκευτικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2192/Thriskeytika_G-Gymnasiou_html-empl/",
-                "topics": "Η Εκκλησία στην ιστορία: Ορθοδοξία, Σχίσμα 1054, Μεταρρύθμιση, Οικουμενικός διάλογος, Θρησκείες του κόσμου (Ιουδαϊσμός, Ισλάμ, Ινδουισμός, Βουδισμός), Σύγχρονα ηθικά διλήμματα."
+                "url": "http://ebooks.edu.gr/ebooks/handle/8547/122",
+                "topics": "Η Εκκλησία στην ιστορία: Πρώτη Εκκλησία, Διωγμοί, Οικουμενικές Σύνοδοι, Σχίσμα του 1054, Ορθοδοξία και σύγχρονος κόσμος."
             },
             "💻 Πληροφορική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2214/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
-                "topics": "Βάσεις Δεδομένων (έννοιες, πίνακες, ερωτήματα), Δίκτυα Υπολογιστών και Διαδίκτυο (IP, DNS, ασφάλεια), Προγραμματισμός (δομές επανάληψης, συναρτήσεις), Τεχνητή Νοημοσύνη και κοινωνικές επιπτώσεις της τεχνολογίας."
-            },
-            "🔧 Τεχνολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2216/Technologia_G-Gymnasiou_html-empl/",
-                "topics": "Η μέθοδος Έρευνα και Πειραματισμός: Επιστημονική μέθοδος, Υπόθεση, Μεταβλητές (ανεξάρτητη, εξαρτημένη), Πειραματική διάταξη, Στατιστική ανάλυση αποτελεσμάτων, Συγγραφή επιστημονικής αναφοράς."
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
+                "topics": "Βάσεις Δεδομένων, Δίκτυα Υπολογιστών, Προγραμματιστικά περιβάλλοντα, Αλγόριθμοι και δομές επανάληψης, Ρομποτική και Αυτοματισμοί."
             },
             "🏃‍♂️ Φυσική Αγωγή (Νέο Βιβλίο - Μελίσπη)": {
-                "url": "https://ebooksdl.cti.gr/",
-                "topics": "Νέο Πρόγραμμα Σπουδών & Ψηφιακό Βιβλίο Φυσικής Αγωγής (Μελίσπη / ebooksdl.cti.gr): Δια βίου άσκηση, Σχεδιασμός ατομικού προγράμματος φυσικής κατάστασης, Προηγμένες τακτικές αθλημάτων, Ολυμπιακή παιδεία και αξίες, Παραδοσιακοί χοροί, Πρώτες βοήθειες και αποκατάσταση, Αθλητισμός και αποφυγή ουσιών (doping)."
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2252/Fysiki-Agogi_A-B-G-Gymnasiou_html-empl/",
+                "melispi_url": "https://ebooksdl.cti.gr/",
+                "topics": "Νέο Πρόγραμμα Σπουδών & Ψηφιακό Βιβλίο Φυσικής Αγωγής (Μελίσπη / ebooksdl.cti.gr & ebooks.edu.gr): Δια βίου άσκηση, Σχεδιασμός ατομικού προγράμματος εκγύμνασης, Αθλητισμός και κοινωνία, Fair play και καταπολέμηση βίας στα γήπεδα, Σύνθετες τεχνικές και τακτικές αθλημάτων, Ελληνικοί χοροί και πολιτισμός."
             },
             "🎨 Καλλιτεχνικά (Εικαστικά)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2220/Eikastika_A-B-G-Gymnasiou_html-empl/",
-                "topics": "Μοντέρνα και Σύγχρονη Τέχνη (Ιμπρεσιονισμός, Κυβισμός, Αφηρημένη τέχνη, Pop Art), Εφαρμοσμένες τέχνες (Γραφιστική, Αρχιτεκτονική, Φωτογραφία, Design), Προσωπική εικαστική έκφραση."
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2306/Eikastika_G-Gymnasiou_html-empl/",
+                "topics": "Μοντέρνα και Σύγχρονη Τέχνη (Ιμπρεσιονισμός, Κυβισμός, Αφαίρεση), Γραφιστική, Φωτογραφία, Design, Κριτική έργων τέχνης."
             },
             "🎵 Μουσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2222/Moysiki_G-Gymnasiou_html-empl/",
-                "topics": "Μουσική του 20ού αιώνα (Jazz, Blues, Rock, Ηλεκτρονική μουσική), Κινηματογραφική μουσική, Μεγάλοι Έλληνες συνθέτες (Χατζιδάκις, Θεοδωράκης, Ξαρχάκος)."
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2304/Mousiki_G-Gymnasiou_html-empl/",
+                "topics": "Μουσική του 20ού και 21ου αιώνα, Jazz, Rock, Ηλεκτρονική μουσική, Μουσική κινηματογράφου, Μουσική παράδοση των λαών του κόσμου."
             },
             "🇬🇧 Αγγλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2228/Think-Teen_G-Gymnasiou-Advanced_html-empl/",
-                "topics": "Think Teen 3: Advanced reading texts, Debate topics, Essays, Grammar (Reported Speech, Relative Clauses, Inversion, Wishes, Advanced Connectors), Vocabulary for global issues."
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2324/Agglika_G-Gymnasiou_html-empl/",
+                "topics": "Think Teen 3: Advanced reading texts, Writing discursive essays and reports, Modals of deduction, Relative Clauses, Conditionals Type 3, Phrasal verbs."
             },
             "🇫🇷 Γαλλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2232/Action-Fr-B1_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2316/Gallika_B-Gymnasiou_html-empl/",
                 "topics": "Action Fr! B1: Έκφραση γνώμης, Επιχειρηματολογία, Χρόνοι (Imparfait vs Passé Composé, Conditionnel Présent, Subjonctif), Γαλλικός πολιτισμός."
             },
             "🇩🇪 Γερμανικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2236/Deutsch-ein-Hit-3_G-Gymnasiou_html-empl/",
+                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2220/Germanika_G-Gymnasiou_html-empl/",
                 "topics": "Deutsch - ein Hit! 3: Έκφραση άποψης, Επαγγέλματα, Περιβάλλον, Γραμματική (Präteritum, Dativ, Υποθετικές προτάσεις με wenn, Δευτερεύουσες με dass & weil)."
             }
         }
@@ -733,15 +732,23 @@ with st.sidebar:
     # Ανάκτηση πληροφοριών βιβλίου & ύλης για το επιλεγμένο μάθημα
     current_book_info = GYMNASIO_DATA[selected_grade]["subjects"][selected_subject]
     book_url = current_book_info.get("url", "http://ebooks.edu.gr")
+    melispi_url = current_book_info.get("melispi_url", None)
     book_topics = current_book_info.get("topics", "")
 
-    # 3. Κουμπί Άμεσης Πρόσβασης στο Σχολικό Βιβλίο (ebooks.edu.gr / Μελίσπη)
+    # 3. Κουμπί Άμεσης Πρόσβασης στο Σχολικό Βιβλίο (ebooks.edu.gr & Μελίσπη)
     st.link_button(
         label="📖 Άνοιγμα Σχολικού Βιβλίου",
         url=book_url,
-        help="Ανοίγει το επίσημο ψηφιακό βιβλίο του Υπουργείου Παιδείας (ebooks.edu.gr / Μελίσπη)",
+        help="Ανοίγει το επίσημο ψηφιακό διαδραστικό βιβλίο του Υπουργείου Παιδείας (ebooks.edu.gr)",
         use_container_width=True
     )
+    if melispi_url:
+        st.link_button(
+            label="🐝 Νέο Βιβλίο στη «Μελίσπη»",
+            url=melispi_url,
+            help="Ανοίγει τη νέα Ψηφιακή Βιβλιοθήκη Διδακτικών Βιβλίων «Μελίσπη» (ebooksdl.cti.gr)",
+            use_container_width=True
+        )
 
     # 4. Πτυσσόμενη προβολή της επίσημης ύλης
     with st.expander("📑 Ύλη & Κεφάλαια Βιβλίου", expanded=False):
