@@ -151,16 +151,17 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 2. Ανύψωση του δεξιού κύριου περιεχομένου κατά 1,5 εκ. (~3.5rem / 55px) */
+    /* 2. Κύριο περιεχόμενο: πλήρης εμφάνιση ονόματος χωρίς καμία αποκοπή */
     .block-container,
     [data-testid="block-container"],
     [data-testid="stMainBlockContainer"],
     .main .block-container {
-        padding-top: 0.5rem !important;
-        margin-top: -3.5rem !important;
+        padding-top: 3.2rem !important;
+        margin-top: 0rem !important;
+        padding-bottom: 1.5rem !important;
     }
     
-    /* 3. Πλαϊνή στήλη: ανύψωση στην κορυφή */
+    /* 3. Πλαϊνή στήλη: κομψή τοποθέτηση στην κορυφή */
     [data-testid="stSidebar"] {
         background-color: #b0d3f4 !important;
         border-right: 1px solid #90bfe9 !important;
@@ -168,8 +169,8 @@ st.markdown("""
     [data-testid="stSidebar"] [data-testid="stSidebarContent"],
     [data-testid="stSidebar"] [data-testid="stSidebarUserContent"],
     [data-testid="stSidebar"] > div:first-child {
-        padding-top: 0rem !important;
-        margin-top: -2.5rem !important;
+        padding-top: 1.5rem !important;
+        margin-top: 0rem !important;
         padding-bottom: 0.5rem !important;
     }
     [data-testid="stSidebar"] label, [data-testid="stSidebar"] p, 
