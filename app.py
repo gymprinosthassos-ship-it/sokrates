@@ -93,25 +93,16 @@ VULGAR_WORDS = [
 ]
 
 def detect_policy_violation(text):
-    """Ελέγχει αν το μήνυμα επιχειρεί να παραβιάσει τους κανόνες και τις πολιτικές ασφαλείας"""
     norm = normalize_text(text)
-    
-    # 1. Έλεγχος Jailbreak / Prompt Injection
     for pattern in JAILBREAK_PATTERNS:
         if pattern in norm:
             return True, "ΑΠΟΠΕΙΡΑ JAILBREAK / ΠΑΡΑΚΑΜΨΗΣ ΟΔΗΓΙΩΝ"
-            
-    # 2. Έλεγχος Επικίνδυνου / Παράνομου Περιεχομένου
     for pattern in DANGEROUS_PATTERNS:
         if pattern in norm:
             return True, "ΕΠΙΚΙΝΔΥΝΟ / ΠΑΡΑΝΟΜΟ ΠΕΡΙΕΧΟΜΕΝΟ"
-
-    # 3. Έλεγχος Βωμολοχίας / Ακατάλληλου Περιεχομένου
     for word in VULGAR_WORDS:
-        # Έλεγχος αν υπάρχει ως αυτούσια λέξη ή τμήμα
         if word in norm:
             return True, "ΥΒΡΙΣΤΙΚΟ / ΑΚΑΤΑΛΛΗΛΟ ΠΕΡΙΕΧΟΜΕΝΟ ΓΙΑ ΑΝΗΛΙΚΟΥΣ"
-
     return False, None
 
 # -------------------------------------------------------------
@@ -133,27 +124,72 @@ if "violations_in_session" not in st.session_state:
     st.session_state.violations_in_session = 0
 
 # -------------------------------------------------------------
-# 5. Προσαρμοσμένο CSS
+# 5. Προσαρμοσμένο CSS — Πλήρης Γαλάζιος Σχεδιασμός & Ανύψωση Sidebar
 # -------------------------------------------------------------
 st.markdown("""
 <style>
     :root {
         color-scheme: light !important;
     }
+    
+    /* 1. Ολόκληρο το παράθυρο και φόντο */
     .stApp {
         background: linear-gradient(180deg, #d3e6fa 0%, #bddcf7 100%) !important;
         color: #0f172a !important;
     }
+    
+    /* 2. Πλαϊνή στήλη: ανύψωση εικονιδίου και ονόματος στην κορυφή */
     [data-testid="stSidebar"] {
         background-color: #b0d3f4 !important;
         border-right: 1px solid #90bfe9 !important;
     }
-    [data-testid="stSidebar"] label, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"],
+    [data-testid="stSidebar"] [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 0.1rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    [data-testid="stSidebar"] label, [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] span, [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3 {
         color: #0f172a !important;
     }
+    
+    /* 3. Κατάσταση Ασφαλείας (Sidebar Alert Box) σε απαλό γαλάζιο */
+    [data-testid="stSidebar"] [data-testid="stAlert"] {
+        background-color: #c4e1f7 !important;
+        color: #082f56 !important;
+        border: 1px solid #8ec0e7 !important;
+        border-radius: 12px !important;
+        padding: 6px 12px !important;
+        margin-bottom: 0.3rem !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stAlert"] * {
+        color: #082f56 !important;
+    }
+
+    /* 4. Όλα τα Dropdowns & Selectbox (Τάξη, Μάθημα κλπ) σε απαλό γαλάζιο αντί για λευκό */
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] {
+        background-color: #cce5f9 !important;
+        border-color: #8bbfe6 !important;
+        color: #0f172a !important;
+        border-radius: 10px !important;
+    }
+    div[data-baseweb="select"] * {
+        color: #0f172a !important;
+    }
+    div[data-baseweb="popover"],
+    ul[role="listbox"],
+    li[role="option"] {
+        background-color: #d7ecfa !important;
+        color: #0f172a !important;
+    }
+
+    /* 5. Μηνύματα συνομιλίας σε φωτεινό γαλάζιο αντί για λευκό */
     .stChatMessage, [data-testid="stChatMessage"] {
-        background-color: #ffffff !important;
-        border: 1px solid #a8cfee !important;
+        background-color: #e4f1fb !important;
+        border: 1px solid #a3cef0 !important;
         box-shadow: 0 4px 12px rgba(15, 60, 120, 0.08) !important;
         border-radius: 14px;
         margin-bottom: 0.5rem;
@@ -167,22 +203,88 @@ st.markdown("""
         border-radius: 50% !important;
         box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
+
+    /* 6. Κάτω μπάρα πληκτρολόγησης (stChatInput) σε γαλάζιο αντί για λευκό */
     [data-testid="stBottom"], [data-testid="stBottom"] > div {
         background: transparent !important;
     }
     [data-testid="stChatInput"] {
-        background-color: #ffffff !important;
-        border: 1px solid #90bfe9 !important;
+        background-color: #d6ecfb !important;
+        border: 1.5px solid #84bee7 !important;
         border-radius: 14px !important;
-        box-shadow: 0 2px 8px rgba(15, 60, 120, 0.06);
+        box-shadow: 0 3px 12px rgba(15, 60, 120, 0.08) !important;
     }
     [data-testid="stChatInput"] textarea {
         color: #0f172a !important;
-        background-color: #ffffff !important;
+        background-color: #d6ecfb !important;
     }
+    [data-testid="stChatInput"] textarea::placeholder {
+        color: #476685 !important;
+    }
+
+    /* 7. Όλα τα κουμπιά & Quick Action Chips σε γαλάζιο αντί για λευκό */
+    .stButton > button {
+        background-color: #d5ebfb !important;
+        color: #0b2f56 !important;
+        border: 1.5px solid #94c4ea !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 6px rgba(15, 60, 120, 0.05);
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button:hover {
+        background-color: #bfdff7 !important;
+        border-color: #6daae0 !important;
+        color: #072342 !important;
+        box-shadow: 0 4px 10px rgba(15, 60, 120, 0.12);
+        transform: translateY(-1px);
+    }
+    /* Κουμπί Νέας Συζήτησης (Κόκκινο/Κοραλί για αντίθεση) */
+    .stButton > button[kind="primary"],
+    .stButton > button[data-testid="baseButton-primary"] {
+        background-color: #ff5252 !important;
+        color: #ffffff !important;
+        border: none !important;
+    }
+
+    /* 8. Πτυσσόμενα πλαίσια (Expanders) σε γαλάζιο αντί για λευκό */
+    [data-testid="stExpander"] {
+        background-color: #cde6f9 !important;
+        border: 1px solid #93c4eb !important;
+        border-radius: 12px !important;
+        margin-bottom: 0.5rem;
+    }
+    [data-testid="stExpander"] summary {
+        background-color: #cde6f9 !important;
+        color: #0b2f56 !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stExpander"] div[role="region"] {
+        background-color: #d8edf9 !important;
+        border-radius: 0 0 12px 12px !important;
+    }
+    [data-testid="stFileUploader"] section {
+        background-color: #d6ecfb !important;
+        border: 1px dashed #7db4dc !important;
+    }
+
+    /* 9. Κάρτα Συμμόρφωσης / Footer σε γαλάζιο αντί για υπόλευκο */
+    .compliance-footer {
+        text-align: center;
+        font-size: 0.78rem;
+        color: #1e3a5f;
+        margin-top: 1.5rem;
+        padding: 12px 16px;
+        border: 1px solid #8fc2e8;
+        background-color: #c6e2f7;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 60, 120, 0.05);
+    }
+
+    /* Επικεφαλίδα */
     .main-header {
         text-align: center;
-        padding-bottom: 0.4rem;
+        padding-bottom: 0.2rem;
     }
     .socratic-badge {
         background-color: #b9d8f6 !important;
@@ -236,17 +338,6 @@ st.markdown("""
         color: #dc2626 !important;
         margin-top: 0.5rem;
     }
-    
-    .compliance-footer {
-        text-align: center;
-        font-size: 0.78rem;
-        color: #334155;
-        margin-top: 2rem;
-        padding: 12px;
-        border-top: 1px solid #94a3b8;
-        background: rgba(255, 255, 255, 0.4);
-        border-radius: 8px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -287,11 +378,10 @@ st.markdown(f"""
 <div class="main-header">
     <span class="socratic-badge">Τάξη & Σκέψη</span>
     <h1 style="margin: 0.2rem 0;">Σωκράτης</h1>
-    <p style="color:#334155;font-size:0.95rem;margin-top:2px;"><i>«Το να γνωρίζεις ότι δεν γνωρίζεις είναι το πρώτο βήμα της σοφίας.»</i></p>
+    <p style="color:#1e3a5f;font-size:0.95rem;margin-top:2px;"><i>«Το να γνωρίζεις ότι δεν γνωρίζεις είναι το πρώτο βήμα της σοφίας.»</i></p>
 </div>
 """, unsafe_allow_html=True)
 
-# Αν η εφαρμογή είναι κλειδωμένη ή υπάρχει ενεργός συναγερμός, εμφάνισε το ΚΟΚΚΙΝΟ ΚΑΜΠΑΝΑΚΙ
 if st.session_state.is_locked or st.session_state.violations_in_session > 0:
     st.markdown(f"""
     <div class="red-bell-alert">
@@ -304,7 +394,6 @@ if st.session_state.is_locked or st.session_state.violations_in_session > 0:
     </div>
     """, unsafe_allow_html=True)
 
-# Αν ΔΕΝ υπάρχει αποθηκευμένο κλειδί, ζητείται από τον διαχειριστή
 if not api_key:
     st.markdown("---")
     st.info("🔐 **Διαμόρφωση Εκπαιδευτικού/Διαχειριστή:** Παρακαλώ εισάγετε το Gemini API Key για την ενεργοποίηση της εφαρμογής:")
@@ -325,7 +414,7 @@ if not api_key:
     st.stop()
 
 # -------------------------------------------------------------
-# 8. Μοντέλα AI & Πλαϊνή Στήλη
+# 8. Μοντέλα AI & Πλαϊνή Στήλη (Ανυψωμένο Menu στην Κορυφή)
 # -------------------------------------------------------------
 FAST_CHAT_MODELS = [
     "gemini-3.5-flash-lite",
@@ -335,21 +424,21 @@ FAST_CHAT_MODELS = [
     "gemini-flash-latest"
 ]
 active_model = "gemini-3.5-flash-lite"
-
 total_violations = get_violation_count()
 
 with st.sidebar:
+    # Εικονίδιο και Όνομα ακριβώς στην κορυφή του sidebar
     if os.path.exists(avatar_image):
         col_l, col_img, col_r = st.columns([1, 4, 1])
         with col_img:
-            st.image(avatar_image, width=150)
-    st.markdown("<h2 style='text-align:center;margin-top:0.2rem;margin-bottom:0.5rem;'>Σωκράτης</h2>", unsafe_allow_html=True)
+            st.image(avatar_image, width=135)
+    st.markdown("<h2 style='text-align:center;margin-top:-0.4rem;margin-bottom:0.3rem;font-size:1.6rem;'>Σωκράτης</h2>", unsafe_allow_html=True)
     
-    # Κατάσταση Ασφαλείας στο Sidebar
+    # Κατάσταση Ασφαλείας: Μόνο "Κατάσταση: Ασφαλές"
     if st.session_state.is_locked:
-        st.error("🚨 🔔 **ΚΑΤΑΣΤΑΣΗ: ΚΛΕΙΔΩΜΕΝΟ**")
+        st.error("🚨 🔔 **Κατάσταση: Κλειδωμένο**")
     else:
-        st.success("🛡️ **ΚΑΤΑΣΤΑΣΗ: ΑΣΦΑΛΕΣ & ΕΠΟΠΤΕΥΟΜΕΝΟ**")
+        st.success("🛡️ **Κατάσταση: Ασφαλές**")
 
     # 1. Επιλογή Τάξης Γυμνασίου
     GYMNASIO_GRADES = ["Α' Γυμνασίου", "Β' Γυμνασίου", "Γ' Γυμνασίου"]
@@ -394,7 +483,7 @@ with st.sidebar:
             use_container_width=True
         )
 
-    # Πίνακας Ελέγχου Ασφαλείας & Αρχείου Παραβιάσεων (Security Audit Log)
+    # Πίνακας Ελέγχου Ασφαλείας & Αρχείου Παραβιάσεων
     with st.expander(f"📋 Αρχείο Παραβιάσεων ({total_violations})"):
         st.markdown(f"**Καταγεγραμμένες Απόπειρες:** `{total_violations}`")
         if os.path.exists(SECURITY_LOG_PATH):
@@ -407,7 +496,6 @@ with st.sidebar:
                 mime="text/csv",
                 use_container_width=True
             )
-            # Εμφάνιση των τελευταίων εγγραφών
             log_lines = log_data.strip().split("\n")
             if len(log_lines) > 1:
                 st.caption("Τελευταία καταγραφή:")
@@ -445,7 +533,6 @@ if st.session_state.is_locked:
     </div>
     """, unsafe_allow_html=True)
 
-    # Μηχανισμός Ξεκλειδώματος από Εκπαιδευτικό
     with st.expander("🔑 Ξεκλείδωμα από Εκπαιδευτικό / Διαχειριστή"):
         st.caption("Εισάγετε τον σχολικό κωδικό ξεκλειδώματος:")
         col_pin1, col_pin2 = st.columns([3, 1])
@@ -466,7 +553,6 @@ if st.session_state.is_locked:
             else:
                 st.error("Εσφαλμένος κωδικός ξεκλειδώματος.")
 
-    # Σταμάτημα εκτέλεσης - Καμία περαιτέρω αλληλεπίδραση δεν επιτρέπεται!
     st.stop()
 
 # -------------------------------------------------------------
@@ -485,12 +571,12 @@ def render_tts_widget(text_content):
     html_code = f"""
     <div style="margin-top: 4px; margin-bottom: 2px;">
         <button id="tts_btn" onclick="toggleSpeech()" style="
-            background: #e6f2fc;
-            color: #0f3460;
-            border: 1px solid #9dc3e6;
+            background: #cde5f9;
+            color: #082f56;
+            border: 1.5px solid #8ec0e7;
             border-radius: 12px;
-            padding: 3px 10px;
-            font-size: 0.80rem;
+            padding: 4px 12px;
+            font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
@@ -644,9 +730,7 @@ if prompt:
     # 🚨 ΒΗΜΑ 1: ΕΛΕΓΧΟΣ ΑΠΟΠΕΙΡΑΣ ΠΑΡΑΒΙΑΣΗΣ ΠΟΛΙΤΙΚΗΣ & ΚΑΝΟΝΩΝ
     is_violation, violation_reason = detect_policy_violation(prompt)
     if is_violation:
-        # 1. Καταγραφή στο ημερολόγιο ασφαλείας
         log_security_violation(violation_reason, prompt, selected_grade, selected_subject)
-        # 2. Ενεργοποίηση κλειδώματος και κόκκινου συναγερμού
         st.session_state.is_locked = True
         st.session_state.lock_reason = violation_reason
         st.session_state.locked_at = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -775,7 +859,6 @@ if prompt:
                             break
                     except Exception as api_err:
                         err_str = str(api_err).lower()
-                        # Αν το ίδιο το API μπλόκαρε το περιεχόμενο λόγω ασφαλείας
                         if "safety" in err_str or "blocked" in err_str:
                             log_security_violation("API_SAFETY_BLOCK_TRIGGERED", prompt, selected_grade, selected_subject)
                             st.session_state.is_locked = True
@@ -792,7 +875,7 @@ if prompt:
                 st.error(f"⚠️ Παρουσιάστηκε πρόβλημα επικοινωνίας: {e}")
 
 # -------------------------------------------------------------
-# 16. Υποσέλιδο Συμμόρφωσης
+# 16. Υποσέλιδο Συμμόρφωσης σε Απαλό Γαλάζιο
 # -------------------------------------------------------------
 st.markdown("""
 <div class="compliance-footer">
