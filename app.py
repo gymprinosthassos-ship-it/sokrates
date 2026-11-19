@@ -943,56 +943,83 @@ active_model = st.session_state.get("active_model", "gemini-3.5-flash-lite")
 total_violations = get_violation_count()
 
 with st.sidebar:
-    # Κορυφή πλαϊνής στήλης: Εικονίδιο Σωκράτη αριστερά και ευανάγνωστος τίτλος
+    # Κομψή κάρτα κορυφής με το εικονίδιο του Σωκράτη
     if AVATAR_DATA_URI:
-        avatar_img_tag = f'<img src="{AVATAR_DATA_URI}" alt="Σωκράτης" style="width: 72px; height: 72px; min-width: 72px; border-radius: 50%; object-fit: cover; border: 2.5px solid #7eb9e6; box-shadow: 0 2px 6px rgba(12, 51, 94, 0.14); display: block;" />'
+        avatar_img_tag = f'<img src="{AVATAR_DATA_URI}" alt="Σωκράτης" style="width: 56px; height: 56px; min-width: 56px; border-radius: 50%; object-fit: cover; border: 2.5px solid #2563eb; box-shadow: 0 2px 8px rgba(12, 51, 94, 0.16); display: block;" />'
     else:
-        avatar_img_tag = '<div style="font-size: 2.8rem; line-height: 1;">🧔</div>'
+        avatar_img_tag = '<div style="font-size: 2.3rem; line-height: 1;">🧔</div>'
 
-    lock_tag = '<div style="background-color: #fee2e2; border: 1.5px solid #ef4444; border-radius: 6px; padding: 1px 6px; text-align: center; margin-top: 2px;"><span style="font-size: 0.74rem; font-weight: 800; color: #dc2626;">🚨 Κλειδωμένο</span></div>' if st.session_state.is_locked else ''
+    lock_tag = '<div style="background-color: #fee2e2; border: 1.5px solid #ef4444; border-radius: 6px; padding: 1px 6px; text-align: center; margin-top: 3px;"><span style="font-size: 0.72rem; font-weight: 800; color: #dc2626;">🚨 Κλειδωμένο</span></div>' if st.session_state.is_locked else ''
 
     header_html = (
-        f'<div style="display: flex; align-items: center; gap: 8px; margin-top: -6px; margin-bottom: 4px; padding: 0;">'
+        f'<div style="background: rgba(255,255,255,0.72); border: 1.5px solid #93c5fd; border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; margin-top: -10px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(15, 52, 96, 0.08);">'
         f'{avatar_img_tag}'
         f'<div style="display: flex; flex-direction: column; justify-content: center; overflow: visible;">'
-        f'<div style="font-size: 1.25rem; font-weight: 800; color: #072b52; line-height: 1.2; letter-spacing: -0.2px;">Σωκράτης</div>'
-        f'<div style="font-size: 0.82rem; font-weight: 700; color: #1e3a5f; line-height: 1.2; margin-top: 1px;">AI Tutor</div>'
-        f'<div style="font-size: 0.78rem; font-weight: 600; color: #3b6088; line-height: 1.2;">Γυμνασίου</div>'
+        f'<div style="font-size: 1.18rem; font-weight: 800; color: #072b52; line-height: 1.15; letter-spacing: -0.2px;">Σωκράτης</div>'
+        f'<div style="font-size: 0.78rem; font-weight: 700; color: #1d4ed8; line-height: 1.2; margin-top: 2px;">AI Tutor Γυμνασίου</div>'
         f'{lock_tag}'
         f'</div>'
         f'</div>'
     )
     st.markdown(header_html, unsafe_allow_html=True)
 
-    # Επιλογή Ρόλου / Λειτουργίας Εφαρμογής (Συγχρονισμένη με τα πάνω κουμπιά)
-    mode_options = ["🎓 Μαθητής (AI Tutor)", "👩‍🏫 Βοηθός Εκπαιδευτικού (Ασκήσεις & Εργασίες)"]
-    current_mode_idx = 0 if st.session_state.active_mode == "student" else 1
-    selected_role = st.radio(
-        "📌 Επιλογή Λειτουργίας:",
-        mode_options,
-        index=current_mode_idx,
-        key="sidebar_role_select",
-        help="Εναλλαγή μεταξύ Μαθητή (Σωκρατικός Διάλογος) και Βοηθού Εκπαιδευτικού (παραγωγή ασκήσεων & εργασιών για όλα τα μαθήματα)."
-    )
-    if selected_role == mode_options[0] and st.session_state.active_mode != "student":
-        st.session_state.active_mode = "student"
-        st.rerun()
-    elif selected_role == mode_options[1] and st.session_state.active_mode != "teacher":
-        st.session_state.active_mode = "teacher"
-        st.rerun()
+    # 2 καθαρά κουμπιά λειτουργίας δίπλα-δίπλα (1 γραμμή)
+    col_m1, col_m2 = st.columns(2)
+    with col_m1:
+        if st.button(
+            "🎓 Μαθητής",
+            key="side_btn_student",
+            type="primary" if st.session_state.active_mode == "student" else "secondary",
+            use_container_width=True,
+        ):
+            if st.session_state.active_mode != "student":
+                st.session_state.active_mode = "student"
+                st.rerun()
+    with col_m2:
+        if st.button(
+            "👩‍🏫 Καθηγητής",
+            key="side_btn_teacher",
+            type="primary" if st.session_state.active_mode == "teacher" else "secondary",
+            use_container_width=True,
+        ):
+            if st.session_state.active_mode != "teacher":
+                st.session_state.active_mode = "teacher"
+                st.rerun()
 
+    status_badges = []
     if st.session_state.active_mode == "teacher":
-        st.caption("🟢 *Βοηθός Εκπαιδευτικού: Ενεργός*")
+        status_badges.append("🟢 Καθηγητής")
     if st.session_state.camera_unlocked:
-        st.caption("📷 *Κάμερα: Ξεκλείδωτη*")
+        status_badges.append("📷 Κάμερα ανοιχτή")
+    if status_badges:
+        st.caption(" • ".join(status_badges))
 
-    # 1. Επιλογή Τάξης Γυμνασίου
+    # Ενότητα 1: Επιλογή Μαθήματος & Τρόπου Εξήγησης
+    st.markdown('<div style="font-size: 0.76rem; font-weight: 800; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.4px; margin: 6px 0 2px 2px;">📚 Το Μάθημά μου</div>', unsafe_allow_html=True)
+
     GYMNASIO_GRADES = list(GYMNASIO_DATA.keys())
-    selected_grade = st.selectbox("🏫 Τάξη:", GYMNASIO_GRADES, index=0)
+    selected_grade = st.selectbox("🏫 Τάξη:", GYMNASIO_GRADES, index=0, label_visibility="collapsed")
 
-    # 2. Επιλογή Μαθήματος (Δυναμικά προσαρμοσμένο στην επιλεγμένη τάξη!)
     class_subjects = list(GYMNASIO_DATA[selected_grade]["subjects"].keys())
-    selected_subject = st.selectbox("📚 Μάθημα:", class_subjects, index=0)
+    selected_subject = st.selectbox("📚 Μάθημα:", class_subjects, index=0, label_visibility="collapsed")
+
+    # Συμπεριληπτική & συμπαγής επιλογή επιπέδου (1 γραμμή αντί για 3 μεγάλους κύκλους)
+    support_labels = {
+        "LEVEL_1": "🟢 Πολύ Απλά & Εικόνες",
+        "LEVEL_2": "🟡 Απλά, Βήμα-Βήμα",
+        "LEVEL_3": "🔵 Κανονικά (Γυμνάσιο)",
+    }
+    cur_lvl = st.session_state.get("support_level", "LEVEL_3")
+    cur_lvl_idx = list(support_labels.keys()).index(cur_lvl) if cur_lvl in support_labels else 2
+    selected_lvl = st.selectbox(
+        "🎯 Τρόπος Εξήγησης:",
+        options=list(support_labels.keys()),
+        format_func=lambda k: support_labels[k],
+        index=cur_lvl_idx,
+        key="support_level_selector",
+        help="Διάλεξε πόσο απλά και αναλυτικά θέλεις να σου εξηγεί ο Σωκράτης."
+    )
+    st.session_state.support_level = selected_lvl
 
     # Ανάκτηση πληροφοριών βιβλίου & ύλης για το επιλεγμένο μάθημα
     current_book_info = GYMNASIO_DATA[selected_grade]["subjects"][selected_subject]
@@ -1000,53 +1027,28 @@ with st.sidebar:
     melispi_url = current_book_info.get("melispi_url", None)
     book_topics = current_book_info.get("topics", "")
 
-    # 3. Κουμπί Άμεσης Πρόσβασης στο Σχολικό Βιβλίο (ebooks.edu.gr & Μελίσπη)
-    st.link_button(
-        label="📖 Άνοιγμα Σχολικού Βιβλίου",
-        url=book_url,
-        help="Ανοίγει το επίσημο ψηφιακό διαδραστικό βιβλίο του Υπουργείου Παιδείας (ebooks.edu.gr)",
-        use_container_width=True
-    )
+    # Κουμπί Σχολικού Βιβλίου (και Μελίσπη δίπλα-δίπλα όταν υπάρχει)
     if melispi_url:
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            st.link_button("📖 Βιβλίο", url=book_url, use_container_width=True)
+        with col_b2:
+            st.link_button("🐝 Μελίσπη", url=melispi_url, use_container_width=True)
+    else:
         st.link_button(
-            label="🐝 Νέο Βιβλίο στη «Μελίσπη»",
-            url=melispi_url,
-            help="Ανοίγει τη νέα Ψηφιακή Βιβλιοθήκη Διδακτικών Βιβλίων «Μελίσπη» (ebooksdl.cti.gr)",
+            label="📖 Άνοιγμα Σχολικού Βιβλίου",
+            url=book_url,
+            help="Ανοίγει το επίσημο ψηφιακό βιβλίο (ebooks.edu.gr)",
             use_container_width=True
         )
 
-    # 4. Πτυσσόμενη προβολή της επίσημης ύλης
-    with st.expander("📑 Ύλη & Κεφάλαια Βιβλίου", expanded=False):
+    # Πτυσσόμενα εργαλεία μαθήματος (Ύλη & Εποπτικές Κάρτες)
+    with st.expander("📑 Ύλη & Κεφάλαια", expanded=False):
         st.write(book_topics)
-        st.caption("🌐 Πηγή: Ψηφιακά Διδακτικά Βιβλία ΙΕΠ / Μελίσπη")
+        st.caption("🌐 Πηγή: Ψηφιακά Βιβλία ΙΕΠ / Μελίσπη")
 
-    # 4.5. Προφίλ Υποστήριξης Ειδικής Αγωγής (Support Profile)
-    st.markdown("""
-    <div style="background: #eef6ff; border: 1.5px solid #60a5fa; border-radius: 10px; padding: 6px 10px; margin: 0.3rem 0;">
-        <span style="font-size: 0.82rem; font-weight: 800; color: #1e40af;">🎛️ Προφίλ Ειδικής Αγωγής:</span>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    support_labels = {
-        "LEVEL_1": "🟢 Επίπεδο 1: Μέγιστη Απλοποίηση (Easy-to-Read & Εικόνες)",
-        "LEVEL_2": "🟡 Επίπεδο 2: Απλοποιημένο Γυμνασίου (ΕΕΑ / Μαθησιακές Δυσκολίες)",
-        "LEVEL_3": "🔵 Επίπεδο 3: Τυπικό Γυμνασίου (Σωκρατικός Διάλογος)",
-    }
-    cur_lvl = st.session_state.get("support_level", "LEVEL_3")
-    cur_lvl_idx = list(support_labels.keys()).index(cur_lvl) if cur_lvl in support_labels else 2
-    selected_lvl = st.radio(
-        "Επιλογή Επιπέδου:",
-        options=list(support_labels.keys()),
-        format_func=lambda k: support_labels[k],
-        index=cur_lvl_idx,
-        key="support_level_selector",
-        help="Επίπεδο 1: Μικρές προτάσεις, εικόνες και άμεση εξήγηση. Επίπεδο 2: Διαφοροποιημένη μάθηση βήμα-βήμα."
-    )
-    st.session_state.support_level = selected_lvl
-
-    # 4.6. Παιδαγωγικές Εικόνες & Εποπτικό Υλικό
-    with st.expander("🖼️ Παιδαγωγικές Εικόνες & Κάρτες", expanded=False):
-        st.caption(f"Εποπτικό υλικό για το μάθημα: **{selected_subject.split()[1] if len(selected_subject.split())>1 else selected_subject}**")
+    with st.expander("🖼️ Εποπτικές Κάρτες", expanded=False):
+        st.caption(f"Υλικό για: **{selected_subject.split()[1] if len(selected_subject.split())>1 else selected_subject}**")
         subj_cards = get_cards_for_subject(selected_subject)
         for sc in subj_cards:
             if st.button(f"👁️ {sc['title']}", key=f"side_card_{sc['id']}", use_container_width=True):
@@ -1057,33 +1059,7 @@ with st.sidebar:
                 })
                 st.rerun()
 
-    # Μετρητής Βημάτων (συμπαγές πλαίσιο)
-    user_turns = len([m for m in st.session_state.messages if m["role"] == "user"])
-    st.markdown(f"""
-    <div style="background: #e2f0fc; border: 1px solid #9ccaf0; border-radius: 8px; padding: 3px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.80rem; margin: 0.15rem 0;">
-        <span style="color: #082f56;">🧠 <b>Βήματα Στοχασμού:</b></span>
-        <span style="font-weight: 800; color: #1d4ed8; font-size: 0.88rem;">{user_turns}</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # 5. Ρυθμίσεις Ταχύτητας & Μοντέλου AI
-    with st.expander("⚡ Ταχύτητα & Μοντέλο AI", expanded=False):
-        model_keys = list(MODEL_OPTIONS.keys())
-        model_labels = list(MODEL_OPTIONS.values())
-        curr_m = st.session_state.get("active_model", "gemini-3.5-flash-lite")
-        curr_idx = model_keys.index(curr_m) if curr_m in model_keys else 0
-        selected_model_label = st.selectbox(
-            "Μοντέλο:",
-            options=model_labels,
-            index=curr_idx,
-            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα. Το Gemini 3.5 Flash Lite απαντά σε ~1 δευτερόλεπτο!"
-        )
-        st.session_state.active_model = model_keys[model_labels.index(selected_model_label)]
-        active_model = st.session_state.active_model
-        st.caption("⚡ *Ενεργή άμεση ροή (real-time stream) με μόνιμη σύνδεση.*")
-
-
-    # Νέα Συζήτηση
+    # Κύρια Δράση: Πάντα ορατή χωρίς κύλιση!
     if st.button("🔄 Νέα Συζήτηση", use_container_width=True, type="primary"):
         st.session_state.messages = []
         st.session_state.current_image = None
@@ -1092,7 +1068,7 @@ with st.sidebar:
         st.session_state.stuck_level = 0
         st.rerun()
 
-    # Εξαγωγή Σημειώσεων Μελέτης
+    # Εξαγωγή Σημειώσεων Μελέτης (όταν υπάρχει διάλογος)
     if len(st.session_state.messages) > 1 and not st.session_state.is_locked:
         clean_sub_name = selected_subject.split()[1] if len(selected_subject.split()) > 1 else "mathima"
         notes_md = f"# 📜 Σημειώσεις Μελέτης — Σωκράτης AI Tutor\n\n"
@@ -1104,21 +1080,44 @@ with st.sidebar:
             sender = "🎓 Μαθητής" if m["role"] == "user" else "🧔 Σωκράτης"
             notes_md += f"### {sender}\n{m['content']}\n\n"
         st.download_button(
-            label="📥 Λήψη Σημειώσεων (.md)",
+            label="📥 Λήψη Σημειώσεων",
             data=notes_md.encode("utf-8"),
             file_name=f"sokrates_notes_{selected_grade[:2]}_{clean_sub_name}.md",
             mime="text/markdown",
             use_container_width=True
         )
 
-    # Πίνακας Ελέγχου Ασφαλείας & Αρχείου Παραβιάσεων
-    with st.expander(f"📋 Αρχείο Παραβιάσεων ({total_violations})"):
-        st.markdown(f"**Καταγεγραμμένες Απόπειρες:** `{total_violations}`")
+    # Δευτερεύουσες Ρυθμίσεις & Πληροφορίες (μαζεμένες διακριτικά σε 1 πτυσσόμενο)
+    user_turns = len([m for m in st.session_state.messages if m["role"] == "user"])
+    active_model = st.session_state.get("active_model", "gemini-3.5-flash-lite")
+
+    with st.expander("⚙️ Ρυθμίσεις & Πληροφορίες", expanded=False):
+        st.markdown(f"""
+        <div style="background: #e2f0fc; border: 1px solid #9ccaf0; border-radius: 8px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.80rem; margin-bottom: 8px;">
+            <span style="color: #082f56;">🧠 <b>Βήματα Στοχασμού:</b></span>
+            <span style="font-weight: 800; color: #1d4ed8; font-size: 0.88rem;">{user_turns}</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        model_keys = list(MODEL_OPTIONS.keys())
+        model_labels = list(MODEL_OPTIONS.values())
+        curr_idx = model_keys.index(active_model) if active_model in model_keys else 0
+        selected_model_label = st.selectbox(
+            "⚡ Μοντέλο AI:",
+            options=model_labels,
+            index=curr_idx,
+            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα."
+        )
+        st.session_state.active_model = model_keys[model_labels.index(selected_model_label)]
+        active_model = st.session_state.active_model
+
+        st.markdown("---")
+        st.markdown(f"**📋 Αρχείο Παραβιάσεων:** `{total_violations}`")
         if os.path.exists(SECURITY_LOG_PATH):
             with open(SECURITY_LOG_PATH, "r", encoding="utf-8") as f:
                 log_data = f.read()
             st.download_button(
-                label="📥 Λήψη Log Παραβιάσεων (.csv)",
+                label="📥 Λήψη Log (.csv)",
                 data=log_data.encode("utf-8"),
                 file_name="security_violations.csv",
                 mime="text/csv",
@@ -1126,22 +1125,19 @@ with st.sidebar:
             )
             log_lines = log_data.strip().split("\n")
             if len(log_lines) > 1:
-                st.caption("Τελευταία καταγραφή:")
                 st.code(log_lines[-1], language="text")
         else:
             st.caption("Δεν υπάρχουν καταγεγραμμένες παραβιάσεις.")
 
-    with st.expander("💡 Οδηγίες για μαθητές"):
+        st.markdown("---")
         st.caption("""
-        * **Γράψε την απορία σου** ή φωτογράφισε την άσκηση.
-        * **Δεν δίνω έτοιμες λύσεις!** Σε καθοδηγώ με ερωτήσεις.
-        * Πάτα **«Άνοιγμα Σχολικού Βιβλίου»** για να δεις τη θεωρία στο επίσημο βιβλίο σου.
-        * Μη φοβάσαι τα λάθη — μέσα από αυτά μαθαίνουμε.
-        * **Προσοχή:** Απόπειρες ακατάλληλου περιεχομένου ή παράκαμψης κλειδώνουν την εφαρμογή.
+        **💡 Οδηγίες:**
+        • Γράψε την απορία σου — δεν δίνω έτοιμες λύσεις, σε καθοδηγώ με ερωτήσεις.
+        • Πάτα «Άνοιγμα Σχολικού Βιβλίου» για τη θεωρία.
+        • Μη φοβάσαι τα λάθη — μέσα από αυτά μαθαίνουμε!
         """)
 
     # Τελευταίο στοιχείο κάτω αριστερά στο μενού: Δήλωση Διαφάνειας με αναδυόμενο παράθυρο
-    st.markdown("---")
     @st.dialog("🛡️ Δήλωση Διαφάνειας & Προστασίας Ανηλίκων")
     def show_compliance_dialog():
         st.markdown("""
