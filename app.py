@@ -71,6 +71,8 @@ def get_avatar_base64(path):
     return None
 
 AVATAR_DATA_URI = get_avatar_base64(avatar_image)
+ANASKALLI_LOGO_PATH = os.path.join(BASE_DIR, "anaskalli-logo.png")
+ANASKALLI_LOGO_URI = get_avatar_base64(ANASKALLI_LOGO_PATH)
 
 # -------------------------------------------------------------
 # 1. Ρύθμιση Σελίδας & Εικονιδίου (Favicon Σωκράτη παντού)
@@ -1427,6 +1429,19 @@ with st.sidebar:
 
     if st.button("🛡️ Δήλωση Διαφάνειας", use_container_width=True, help="Πληροφορίες συμμόρφωσης GDPR, προστασίας ανηλίκων & EU AI Act"):
         show_compliance_dialog()
+
+    # Επίσημο Λογότυπο Δημιουργού ANASKALLI κάτω από τη Δήλωση Διαφάνειας
+    if ANASKALLI_LOGO_URI:
+        st.markdown(
+            f"""
+            <div style="display: flex; justify-content: center; margin-top: 8px; margin-bottom: 4px;">
+                <div style="background: rgba(255, 255, 255, 0.9); border: 2px solid #1d4ed8; border-radius: 12px; padding: 5px 10px; box-shadow: 0 3px 10px rgba(15, 52, 96, 0.14); display: inline-flex; align-items: center; justify-content: center;">
+                    <img src="{ANASKALLI_LOGO_URI}" alt="ANASKALLI" style="height: 58px; width: auto; display: block; border-radius: 6px;" />
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 # -------------------------------------------------------------
 # 10. ΕΛΕΓΧΟΣ ΚΛΕΙΔΩΜΑΤΟΣ ΕΦΑΡΜΟΓΗΣ (LOCKOUT SCREEN)
