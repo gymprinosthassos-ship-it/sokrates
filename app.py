@@ -23,15 +23,31 @@ AVATAR_PATH_PNG = os.path.join(BASE_DIR, "socrates_256.png")
 AVATAR_PATH_JPG = os.path.join(BASE_DIR, "socrates.jpg")
 SECURITY_LOG_PATH = os.path.join(BASE_DIR, "security_violations.csv")
 SECRETS_PATH = os.path.join(BASE_DIR, ".streamlit", "secrets.toml")
-# Ανάγνωση από secrets.toml με ασφαλή fallback τιμή
-try:
-    TEACHER_UNLOCK_PIN = st.secrets.get("TEACHER_UNLOCK_PIN", "ΣΩΚΡΑΤΗΣ2026")
-    TEACHER_PORTAL_PIN = st.secrets.get("TEACHER_PORTAL_PIN", "1963")
-    CAMERA_UNLOCK_PIN = st.secrets.get("CAMERA_UNLOCK_PIN", "1963")
-except Exception:
-    TEACHER_UNLOCK_PIN = "ΣΩΚΡΑΤΗΣ2026"
-    TEACHER_PORTAL_PIN = "1963"
-    CAMERA_UNLOCK_PIN = "1963"
+import hmac
+
+# Ανάγνωση κωδικών PIN αποκλειστικά από κρυφά Secrets ή μεταβλητές περιβάλλοντος
+# (ποτέ γραμμένοι φανερά στον δημόσιο κώδικα)
+def _load_secret_pin(secret_name: str) -> str:
+    try:
+        val = st.secrets.get(secret_name, "")
+        if val:
+            return str(val).strip()
+    except Exception:
+        pass
+    return os.environ.get(secret_name, "").strip()
+
+def verify_pin(entered: str, *allowed_pins: str) -> bool:
+    cleaned = (entered or "").strip()
+    if not cleaned:
+        return False
+    for pin in allowed_pins:
+        if pin and hmac.compare_digest(cleaned, pin):
+            return True
+    return False
+
+TEACHER_UNLOCK_PIN = _load_secret_pin("TEACHER_UNLOCK_PIN")
+TEACHER_PORTAL_PIN = _load_secret_pin("TEACHER_PORTAL_PIN")
+CAMERA_UNLOCK_PIN = _load_secret_pin("CAMERA_UNLOCK_PIN")
 
 if os.path.exists(AVATAR_PATH_PNG):
     avatar_image = AVATAR_PATH_PNG
@@ -42,6 +58,7 @@ else:
 
 import base64
 
+@st.cache_data(show_spinner=False)
 def get_avatar_base64(path):
     if isinstance(path, str) and os.path.exists(path):
         try:
@@ -420,11 +437,11 @@ if "active_mode" not in st.session_state:
 if "camera_unlocked" not in st.session_state:
     st.session_state.camera_unlocked = False
 if "teacher_unlocked" not in st.session_state:
-    st.session_state.teacher_unlocked = True
+    st.session_state.teacher_unlocked = False
 if "teacher_output" not in st.session_state:
     st.session_state.teacher_output = ""
 if "active_model" not in st.session_state:
-    st.session_state.active_model = "gemini-flash-lite-latest"
+    st.session_state.active_model = "gemini-2.5-flash-lite"
 if "support_level" not in st.session_state:
     st.session_state.support_level = "LEVEL_3"
 if "show_visual_gallery" not in st.session_state:
@@ -869,6 +886,15 @@ def get_genai_client(key: str):
         )
     )
 
+def build_fast_config(model_name: str, **kwargs):
+    """Δημιουργεί ρυθμίσεις άμεσης απόκρισης (χωρίς καθυστέρηση εσωτερικής σκέψης στα 2.5 μοντέλα)."""
+    if "2.5" in model_name:
+        try:
+            kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+        except Exception:
+            pass
+    return types.GenerateContentConfig(**kwargs)
+
 # -------------------------------------------------------------
 # 8. Κατάσταση Ασφαλείας & Ειδοποιήσεις
 # -------------------------------------------------------------
@@ -908,12 +934,12 @@ if not api_key:
 # 9. Υπερταχέα Μοντέλα AI & Πλαϊνή Στήλη με Δυναμικά Μαθήματα
 # -------------------------------------------------------------
 MODEL_OPTIONS = {
-    "gemini-flash-lite-latest": "🚀 Gemini Flash Lite Latest (~0.8s - Υπερταχύ & Προτεινόμενο)",
-    "gemini-3.5-flash-lite": "⚡ Gemini 3.5 Flash Lite (~1.2s - Υψηλή Ταχύτητα)",
-    "gemini-3.8-flash": "🧠 Gemini 3.8 Flash (~3.0s - Αναλυτική Σκέψη)",
+    "gemini-2.5-flash-lite": "🚀 Gemini 2.5 Flash Lite (~0.6s - Υπερταχύ & Προτεινόμενο)",
+    "gemini-2.5-flash": "⚡ Gemini 2.5 Flash (~1.2s - Υψηλή Ακρίβεια & Ισορροπία)",
+    "gemini-2.0-flash": "🛡️ Gemini 2.0 Flash (Εφεδρικό Μοντέλο Σταθερότητας)",
 }
 FAST_CHAT_MODELS = list(MODEL_OPTIONS.keys())
-active_model = st.session_state.get("active_model", "gemini-flash-lite-latest")
+active_model = st.session_state.get("active_model", "gemini-2.5-flash-lite")
 total_violations = get_violation_count()
 
 with st.sidebar:
@@ -1044,13 +1070,13 @@ with st.sidebar:
     with st.expander("⚡ Ταχύτητα & Μοντέλο AI", expanded=False):
         model_keys = list(MODEL_OPTIONS.keys())
         model_labels = list(MODEL_OPTIONS.values())
-        curr_m = st.session_state.get("active_model", "gemini-flash-lite-latest")
+        curr_m = st.session_state.get("active_model", "gemini-2.5-flash-lite")
         curr_idx = model_keys.index(curr_m) if curr_m in model_keys else 0
         selected_model_label = st.selectbox(
             "Μοντέλο:",
             options=model_labels,
             index=curr_idx,
-            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα. Το Gemini 3.5 Flash Lite απαντά σε ~0.5 δευτερόλεπτο!"
+            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα. Το Gemini 2.5 Flash Lite απαντά σε λιγότερο από 1 δευτερόλεπτο!"
         )
         st.session_state.active_model = model_keys[model_labels.index(selected_model_label)]
         active_model = st.session_state.active_model
@@ -1169,7 +1195,9 @@ if st.session_state.is_locked:
             unlock_btn = st.button("🔓 Ξεκλείδωμα", type="primary", use_container_width=True)
             
         if unlock_btn:
-            if entered_pin in [TEACHER_UNLOCK_PIN, TEACHER_PORTAL_PIN, "1234"]:
+            if not (TEACHER_UNLOCK_PIN or TEACHER_PORTAL_PIN):
+                st.warning("⚠️ Δεν έχει οριστεί κωδικός εκπαιδευτικού στις ρυθμίσεις ασφαλείας (Secrets).")
+            elif verify_pin(entered_pin, TEACHER_UNLOCK_PIN, TEACHER_PORTAL_PIN):
                 st.session_state.is_locked = False
                 st.session_state.lock_reason = ""
                 st.session_state.messages = []
@@ -1203,7 +1231,9 @@ if st.session_state.active_mode == "teacher":
             entered_t_pwd = st.text_input("🔑 Κωδικός Πρόσβασης Εκπαιδευτικού (PIN):", type="password", placeholder="Εισάγετε τον κωδικό...", key="teacher_gate_key")
             unlock_t_btn = st.button("🔓 Άνοιγμα Βοηθού Εκπαιδευτικού", type="primary", use_container_width=True)
             if unlock_t_btn:
-                if entered_t_pwd.strip() in [TEACHER_PORTAL_PIN, TEACHER_UNLOCK_PIN, "1963"]:
+                if not (TEACHER_PORTAL_PIN or TEACHER_UNLOCK_PIN):
+                    st.warning("⚠️ Δεν έχει οριστεί κωδικός εκπαιδευτικού στις ρυθμίσεις ασφαλείας (Secrets).")
+                elif verify_pin(entered_t_pwd, TEACHER_PORTAL_PIN, TEACHER_UNLOCK_PIN):
                     st.session_state.teacher_unlocked = True
                     st.success("✅ Επιτυχής είσοδος! Καλωσήρθατε στον Βοηθό Εκπαιδευτικού.")
                     st.rerun()
@@ -1344,10 +1374,10 @@ if st.session_state.active_mode == "teacher":
         try:
             client = get_genai_client(api_key)
             models_to_try = [
-                st.session_state.get("active_model", "gemini-flash-lite-latest"),
-                "gemini-flash-lite-latest",
-                "gemini-3.5-flash-lite",
-                "gemini-3.8-flash",
+                st.session_state.get("active_model", "gemini-2.5-flash-lite"),
+                "gemini-2.5-flash-lite",
+                "gemini-2.5-flash",
+                "gemini-2.0-flash",
             ]
             seen_m = set()
             ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
@@ -1358,7 +1388,8 @@ if st.session_state.active_mode == "teacher":
                     resp_stream = client.models.generate_content_stream(
                         model=m_name,
                         contents=teacher_prompt,
-                        config=types.GenerateContentConfig(
+                        config=build_fast_config(
+                            m_name,
                             temperature=0.7,
                             max_output_tokens=1500,
                         )
@@ -1509,7 +1540,7 @@ for i, msg in enumerate(st.session_state.messages):
 
 
 # -------------------------------------------------------------
-# 12. Ανέβασμα Εικόνας / Κάμερα (Προστατευμένο με Κωδικό 1963)
+# 12. Ανέβασμα Εικόνας / Κάμερα (Προστατευμένο με PIN Εκπαιδευτικού)
 # -------------------------------------------------------------
 cam_expander_title = "📷 🟢 Κάμερα & Ανέβασμα Άσκησης (Ξεκλείδωτο)" if st.session_state.camera_unlocked else "📷 🔒 Κάμερα & Ανέβασμα Άσκησης (Κλειδωμένο με PIN)"
 with st.expander(cam_expander_title, expanded=st.session_state.camera_unlocked and bool(st.session_state.current_image)):
@@ -1536,7 +1567,9 @@ with st.expander(cam_expander_title, expanded=st.session_state.camera_unlocked a
             btn_cam_unlock = st.button("🔓 Ξεκλείδωμα", type="primary", use_container_width=True, key="btn_unlock_camera")
         
         if btn_cam_unlock:
-            if entered_cam_pin.strip() == CAMERA_UNLOCK_PIN:
+            if not (CAMERA_UNLOCK_PIN or TEACHER_PORTAL_PIN):
+                st.warning("⚠️ Δεν έχει οριστεί κωδικός κάμερας στις ρυθμίσεις ασφαλείας (Secrets).")
+            elif verify_pin(entered_cam_pin, CAMERA_UNLOCK_PIN, TEACHER_PORTAL_PIN):
                 st.session_state.camera_unlocked = True
                 st.success("✅ Η κάμερα ξεκλειδώθηκε επιτυχώς!")
                 st.rerun()
@@ -1787,10 +1820,10 @@ if prompt:
             full_response = ""
             success = False
             models_to_try = [
-                st.session_state.get("active_model", "gemini-flash-lite-latest"),
-                "gemini-flash-lite-latest",
-                "gemini-3.5-flash-lite",
-                "gemini-3.8-flash",
+                st.session_state.get("active_model", "gemini-2.5-flash-lite"),
+                "gemini-2.5-flash-lite",
+                "gemini-2.5-flash",
+                "gemini-2.0-flash",
             ]
             seen_m = set()
             models_to_try = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
@@ -1856,76 +1889,38 @@ if prompt:
                     )
                 message_parts.append(types.Part.from_text(text=prompt))
 
+                last_api_error = ""
                 for model_name in models_to_try:
                     t_start = time.time()
                     try:
                         full_response = ""
-                        # 1η Προσπάθεια: Streaming
-                        try:
-                            chat = client.chats.create(
-                                model=model_name,
-                                config=types.GenerateContentConfig(
-                                    system_instruction=system_instruction,
-                                    temperature=0.6,
-                                    max_output_tokens=300,
-                                    safety_settings=safety_settings,
-                                ),
-                                history=history if history else None,
-                            )
-                            response = chat.send_message_stream(message_parts)
-                            last_ui_update = time.time()
-                            first_chunk = True
-                            for chunk in response:
-                                try:
-                                    text_piece = chunk.text
-                                except Exception:
-                                    text_piece = ""
-                                if text_piece:
-                                    full_response += text_piece
-                                    now_t = time.time()
-                                    if first_chunk or (now_t - last_ui_update >= 0.03):
-                                        response_container.markdown(full_response + "▌")
-                                        last_ui_update = now_t
-                                        first_chunk = False
-                        except Exception:
-                            pass
-                        
-                        # 2η Προσπάθεια: Απευθείας (Non-streaming) κλήση αν το streaming απέτυχε
-                        if not full_response.strip():
+                        fast_cfg = build_fast_config(
+                            model_name,
+                            system_instruction=system_instruction,
+                            temperature=0.6,
+                            max_output_tokens=300,
+                            safety_settings=safety_settings,
+                        )
+                        chat = client.chats.create(
+                            model=model_name,
+                            config=fast_cfg,
+                            history=history if history else None,
+                        )
+                        response = chat.send_message_stream(message_parts)
+                        last_ui_update = time.time()
+                        first_chunk = True
+                        for chunk in response:
                             try:
-                                chat_direct = client.chats.create(
-                                    model=model_name,
-                                    config=types.GenerateContentConfig(
-                                        system_instruction=system_instruction,
-                                        temperature=0.6,
-                                        max_output_tokens=300,
-                                        safety_settings=safety_settings,
-                                    ),
-                                    history=history if history else None,
-                                )
-                                direct_res = chat_direct.send_message(message_parts)
-                                if direct_res.text and direct_res.text.strip():
-                                    full_response = direct_res.text.strip()
+                                text_piece = chunk.text
                             except Exception:
-                                try:
-                                    contents_payload = []
-                                    if history:
-                                        contents_payload.extend(history)
-                                    contents_payload.append(types.Content(role="user", parts=message_parts))
-                                    direct_resp = client.models.generate_content(
-                                        model=model_name,
-                                        contents=contents_payload,
-                                        config=types.GenerateContentConfig(
-                                            system_instruction=system_instruction,
-                                            temperature=0.6,
-                                            max_output_tokens=300,
-                                            safety_settings=safety_settings,
-                                        )
-                                    )
-                                    if direct_resp.text and direct_resp.text.strip():
-                                        full_response = direct_resp.text.strip()
-                                except Exception:
-                                    pass
+                                text_piece = ""
+                            if text_piece:
+                                full_response += text_piece
+                                now_t = time.time()
+                                if first_chunk or (now_t - last_ui_update >= 0.03):
+                                    response_container.markdown(full_response + "▌")
+                                    last_ui_update = now_t
+                                    first_chunk = False
 
                         if full_response.strip():
                             success = True
@@ -1978,7 +1973,8 @@ if prompt:
                             render_tts_widget(full_response)
                             break
                     except Exception as api_err:
-                        err_str = str(api_err).lower()
+                        last_api_error = str(api_err)
+                        err_str = last_api_error.lower()
                         if "blocked" in err_str and any(k in err_str for k in ["safety", "hate", "harass", "danger", "explicit"]):
                             log_security_violation("API_SAFETY_BLOCK_TRIGGERED", prompt, selected_grade, selected_subject)
                             st.session_state.is_locked = True
@@ -1989,7 +1985,13 @@ if prompt:
                         continue
 
                 if not success and not st.session_state.is_locked:
-                    st.warning("⚠️ Προσωρινό πρόβλημα επικοινωνίας με το μοντέλο AI. Παρακαλώ ξαναστείλτε την ερώτηση.")
+                    err_low = last_api_error.lower()
+                    if "api_key_invalid" in err_low or "api key not valid" in err_low:
+                        st.error("🔑 Το κλειδί Gemini (API Key) δεν είναι έγκυρο. Ελέγξτε τις ρυθμίσεις ασφαλείας (Secrets).")
+                    elif "429" in err_low or "resource_exhausted" in err_low or "quota" in err_low:
+                        st.warning("⏳ Πολλά ταυτόχρονα αιτήματα στο δωρεάν όριο του AI. Περιμένετε 15-20 δευτερόλεπτα και ξαναστείλτε την ερώτηση.")
+                    else:
+                        st.warning("⚠️ Προσωρινό πρόβλημα επικοινωνίας με το μοντέλο AI. Παρακαλώ ξαναστείλτε την ερώτηση.")
 
             except Exception as e:
                 st.error(f"⚠️ Παρουσιάστηκε πρόβλημα επικοινωνίας: {e}")

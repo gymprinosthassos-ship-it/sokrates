@@ -14,11 +14,14 @@ import app
 
 class TestSokratesFunctionality(unittest.TestCase):
     
-    def test_pin_constants(self):
-        """Επαλήθευση ότι οι κωδικοί ασφαλείας είναι 1963"""
-        self.assertEqual(app.TEACHER_PORTAL_PIN, "1963")
-        self.assertEqual(app.CAMERA_UNLOCK_PIN, "1963")
-        print("[PASS] Security PINs (1963 for Camera and Teacher)")
+    def test_pin_security(self):
+        """Επαλήθευση ασφαλούς ελέγχου PIN χωρίς φανερούς κωδικούς"""
+        self.assertTrue(app.verify_pin("mySecret99", "mySecret99"))
+        self.assertFalse(app.verify_pin("1234", "mySecret99"))
+        self.assertFalse(app.verify_pin("1963", "mySecret99"))
+        self.assertFalse(app.verify_pin("", ""))
+        self.assertFalse(app.verify_pin("   ", ""))
+        print("[PASS] Hardened PIN Verification (no hardcoded backdoors)")
 
     def test_curriculum_integrity(self):
         """Επαλήθευση ύλης Γυμνασίου (Α, Β, Γ)"""
@@ -57,26 +60,30 @@ class TestSokratesFunctionality(unittest.TestCase):
         print("[PASS] Child Protection & Bullying Hotline Trigger (1056 / 116111 / stop-bullying.gov.gr)")
 
     def test_fast_models_configuration(self):
-        """Επαλήθευση μοντέλων υψηλής ταχύτητας"""
-        self.assertIn("gemini-3.5-flash-lite", app.MODEL_OPTIONS)
-        self.assertIn("gemini-flash-lite-latest", app.MODEL_OPTIONS)
-        self.assertIn("gemini-3.8-flash", app.MODEL_OPTIONS)
-        print("[PASS] Fast Sub-Second Gemini Models Configuration")
+        """Επαλήθευση πραγματικών και γρήγορων μοντέλων Gemini"""
+        self.assertIn("gemini-2.5-flash-lite", app.MODEL_OPTIONS)
+        self.assertIn("gemini-2.5-flash", app.MODEL_OPTIONS)
+        self.assertIn("gemini-2.0-flash", app.MODEL_OPTIONS)
+        print("[PASS] Verified Fast Gemini Models Configuration")
 
     def test_api_key_loading(self):
-        """Επαλήθευση φόρτωσης του Gemini API Key"""
+        """Επαλήθευση φόρτωσης του Gemini API Key (αν έχει ρυθμιστεί τοπικά)"""
         key = app.load_saved_key()
+        if not key:
+            self.skipTest("Δεν έχει οριστεί τοπικό GEMINI_API_KEY ακόμη (αναμενόμενο σε καθαρή εγκατάσταση).")
         self.assertTrue(len(key) > 20, f"Key length too short: {len(key)}")
         print(f"[PASS] Encrypted API Key loaded successfully (Length: {len(key)})")
 
     def test_live_socratic_chat_response(self):
-        """Ζωντανή δοκιμή παραγωγής Σωκρατικού διαλόγου με Gemini Flash Lite"""
+        """Ζωντανή δοκιμή παραγωγής Σωκρατικού διαλόγου με Gemini 2.5 Flash Lite"""
         key = app.load_saved_key()
+        if not key:
+            self.skipTest("Δεν έχει οριστεί τοπικό GEMINI_API_KEY ακόμη.")
         client = app.get_genai_client(key)
         t_start = time.time()
         try:
             resp = client.models.generate_content(
-                model="gemini-3.1-flash-lite",
+                model="gemini-2.5-flash-lite",
                 contents="Ερώτηση μαθητή Α' Γυμνασίου στα Μαθηματικά: 'Πόσο κάνει 2x + 4 = 10;' Απάντησε σωκρατικά με 1 σύντομη ερώτηση."
             )
             t_dur = time.time() - t_start
