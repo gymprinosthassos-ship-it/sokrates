@@ -1481,8 +1481,59 @@ if len(st.session_state.messages) == 0:
     welcome_text = f"Χαίρε! 🌟\n\nΕίμαι ο Σωκράτης. Είμαι εδώ για να μελετήσουμε μαζί με απλά λόγια, παραδείγματα και εικόνες!\n\n*Ενεργό Προφίλ: {cur_lvl_badge}*\n\nΠοιο θέμα ή ποια άσκηση θέλεις να δούμε τώρα;"
     st.session_state.messages.append({"role": "assistant", "content": welcome_text})
 
-def render_tts_widget(text_content):
-    clean_text = text_content.replace('"', '\\"').replace("'", "\\'").replace("\n", " ").replace("`", "")
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+def _clean_text_for_speech(text: str) -> str:
+    """Καθαρίζει σύμβολα Markdown & emoji ώστε η φωνή του Σωκράτη να ακούγεται απόλυτα φυσική."""
+    if not text:
+        return ""
+    cleaned = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    cleaned = re.sub(r'[*_`#>~|]', ' ', cleaned)
+    # Αφαίρεση emoji & εικονογραμμάτων
+    cleaned = re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f]', '', cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned
+
+async def _edge_tts_fetch(clean_text: str) -> bytes:
+    import edge_tts
+    # Φυσική ανδρική ελληνική φωνή "Νέστορας" — βαθιά (-14Hz) και αργή (-18%) σαν σοφός 70χρονος
+    communicate = edge_tts.Communicate(
+        clean_text,
+        voice="el-GR-NestorasNeural",
+        rate="-18%",
+        pitch="-14Hz",
+    )
+    buf = bytearray()
+    async for chunk in communicate.stream():
+        if chunk.get("type") == "audio":
+            buf.extend(chunk["data"])
+    return bytes(buf)
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def generate_socrates_audio_bytes(text_content: str):
+    """Παράγει φυσικό ήχο MP3 στη μνήμη (χωρίς αποθήκευση στον δίσκο). Επιστρέφει None αν αποτύχει."""
+    clean = _clean_text_for_speech(text_content)
+    if not clean:
+        return None
+    try:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop and loop.is_running():
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                audio = pool.submit(asyncio.run, _edge_tts_fetch(clean)).result(timeout=12)
+        else:
+            audio = asyncio.run(_edge_tts_fetch(clean))
+        return audio if audio and len(audio) > 500 else None
+    except Exception:
+        return None
+
+def _render_browser_fallback_tts(text_content: str, auto_play: bool = False):
+    """Εφεδρικό δίχτυ: βαθιά & αργή φωνή του περιηγητή αν η online φωνή δεν απαντήσει."""
+    clean_text = _clean_text_for_speech(text_content).replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
+    auto_js = "setTimeout(toggleSpeech, 150);" if auto_play else ""
     html_code = f"""
     <div style="margin-top: 4px; margin-bottom: 2px;">
         <button id="tts_btn" onclick="toggleSpeech()" style="
@@ -1497,13 +1548,18 @@ def render_tts_widget(text_content):
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            transition: all 0.2s ease;
         ">
-            🔊 Άκουσε τον Σωκράτη
+            🔊 Άκουσε τον Σωκράτη (Εφεδρική Φωνή)
         </button>
     </div>
     <script>
     let isSpeaking = false;
+    function pickDeepGreekVoice() {{
+        const voices = window.speechSynthesis.getVoices() || [];
+        const elVoices = voices.filter(v => (v.lang || '').toLowerCase().startsWith('el'));
+        const male = elVoices.find(v => /nestor|stefan|male|man|άνδρ/i.test(v.name));
+        return male || elVoices[0] || null;
+    }}
     function toggleSpeech() {{
         if (!('speechSynthesis' in window)) return;
         const btn = document.getElementById('tts_btn');
@@ -1515,16 +1571,45 @@ def render_tts_widget(text_content):
         }}
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance("{clean_text}");
+        const v = pickDeepGreekVoice();
+        if (v) utter.voice = v;
         utter.lang = 'el-GR';
-        utter.rate = 0.88;
+        utter.rate = 0.76;
+        utter.pitch = 0.68;
         utter.onstart = function() {{ isSpeaking = true; btn.innerHTML = '⏹️ Διακοπή'; }};
         utter.onend = function() {{ isSpeaking = false; btn.innerHTML = '🔊 Άκουσε τον Σωκράτη'; }};
         utter.onerror = function() {{ isSpeaking = false; btn.innerHTML = '🔊 Άκουσε τον Σωκράτη'; }};
         window.speechSynthesis.speak(utter);
     }}
+    {auto_js}
     </script>
     """
-    components.html(html_code, height=36)
+    components.html(html_code, height=38)
+
+def render_tts_widget(text_content: str, msg_idx: int = 0):
+    btn_key = f"socrates_voice_btn_{msg_idx}"
+    play_key = f"socrates_voice_play_{msg_idx}"
+
+    if st.button("🔊 Άκουσε τον Σωκράτη (Βαθιά Φυσική Φωνή)", key=btn_key):
+        st.session_state[play_key] = True
+
+    if st.session_state.get(play_key, False):
+        with st.spinner("🎙️ Ο Σωκράτης ετοιμάζει τη φωνή του..."):
+            audio_bytes = generate_socrates_audio_bytes(text_content)
+        if audio_bytes:
+            b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
+            components.html(
+                f"""
+                <div style="margin-top: 2px;">
+                    <audio controls autoplay style="width: 100%; max-width: 420px; height: 38px;">
+                        <source src="data:audio/mpeg;base64,{b64_audio}" type="audio/mpeg">
+                    </audio>
+                </div>
+                """,
+                height=46,
+            )
+        else:
+            _render_browser_fallback_tts(text_content, auto_play=True)
 
 for i, msg in enumerate(st.session_state.messages):
     msg_avatar = avatar_image if msg["role"] == "assistant" else "🎓"
@@ -1536,7 +1621,7 @@ for i, msg in enumerate(st.session_state.messages):
             card_html = render_visual_card_html(msg["visual_card"])
             components.html(card_html, height=520, scrolling=True)
         if msg["role"] == "assistant" and i == len(st.session_state.messages) - 1:
-            render_tts_widget(msg["content"])
+            render_tts_widget(msg["content"], msg_idx=i)
 
 
 # -------------------------------------------------------------
@@ -1981,7 +2066,7 @@ if prompt:
                                 st.balloons()
                                 st.success("🌟 **Εύγε!** Κατέκτησες τη γνώση με τη δική σου σκέψη!")
                             
-                            render_tts_widget(full_response)
+                            render_tts_widget(full_response, msg_idx=len(st.session_state.messages) - 1)
                             break
                     except Exception as api_err:
                         last_api_error = str(api_err)
