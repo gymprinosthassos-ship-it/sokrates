@@ -601,6 +601,36 @@ st.markdown("""
         color: #0f172a !important;
     }
 
+    /* Αρμονικά μπλε κουμπιά στο πλαϊνό μενού (αντί για κόκκινα) & καθαρό κείμενο χωρίς κόψιμο */
+    [data-testid="stSidebar"] button[kind="primary"],
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+        border: 1.5px solid #1e3a8a !important;
+        border-radius: 10px !important;
+        box-shadow: 0 2px 6px rgba(29, 78, 216, 0.22) !important;
+    }
+    [data-testid="stSidebar"] button[kind="primary"] p,
+    [data-testid="stSidebar"] button[kind="primary"] span,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] p,
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stSidebar"] button[kind="secondary"],
+    [data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"] {
+        background-color: #d8ebfb !important;
+        border: 1.5px solid #8bbfe6 !important;
+        border-radius: 10px !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button p {
+        font-size: 0.78rem !important;
+        white-space: nowrap !important;
+    }
+
     /* Ετικέτες πεδίων (Labels) - ευανάγνωστες */
     [data-testid="stWidgetLabel"] {
         min-height: auto !important;
@@ -952,7 +982,7 @@ with st.sidebar:
     lock_tag = '<div style="background-color: #fee2e2; border: 1.5px solid #ef4444; border-radius: 6px; padding: 1px 6px; text-align: center; margin-top: 3px;"><span style="font-size: 0.72rem; font-weight: 800; color: #dc2626;">🚨 Κλειδωμένο</span></div>' if st.session_state.is_locked else ''
 
     header_html = (
-        f'<div style="background: rgba(255,255,255,0.72); border: 1.5px solid #93c5fd; border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; margin-top: -10px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(15, 52, 96, 0.08);">'
+        f'<div style="background: rgba(255,255,255,0.82); border: 1.5px solid #93c5fd; border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; margin-top: 2px; margin-bottom: 6px; box-shadow: 0 2px 8px rgba(15, 52, 96, 0.08);">'
         f'{avatar_img_tag}'
         f'<div style="display: flex; flex-direction: column; justify-content: center; overflow: visible;">'
         f'<div style="font-size: 1.18rem; font-weight: 800; color: #072b52; line-height: 1.15; letter-spacing: -0.2px;">Σωκράτης</div>'
@@ -994,8 +1024,7 @@ with st.sidebar:
     if status_badges:
         st.caption(" • ".join(status_badges))
 
-    # Ενότητα 1: Επιλογή Μαθήματος & Τρόπου Εξήγησης
-    st.markdown('<div style="font-size: 0.76rem; font-weight: 800; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.4px; margin: 6px 0 2px 2px;">📚 Το Μάθημά μου</div>', unsafe_allow_html=True)
+    st.markdown('<div style="border-top: 1px solid #8bbfe6; margin: 4px 0 4px 0;"></div>', unsafe_allow_html=True)
 
     GYMNASIO_GRADES = list(GYMNASIO_DATA.keys())
     selected_grade = st.selectbox("🏫 Τάξη:", GYMNASIO_GRADES, index=0, label_visibility="collapsed")
