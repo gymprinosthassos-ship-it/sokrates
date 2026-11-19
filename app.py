@@ -1590,26 +1590,63 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
     btn_key = f"socrates_voice_btn_{msg_idx}"
     play_key = f"socrates_voice_play_{msg_idx}"
 
-    if st.button("🔊 Άκουσε τον Σωκράτη (Βαθιά Φυσική Φωνή)", key=btn_key):
-        st.session_state[play_key] = True
+    if not st.session_state.get(play_key, False):
+        if st.button("🔊 Άκουσε τον Σωκράτη", key=btn_key):
+            st.session_state[play_key] = True
+            st.rerun()
+        return
 
-    if st.session_state.get(play_key, False):
-        with st.spinner("🎙️ Ο Σωκράτης ετοιμάζει τη φωνή του..."):
-            audio_bytes = generate_socrates_audio_bytes(text_content)
-        if audio_bytes:
-            b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
-            components.html(
-                f"""
-                <div style="margin-top: 2px;">
-                    <audio controls autoplay style="width: 100%; max-width: 420px; height: 38px;">
-                        <source src="data:audio/mpeg;base64,{b64_audio}" type="audio/mpeg">
-                    </audio>
-                </div>
-                """,
-                height=46,
-            )
-        else:
-            _render_browser_fallback_tts(text_content, auto_play=True)
+    with st.spinner("🎙️ Ο Σωκράτης ετοιμάζει τη φωνή του..."):
+        audio_bytes = generate_socrates_audio_bytes(text_content)
+
+    if audio_bytes:
+        b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
+        components.html(
+            f"""
+            <div style="margin-top: 2px;">
+                <audio id="soc_audio_{msg_idx}" style="display: none;">
+                    <source src="data:audio/mpeg;base64,{b64_audio}" type="audio/mpeg">
+                </audio>
+                <button id="soc_btn_{msg_idx}" onclick="toggleSocAudio_{msg_idx}()" style="
+                    background: #cde5f9;
+                    color: #082f56;
+                    border: 1.5px solid #8ec0e7;
+                    border-radius: 12px;
+                    padding: 5px 14px;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    transition: all 0.2s ease;
+                ">⏸️ Παύση</button>
+            </div>
+            <script>
+            (function() {{
+                const audio = document.getElementById("soc_audio_{msg_idx}");
+                const btn = document.getElementById("soc_btn_{msg_idx}");
+                window.toggleSocAudio_{msg_idx} = function() {{
+                    if (audio.paused) {{
+                        audio.play().then(() => {{ btn.innerHTML = "⏸️ Παύση"; }}).catch(() => {{}});
+                    }} else {{
+                        audio.pause();
+                        btn.innerHTML = "▶️ Συνέχεια";
+                    }}
+                }};
+                audio.onended = function() {{ btn.innerHTML = "▶️ Άκουσε ξανά"; }};
+                audio.play().then(() => {{
+                    btn.innerHTML = "⏸️ Παύση";
+                }}).catch(() => {{
+                    btn.innerHTML = "▶️ Άκουσε τον Σωκράτη";
+                }});
+            }})();
+            </script>
+            """,
+            height=42,
+        )
+    else:
+        _render_browser_fallback_tts(text_content, auto_play=True)
 
 for i, msg in enumerate(st.session_state.messages):
     msg_avatar = avatar_image if msg["role"] == "assistant" else "🎓"
