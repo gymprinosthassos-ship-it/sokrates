@@ -441,7 +441,7 @@ if "teacher_unlocked" not in st.session_state:
 if "teacher_output" not in st.session_state:
     st.session_state.teacher_output = ""
 if "active_model" not in st.session_state:
-    st.session_state.active_model = "gemini-flash-lite-latest"
+    st.session_state.active_model = "gemini-3.5-flash-lite"
 if "support_level" not in st.session_state:
     st.session_state.support_level = "LEVEL_3"
 if "show_visual_gallery" not in st.session_state:
@@ -881,7 +881,7 @@ def get_genai_client(key: str):
     return genai.Client(
         api_key=key,
         http_options=types.HttpOptions(
-            timeout=10000,
+            timeout=20000,
             retry_options=types.HttpRetryOptions(attempts=1)
         )
     )
@@ -934,12 +934,12 @@ if not api_key:
 # 9. Υπερταχέα Μοντέλα AI & Πλαϊνή Στήλη με Δυναμικά Μαθήματα
 # -------------------------------------------------------------
 MODEL_OPTIONS = {
-    "gemini-flash-lite-latest": "🚀 Gemini Flash Lite Latest (Υπερταχύ & Προτεινόμενο)",
-    "gemini-flash-latest": "⚡ Gemini Flash Latest (Υψηλή Ακρίβεια & Ισορροπία)",
-    "gemini-2.5-flash-lite": "🛡️ Gemini 2.5 Flash Lite (Εφεδρικό Μοντέλο)",
+    "gemini-3.5-flash-lite": "🚀 Gemini 3.5 Flash Lite (Υπερταχύ & Προτεινόμενο)",
+    "gemini-flash-lite-latest": "⚡ Gemini Flash Lite Latest (Εφεδρικό Υψηλής Ταχύτητας)",
+    "gemini-3.8-flash": "🧠 Gemini 3.8 Flash (Αναλυτική Σκέψη)",
 }
 FAST_CHAT_MODELS = list(MODEL_OPTIONS.keys())
-active_model = st.session_state.get("active_model", "gemini-flash-lite-latest")
+active_model = st.session_state.get("active_model", "gemini-3.5-flash-lite")
 total_violations = get_violation_count()
 
 with st.sidebar:
@@ -1070,13 +1070,13 @@ with st.sidebar:
     with st.expander("⚡ Ταχύτητα & Μοντέλο AI", expanded=False):
         model_keys = list(MODEL_OPTIONS.keys())
         model_labels = list(MODEL_OPTIONS.values())
-        curr_m = st.session_state.get("active_model", "gemini-flash-lite-latest")
+        curr_m = st.session_state.get("active_model", "gemini-3.5-flash-lite")
         curr_idx = model_keys.index(curr_m) if curr_m in model_keys else 0
         selected_model_label = st.selectbox(
             "Μοντέλο:",
             options=model_labels,
             index=curr_idx,
-            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα. Το Gemini Flash Lite Latest απαντά σε ~1 δευτερόλεπτο!"
+            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα. Το Gemini 3.5 Flash Lite απαντά σε ~1 δευτερόλεπτο!"
         )
         st.session_state.active_model = model_keys[model_labels.index(selected_model_label)]
         active_model = st.session_state.active_model
@@ -1374,10 +1374,10 @@ if st.session_state.active_mode == "teacher":
         try:
             client = get_genai_client(api_key)
             models_to_try = [
-                st.session_state.get("active_model", "gemini-flash-lite-latest"),
+                st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+                "gemini-3.5-flash-lite",
                 "gemini-flash-lite-latest",
-                "gemini-flash-latest",
-                "gemini-2.5-flash-lite",
+                "gemini-3.8-flash",
             ]
             seen_m = set()
             ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
@@ -1820,10 +1820,10 @@ if prompt:
             full_response = ""
             success = False
             models_to_try = [
-                st.session_state.get("active_model", "gemini-flash-lite-latest"),
+                st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+                "gemini-3.5-flash-lite",
                 "gemini-flash-lite-latest",
-                "gemini-flash-latest",
-                "gemini-2.5-flash-lite",
+                "gemini-3.8-flash",
             ]
             seen_m = set()
             models_to_try = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
@@ -1889,6 +1889,7 @@ if prompt:
                     )
                 message_parts.append(types.Part.from_text(text=prompt))
 
+                errors_log = []
                 last_api_error = ""
                 for model_name in models_to_try:
                     t_start = time.time()
@@ -1984,6 +1985,7 @@ if prompt:
                             break
                     except Exception as api_err:
                         last_api_error = str(api_err)
+                        errors_log.append(f"{model_name}: {last_api_error[:180]}")
                         err_str = last_api_error.lower()
                         if "blocked" in err_str and any(k in err_str for k in ["safety", "hate", "harass", "danger", "explicit"]):
                             log_security_violation("API_SAFETY_BLOCK_TRIGGERED", prompt, selected_grade, selected_subject)
@@ -2002,9 +2004,9 @@ if prompt:
                         st.warning("⏳ Πολλά ταυτόχρονα αιτήματα στο δωρεάν όριο του AI. Περιμένετε 15-20 δευτερόλεπτα και ξαναστείλτε την ερώτηση.")
                     else:
                         st.warning("⚠️ Προσωρινό πρόβλημα επικοινωνίας με το μοντέλο AI. Παρακαλώ ξαναστείλτε την ερώτηση.")
-                    if last_api_error:
+                    if errors_log:
                         with st.expander("🔍 Τεχνική λεπτομέρεια (για τον εκπαιδευτικό)", expanded=False):
-                            st.code(last_api_error[:400])
+                            st.code("\n".join(errors_log))
 
             except Exception as e:
                 st.error(f"⚠️ Παρουσιάστηκε πρόβλημα επικοινωνίας: {e}")

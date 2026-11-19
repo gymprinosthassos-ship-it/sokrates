@@ -61,9 +61,9 @@ class TestSokratesFunctionality(unittest.TestCase):
 
     def test_fast_models_configuration(self):
         """Επαλήθευση πραγματικών και γρήγορων μοντέλων Gemini"""
+        self.assertIn("gemini-3.5-flash-lite", app.MODEL_OPTIONS)
         self.assertIn("gemini-flash-lite-latest", app.MODEL_OPTIONS)
-        self.assertIn("gemini-flash-latest", app.MODEL_OPTIONS)
-        self.assertIn("gemini-2.5-flash-lite", app.MODEL_OPTIONS)
+        self.assertIn("gemini-3.8-flash", app.MODEL_OPTIONS)
         print("[PASS] Verified Fast Gemini Models Configuration")
 
     def test_api_key_loading(self):
