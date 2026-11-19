@@ -73,14 +73,47 @@ def get_avatar_base64(path):
 AVATAR_DATA_URI = get_avatar_base64(avatar_image)
 
 # -------------------------------------------------------------
-# 1. Ρύθμιση Σελίδας
+# 1. Ρύθμιση Σελίδας & Εικονιδίου (Favicon Σωκράτη παντού)
 # -------------------------------------------------------------
+def _load_page_icon(path):
+    if isinstance(path, str) and os.path.exists(path):
+        try:
+            from PIL import Image
+            return Image.open(path)
+        except Exception:
+            return path
+    return "🧔"
+
 st.set_page_config(
     page_title="Σωκράτης — AI Tutor Γυμνασίου",
-    page_icon=avatar_image,
+    page_icon=_load_page_icon(avatar_image),
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Επιβολή του εικονιδίου του Σωκράτη σε καρτέλες, σελιδοδείκτες (Firefox) & κινητά
+if AVATAR_DATA_URI:
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const doc = window.parent ? window.parent.document : document;
+            const head = doc.head || doc.getElementsByTagName("head")[0];
+            if (!head) return;
+            const uri = "{AVATAR_DATA_URI}";
+            doc.querySelectorAll('link[rel*="icon"]').forEach(el => el.remove());
+            ["icon", "shortcut icon", "apple-touch-icon"].forEach(rel => {{
+                const link = doc.createElement("link");
+                link.rel = rel;
+                link.type = "image/png";
+                link.href = uri;
+                head.appendChild(link);
+            }});
+        }})();
+        </script>
+        """,
+        height=0,
+    )
 
 # -------------------------------------------------------------
 # 2. Αναλυτικά Μαθήματα, Ύλη & Σύνδεσμοι Βιβλίων (ebooks.edu.gr & Μελίσπη)
