@@ -2100,8 +2100,6 @@ if prompt:
                             if any(w in full_response.lower() for w in praise_words):
                                 st.session_state.stuck_counter = 0
                                 st.session_state.stuck_level = 0
-                                st.balloons()
-                                st.success("🌟 **Εύγε!** Κατέκτησες τη γνώση με τη δική σου σκέψη!")
                             
                             render_tts_widget(full_response, msg_idx=len(st.session_state.messages) - 1)
                             break
