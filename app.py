@@ -396,10 +396,12 @@ DANGEROUS_PATTERNS = [
     "δηλητηριο", "κατασκευη εκρηκτικων", "κλοπη κωδικων"
 ]
 
-VULGAR_WORDS = [
-    "γαμω", "γαμησ", "μαλακ", "πουστ", "καργιολ", "μουνι", "ψωλη", "αρχιδ",
-    "σκατα", "πουτανα", "κωλο", "fuck", "bitch", "asshole", "shit", "dick",
-    "porn", "πορνο", "σεξουαλικ"
+VULGAR_PATTERNS = [
+    r"\bγαμω\b", r"\bγαμησ\w*\b", r"\bμαλακ(ας|α|ες|ισμεν\w*|ιες)\b",
+    r"\bπουστ\w*\b", r"\bκαργιολ\w*\b", r"\bμουνι\w*\b", r"\bψωλη\w*\b",
+    r"\bαρχιδ\w*\b", r"\bσκατα\b", r"\bπουτανα\w*\b", r"\bκωλο\b",
+    r"\bfuck\w*\b", r"\bbitch\w*\b", r"\basshole\w*\b", r"\bshit\w*\b",
+    r"\bdick\w*\b", r"\bporn\w*\b", r"\bπορνο\w*\b"
 ]
 
 def detect_policy_violation(text):
@@ -410,8 +412,8 @@ def detect_policy_violation(text):
     for pattern in DANGEROUS_PATTERNS:
         if pattern in norm:
             return True, "ΕΠΙΚΙΝΔΥΝΟ / ΠΑΡΑΝΟΜΟ ΠΕΡΙΕΧΟΜΕΝΟ"
-    for word in VULGAR_WORDS:
-        if word in norm:
+    for pat in VULGAR_PATTERNS:
+        if re.search(pat, norm):
             return True, "ΥΒΡΙΣΤΙΚΟ / ΑΚΑΤΑΛΛΗΛΟ ΠΕΡΙΕΧΟΜΕΝΟ ΓΙΑ ΑΝΗΛΙΚΟΥΣ"
     return False, None
 
