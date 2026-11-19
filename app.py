@@ -463,6 +463,10 @@ if "teacher_unlocked" not in st.session_state:
     st.session_state.teacher_unlocked = False
 if "teacher_output" not in st.session_state:
     st.session_state.teacher_output = ""
+if "teacher_simplified_output" not in st.session_state:
+    st.session_state.teacher_simplified_output = ""
+if "teacher_eval_output" not in st.session_state:
+    st.session_state.teacher_eval_output = ""
 if "active_model" not in st.session_state:
     st.session_state.active_model = "gemini-3.5-flash-lite"
 if "support_level" not in st.session_state:
@@ -1263,8 +1267,174 @@ if st.session_state.is_locked:
 
     st.stop()
 
+import io
+
+def build_school_docx(
+    title: str,
+    subtitle: str,
+    markdown_body: str,
+    include_student_header: bool = True,
+    split_solutions_page: bool = False,
+):
+    """Δημιουργεί καθαρό, εκτυπώσιμο αρχείο Word (.docx) στη μνήμη για χρήση στην τάξη."""
+    try:
+        from docx import Document
+        from docx.shared import Pt, RGBColor, Cm
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+    except Exception:
+        return None
+
+    doc = Document()
+    for section in doc.sections:
+        section.top_margin = Cm(1.8)
+        section.bottom_margin = Cm(1.8)
+        section.left_margin = Cm(2.0)
+        section.right_margin = Cm(2.0)
+
+    normal_style = doc.styles["Normal"]
+    normal_style.font.name = "Calibri"
+    normal_style.font.size = Pt(11)
+    normal_style.font.color.rgb = RGBColor(0x1E, 0x29, 0x3B)
+
+    # Επικεφαλίδα σχολείου
+    p_school = doc.add_paragraph()
+    p_school.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_school.paragraph_format.space_after = Pt(2)
+    r_school = p_school.add_run("Γυμνάσιο Πρίνου Θάσου  •  Σωκράτης AI Tutor")
+    r_school.font.size = Pt(9.5)
+    r_school.font.bold = True
+    r_school.font.color.rgb = RGBColor(0x47, 0x55, 0x69)
+
+    # Κύριος τίτλος
+    p_title = doc.add_paragraph()
+    p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_title.paragraph_format.space_after = Pt(2)
+    r_title = p_title.add_run(title)
+    r_title.font.size = Pt(15)
+    r_title.font.bold = True
+    r_title.font.color.rgb = RGBColor(0x0C, 0x33, 0x5E)
+
+    # Υπότιτλος (Τάξη / Μάθημα / Ημερομηνία)
+    p_sub = doc.add_paragraph()
+    p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_sub.paragraph_format.space_after = Pt(10)
+    r_sub = p_sub.add_run(subtitle)
+    r_sub.font.size = Pt(10)
+    r_sub.font.italic = True
+    r_sub.font.color.rgb = RGBColor(0x33, 0x41, 0x55)
+
+    # Πεδίο στοιχείων μαθητή (για φωτοτυπία)
+    if include_student_header:
+        p_st = doc.add_paragraph()
+        p_st.paragraph_format.space_before = Pt(4)
+        p_st.paragraph_format.space_after = Pt(10)
+        r_st = p_st.add_run("Ονοματεπώνυμο: _____________________________   Τμήμα: ______   Ημερομηνία: ____________")
+        r_st.font.size = Pt(10.5)
+        r_st.font.bold = True
+
+    def _add_formatted_runs(paragraph, text_line: str):
+        clean_line = re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f]', '', text_line)
+        parts = re.split(r'(\*\*[^*]+\*\*)', clean_line)
+        for part in parts:
+            if not part:
+                continue
+            if part.startswith("**") and part.endswith("**") and len(part) > 4:
+                run = paragraph.add_run(part[2:-2])
+                run.bold = True
+            else:
+                paragraph.add_run(part.replace("*", "").replace("`", ""))
+
+    solutions_page_broken = False
+    for raw_line in markdown_body.splitlines():
+        line = raw_line.strip()
+        if not line or line in ("---", "***", "___"):
+            continue
+
+        # Αυτόματη αλλαγή σελίδας πριν τις Λύσεις / Ρουμπρίκα (για καθαρή φωτοτυπία μαθητή)
+        if split_solutions_page and not solutions_page_broken:
+            up = line.upper()
+            if any(k in up for k in ["ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ", "ΑΠΑΝΤΗΣΕΙΣ & ΛΥΣΕΙΣ", "ΛΥΣΕΙΣ:", "ΚΡΙΤΗΡΙΑ ΑΞΙΟΛΟΓΗΣΗΣ"]):
+                doc.add_page_break()
+                solutions_page_broken = True
+
+        if line.startswith("### "):
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(8)
+            p.paragraph_format.space_after = Pt(3)
+            r = p.add_run(re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f*]', '', line[4:]).strip())
+            r.bold = True
+            r.font.size = Pt(12)
+            r.font.color.rgb = RGBColor(0x1D, 0x4E, 0xD8)
+        elif line.startswith("## ") or line.startswith("# "):
+            heading_txt = line.lstrip("#").strip()
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(10)
+            p.paragraph_format.space_after = Pt(4)
+            r = p.add_run(re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f*]', '', heading_txt).strip())
+            r.bold = True
+            r.font.size = Pt(13)
+            r.font.color.rgb = RGBColor(0x0C, 0x33, 0x5E)
+        elif line.startswith("- ") or line.startswith("* ") or line.startswith("• "):
+            p = doc.add_paragraph(style="List Bullet")
+            p.paragraph_format.space_after = Pt(3)
+            _add_formatted_runs(p, line[2:].strip())
+        else:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(4)
+            _add_formatted_runs(p, line)
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 1600):
+    """Κοινή γρήγορη ροή παραγωγής AI για όλα τα εργαλεία του Καθηγητή."""
+    client = get_genai_client(api_key)
+    models_to_try = [
+        st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+        "gemini-3.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+    ]
+    seen_m = set()
+    ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
+
+    t_start = time.time()
+    for m_name in ordered_models:
+        for try_no_think in (True, False):
+            try:
+                resp_stream = client.models.generate_content_stream(
+                    model=m_name,
+                    contents=prompt_text,
+                    config=build_fast_config(
+                        m_name,
+                        disable_thinking=try_no_think,
+                        temperature=0.65,
+                        max_output_tokens=max_tokens,
+                    )
+                )
+                full_text = ""
+                last_flush = time.time()
+                for chunk in resp_stream:
+                    if chunk.text:
+                        full_text += chunk.text
+                        now_t = time.time()
+                        if now_t - last_flush >= 0.03:
+                            stream_container.markdown(full_text + "▌")
+                            last_flush = now_t
+                if full_text.strip():
+                    stream_container.markdown(full_text)
+                    return full_text.strip(), m_name, (time.time() - t_start)
+            except Exception as err:
+                err_txt = str(err).lower()
+                if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                    continue
+                break
+    return "", "", (time.time() - t_start)
+
 # -------------------------------------------------------------
-# 10.5. ΒΟΗΘΟΣ ΕΚΠΑΙΔΕΥΤΙΚΟΥ (ΑΣΚΗΣΕΙΣ & ΕΡΓΑΣΙΕΣ ΓΙΑ ΟΛΑ ΤΑ ΜΑΘΗΜΑΤΑ)
+# 10.5. ΒΟΗΘΟΣ ΕΚΠΑΙΔΕΥΤΙΚΟΥ (ΑΣΚΗΣΕΙΣ, ΑΠΛΟΠΟΙΗΤΗΣ & ΑΠΟΤΙΜΗΣΗ)
 # -------------------------------------------------------------
 if st.session_state.active_mode == "teacher":
     # Έλεγχος Κωδικού (μόνο αν ο χρήστης επιλέξει ρητά κλείδωμα)
@@ -1295,13 +1465,13 @@ if st.session_state.active_mode == "teacher":
                     st.error("❌ Λανθασμένος κωδικός πρόσβασης. Προσπαθήστε ξανά.")
         st.stop()
 
-    # --- ΕΦΟΣΟΝ ΕΧΕΙ ΞΕΚΛΕΙΔΩΘΕΙ (ΕΚΠΑΙΔΕΥΤΙΚΟ WORKSPACE) ---
+    # --- ΕΦΟΣΟΝ ΕΧΕΙ ΞΕΚΛΕΙΔΩΘΕΙ (ΕΚΠΑΙΔΕΥΤΙΚΟ WORKSPACE ΜΕ 3 ΚΑΡΤΕΛΕΣ) ---
     col_th1, col_th2 = st.columns([3, 1])
     with col_th1:
         st.markdown("""
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem;">
-            <span style="background: #1d4ed8; color: #ffffff; padding: 4px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 700;">👩‍🏫 Βοηθός Εκπαιδευτικού</span>
-            <span style="color: #0f3460; font-size: 1.15rem; font-weight: 700;">Σχεδιασμός Ασκήσεων & Εργασιών</span>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.4rem;">
+            <span style="background: #1d4ed8; color: #ffffff; padding: 4px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 700;">👩‍🏫 Γραφείο Καθηγητή</span>
+            <span style="color: #0f3460; font-size: 1.15rem; font-weight: 700;">Φύλλα Εργασίας, Απλοποιητής & Αποτίμηση</span>
         </div>
         """, unsafe_allow_html=True)
     with col_th2:
@@ -1309,83 +1479,80 @@ if st.session_state.active_mode == "teacher":
             st.session_state.teacher_unlocked = False
             st.rerun()
 
-    st.markdown("""
-    <div style="background: #ffffff; border: 1.5px solid #a3cef0; border-radius: 10px; padding: 7px 12px; margin-bottom: 0.4rem; box-shadow: 0 2px 8px rgba(15, 60, 120, 0.04);">
-        <p style="margin: 0; color: #1e3a5f; font-size: 0.85rem; line-height: 1.35;">
-            💡 <b>Οδηγός Εκπαιδευτικού:</b> Επιλέξτε τάξη, μάθημα και δραστηριότητα. Το σύστημα αντλεί αυτόματα την 
-            επίσημη ύλη του <b>ΥΠΑΙΘΑ / ΙΕΠ & Μελίσπης</b> και του σχολικού βιβλίου.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    tab_worksheets, tab_simplifier, tab_eval = st.tabs([
+        "📝 Φύλλα Εργασίας & Ασκήσεις",
+        "✂️ Απλοποιητής Κειμένου (ΕΑΕ)",
+        "📊 Αποτίμηση Διαλόγου",
+    ])
 
-    # 1. Επιλογή Τάξης & Μαθήματος
-    c_g, c_s = st.columns([1, 2])
-    with c_g:
-        t_grade = st.selectbox(
-            "🏫 Τάξη:",
-            list(GYMNASIO_DATA.keys()),
-            index=list(GYMNASIO_DATA.keys()).index(selected_grade),
-            key="t_grade_select"
-        )
-    with c_s:
-        t_subjects = list(GYMNASIO_DATA[t_grade]["subjects"].keys())
-        s_idx = t_subjects.index(selected_subject) if selected_subject in t_subjects else 0
-        t_subject = st.selectbox("📚 Μάθημα:", t_subjects, index=s_idx, key="t_subj_select")
+    # ==========================================================
+    # ΚΑΡΤΕΛΑ 1: ΦΥΛΛΑ ΕΡΓΑΣΙΑΣ & ΑΣΚΗΣΕΙΣ (+ ΕΞΑΓΩΓΗ WORD .DOCX)
+    # ==========================================================
+    with tab_worksheets:
+        c_g, c_s = st.columns([1, 2])
+        with c_g:
+            t_grade = st.selectbox(
+                "🏫 Τάξη:",
+                list(GYMNASIO_DATA.keys()),
+                index=list(GYMNASIO_DATA.keys()).index(selected_grade),
+                key="t_grade_select"
+            )
+        with c_s:
+            t_subjects = list(GYMNASIO_DATA[t_grade]["subjects"].keys())
+            s_idx = t_subjects.index(selected_subject) if selected_subject in t_subjects else 0
+            t_subject = st.selectbox("📚 Μάθημα:", t_subjects, index=s_idx, key="t_subj_select")
 
-    t_book_info = GYMNASIO_DATA[t_grade]["subjects"][t_subject]
-    t_book_topics = t_book_info.get("topics", "")
+        t_book_info = GYMNASIO_DATA[t_grade]["subjects"][t_subject]
+        t_book_topics = t_book_info.get("topics", "")
 
-    # 2. Τύπος Δραστηριότητας & Παραμετροποίηση
-    col_act, col_diff, col_num = st.columns([2, 1, 1])
-    with col_act:
-        activity_type = st.selectbox(
-            "🎯 Είδος Διδακτικής Πρότασης:",
-            [
-                "🌟 Φύλλο Εργασίας Ειδικής Αγωγής (Easy-to-Read με Εικόνες & Απλές Ερωτήσεις)",
-                "📖 Κοινωνική Ιστορία / Σενάριο Εμπέδωσης (ΕΕΑ & Νοητική Υστέρηση)",
-                "🧩 Διαβαθμισμένες Ασκήσεις Ειδικής Αγωγής (3 Επίπεδα με Οπτικά Cues)",
-                "📝 Διαβαθμισμένες Ασκήσεις Εμπέδωσης & Κριτικής Σκέψης",
-                "👥 Ομαδική Εργασία / Project (Σχέδιο Δράσης & Ρόλοι)",
-                "🔬 Διαθεματική & STEAM Δραστηριότητα",
-                "🎯 15λεπτο Κριτήριο Αξιολόγησης (με Ρουμπρίκα & Λύσεις)",
-                "💡 Σωκρατικά Εναύσματα Συζήτησης στην Τάξη",
-                "🛠️ Ολοκληρωμένο Φύλλο Εργασίας (Worksheet) για την Τάξη"
-            ],
-            key="t_act_type"
-        )
-    with col_diff:
-        difficulty_level = st.selectbox(
-            "📊 Επίπεδο Δυσκολίας:",
-            [
-                "🟢 Ειδική Αγωγή: Επίπεδο 1 (Μέγιστη Απλοποίηση)",
-                "🟡 Ειδική Αγωγή: Επίπεδο 2 (Διαφοροποιημένη Μάθηση)",
-                "Βασικό / Εμπέδωσης",
-                "Κλιμακούμενο (Α->Γ)",
-                "Αυξημένων Απαιτήσεων"
-            ],
-            key="t_diff_level"
-        )
-    with col_num:
-        item_count = st.selectbox("🔢 Πλήθος:", [3, 5, 8], index=1, key="t_count_sel")
+        col_act, col_diff, col_num = st.columns([2, 1, 1])
+        with col_act:
+            activity_type = st.selectbox(
+                "🎯 Είδος Διδακτικής Πρότασης:",
+                [
+                    "🌟 Φύλλο Εργασίας Ειδικής Αγωγής (Easy-to-Read με Εικόνες & Απλές Ερωτήσεις)",
+                    "📖 Κοινωνική Ιστορία / Σενάριο Εμπέδωσης (ΕΕΑ & Νοητική Υστέρηση)",
+                    "🧩 Διαβαθμισμένες Ασκήσεις Ειδικής Αγωγής (3 Επίπεδα με Οπτικά Cues)",
+                    "📝 Διαβαθμισμένες Ασκήσεις Εμπέδωσης & Κριτικής Σκέψης",
+                    "👥 Ομαδική Εργασία / Project (Σχέδιο Δράσης & Ρόλοι)",
+                    "🔬 Διαθεματική & STEAM Δραστηριότητα",
+                    "🎯 15λεπτο Κριτήριο Αξιολόγησης (με Ρουμπρίκα & Λύσεις)",
+                    "💡 Σωκρατικά Εναύσματα Συζήτησης στην Τάξη",
+                    "🛠️ Ολοκληρωμένο Φύλλο Εργασίας (Worksheet) για την Τάξη"
+                ],
+                key="t_act_type"
+            )
+        with col_diff:
+            difficulty_level = st.selectbox(
+                "📊 Επίπεδο Δυσκολίας:",
+                [
+                    "🟢 Ειδική Αγωγή: Επίπεδο 1 (Μέγιστη Απλοποίηση)",
+                    "🟡 Ειδική Αγωγή: Επίπεδο 2 (Διαφοροποιημένη Μάθηση)",
+                    "Βασικό / Εμπέδωσης",
+                    "Κλιμακούμενο (Α->Γ)",
+                    "Αυξημένων Απαιτήσεων"
+                ],
+                key="t_diff_level"
+            )
+        with col_num:
+            item_count = st.selectbox("🔢 Πλήθος:", [3, 5, 8], index=1, key="t_count_sel")
 
-    col_sub_topic, col_opts = st.columns([3, 2])
-    with col_sub_topic:
-        specific_topic = st.text_input(
-            "📌 Ειδική Ενότητα ή Θέμα (Προαιρετικό):",
-            placeholder="π.χ. Εξισώσεις 1ου βαθμού, Περσικοί Πόλεμοι, Κύτταρο...",
-            key="t_spec_topic"
-        )
-    with col_opts:
-        st.write("")
-        st.write("")
-        inc_solutions = st.checkbox("✅ Ενδεικτικές Απαντήσεις / Λύσεις", value=True, key="t_inc_sol")
-        inc_rubric = st.checkbox("📊 Ρουμπρίκα / Κριτήρια Αξιολόγησης", value=True, key="t_inc_rub")
+        col_sub_topic, col_opts = st.columns([3, 2])
+        with col_sub_topic:
+            specific_topic = st.text_input(
+                "📌 Ειδική Ενότητα ή Θέμα (Προαιρετικό):",
+                placeholder="π.χ. Εξισώσεις 1ου βαθμού, Περσικοί Πόλεμοι, Κύτταρο...",
+                key="t_spec_topic"
+            )
+        with col_opts:
+            st.write("")
+            inc_solutions = st.checkbox("✅ Ενδεικτικές Απαντήσεις / Λύσεις", value=True, key="t_inc_sol")
+            inc_rubric = st.checkbox("📊 Ρουμπρίκα / Κριτήρια Αξιολόγησης", value=True, key="t_inc_rub")
 
-    # Κουμπί Παραγωγής
-    generate_teacher_btn = st.button("✨ Δημιουργία Προτάσεων & Ασκήσεων", type="primary", use_container_width=True)
+        generate_teacher_btn = st.button("✨ Δημιουργία Φύλλου Εργασίας", type="primary", use_container_width=True)
 
-    if generate_teacher_btn:
-        teacher_prompt = f"""
+        if generate_teacher_btn:
+            teacher_prompt = f"""
 Είσαι ένας έμπειρος Σύμβουλος Εκπαίδευσης και Καθηγητής Δευτεροβάθμιας Εκπαίδευσης στην Ελλάδα.
 Απευθύνεσαι ΑΠΟΚΛΕΙΣΤΙΚΑ σε ΕΚΠΑΙΔΕΥΤΙΚΟ (όχι σε μαθητή).
 
@@ -1402,123 +1569,252 @@ if st.session_state.active_mode == "teacher":
 - Συμπερίληψη Λύσεων: {'ΝΑΙ' if inc_solutions else 'ΟΧΙ'}
 - Συμπερίληψη Ρουμπρίκας/Κριτηρίων: {'ΝΑΙ' if inc_rubric else 'ΟΧΙ'}
 
-ΟΔΗΓΙΕΣ ΔΟΜΗΣ ΚΑΙ ΠΕΡΙΕΧΟΜΕΝΟΥ (ΥΨΗΛΗΣ ΠΑΙΔΑΓΩΓΙΚΗΣ ΠΟΙΟΤΗΤΑΣ):
-1. **ΔΙΔΑΚΤΙΚΟΙ ΣΤΟΧΟΙ (Βάσει Ταξινομίας Bloom):**
-   - Γνωστικοί στόχοι και επιδιωκόμενες δεξιότητες.
-2. **ΑΝΑΛΥΤΙΚΕΣ ΠΡΟΤΑΣΕΙΣ / ΕΚΦΩΝΗΣΕΙΣ:**
-   - Πλήρως διατυπωμένες εκφωνήσεις, έτοιμες για φωτοτυπία ή προβολή στον πίνακα.
-   - Χρήση σαφούς γλώσσας και LaTeX για μαθηματικούς/φυσικούς τύπους (π.χ. $x^2 + 5x = 0$ ή $F = m \\cdot a$).
-   - Στα projects: Σαφείς ρόλοι στην ομάδα (π.χ. Συντονιστής, Ερευνητής, Γραμματέας), στάδια υλοποίησης και τελικό παραδοτέο.
-   - Στα εναύσματα συζήτησης: Πραγματικά παραδείγματα, διλήμματα, σωκρατικές ερωτήσεις για την ολομέλεια.
-3. **ΔΙΔΑΚΤΙΚΕΣ ΥΠΟΔΕΙΞΕΙΣ ΓΙΑ ΤΟΝ ΕΚΠΑΙΔΕΥΤΙΚΟ:**
-   - Συνηθισμένα λάθη και παρανοήσεις των μαθητών (common student misconceptions) και πώς να τα αντιμετωπίσει ο εκπαιδευτικός.
-   - Ιδέες για διαφοροποιημένη διδασκαλία.
-{'''4. **ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ & ΛΥΣΕΙΣ:**
-   - Αναλυτικά βήματα επίλυσης για κάθε άσκηση/ερώτημα.''' if inc_solutions else ''}
-{'''5. **ΚΡΙΤΗΡΙΑ ΑΞΙΟΛΟΓΗΣΗΣ (ΡΟΥΜΠΡΙΚΑ):**
-   - Πίνακας ή λίστα με επίπεδα επίτευξης και κριτήρια βαθμολόγησης.''' if inc_rubric else ''}
+ΟΔΗΓΙΕΣ ΔΟΜΗΣ:
+1. ## ΔΙΔΑΚΤΙΚΟΙ ΣΤΟΧΟΙ (σύντομοι και σαφείς)
+2. ## ΕΚΦΩΝΗΣΕΙΣ & ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ (έτοιμες για φωτοτυπία μαθητή)
+3. ## ΔΙΔΑΚΤΙΚΕΣ ΥΠΟΔΕΙΞΕΙΣ (συνήθη λάθη μαθητών & συμβουλές)
+{'''4. ## ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ & ΛΥΣΕΙΣ (σε ξεχωριστή ενότητα για τον εκπαιδευτικό)''' if inc_solutions else ''}
+{'''5. ## ΚΡΙΤΗΡΙΑ ΑΞΙΟΛΟΓΗΣΗΣ (ΡΟΥΜΠΡΙΚΑ)''' if inc_rubric else ''}
 
 Γράψε σε άπταιστα, κομψά και παιδαγωγικά Ελληνικά με καθαρή διάρθρωση σε Markdown.
 """
+            st.markdown("### 📋 Παραγωγή Διδακτικού Υλικού...")
+            stream_container = st.empty()
+            try:
+                out_text, used_m, gen_sec = run_teacher_ai_stream(teacher_prompt, stream_container, max_tokens=1700)
+                if out_text:
+                    st.session_state.teacher_output = out_text
+                    st.success(f"⚡ Ολοκληρώθηκε σε {gen_sec:.1f}δλ.! (Μοντέλο: `{used_m}`)")
+                else:
+                    st.error("⚠️ Τα μοντέλα AI δεν μπόρεσαν να αποκριθούν άμεσα. Δοκιμάστε ξανά.")
+            except Exception as e:
+                st.error(f"⚠️ Σφάλμα κατά την παραγωγή: {e}")
 
-        st.markdown("### 📋 Παραγωγή Διδακτικού Υλικού (Σε πραγματικό χρόνο)...")
-        stream_container = st.empty()
-        full_stream_text = ""
-        t_gen_start = time.time()
-        try:
-            client = get_genai_client(api_key)
-            models_to_try = [
-                st.session_state.get("active_model", "gemini-3.5-flash-lite"),
-                "gemini-3.5-flash-lite",
-                "gemini-flash-lite-latest",
-                "gemini-3.8-flash",
-            ]
-            seen_m = set()
-            ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
-            
-            gen_ok = False
-            for m_name in ordered_models:
-                try:
-                    resp_stream = client.models.generate_content_stream(
-                        model=m_name,
-                        contents=teacher_prompt,
-                        config=build_fast_config(
-                            m_name,
-                            temperature=0.7,
-                            max_output_tokens=1500,
-                        )
-                    )
-                    full_stream_text = ""
-                    last_flush = time.time()
-                    for chunk in resp_stream:
-                        if chunk.text:
-                            full_stream_text += chunk.text
-                            now_t = time.time()
-                            if now_t - last_flush >= 0.03:
-                                stream_container.markdown(full_stream_text + "▌")
-                                last_flush = now_t
-                    if full_stream_text.strip():
-                        gen_ok = True
-                        stream_container.markdown(full_stream_text)
-                        st.session_state.teacher_output = full_stream_text
-                        gen_sec = time.time() - t_gen_start
-                        st.success(f"⚡ Ολοκληρώθηκε σε {gen_sec:.1f}δλ.! (Μοντέλο: `{m_name}`)")
-                        break
-                except Exception:
-                    # Άμεση κλήση αν το streaming αποτύχει
-                    try:
-                        dir_res = client.models.generate_content(
-                            model=m_name,
-                            contents=teacher_prompt,
-                            config=types.GenerateContentConfig(
-                                temperature=0.7,
-                                max_output_tokens=1500,
-                            )
-                        )
-                        if dir_res.text and dir_res.text.strip():
-                            full_stream_text = dir_res.text
-                            gen_ok = True
-                            stream_container.markdown(full_stream_text)
-                            st.session_state.teacher_output = full_stream_text
-                            gen_sec = time.time() - t_gen_start
-                            st.success(f"⚡ Ολοκληρώθηκε σε {gen_sec:.1f}δλ.! (Μοντέλο: `{m_name}`)")
-                            break
-                    except Exception:
-                        continue
-            if not gen_ok:
-                st.error("⚠️ Τα μοντέλα AI δεν μπόρεσαν να αποκριθούν άμεσα. Παρακαλώ ελέγξτε τη σύνδεση ή δοκιμάστε ξανά.")
-        except Exception as e:
-            st.error(f"⚠️ Σφάλμα κατά την παραγωγή: {e}")
+        if st.session_state.get("teacher_output", ""):
+            st.markdown("---")
+            clean_title = t_subject.split()[1] if len(t_subject.split()) > 1 else "mathima"
+            today_str = datetime.date.today().strftime("%Y%m%d")
+            today_gr = datetime.date.today().strftime("%d/%m/%Y")
 
-    # Προβολή Αποτελεσμάτων
-    if st.session_state.get("teacher_output", ""):
-        st.markdown("---")
-        st.markdown("### 📋 Παραγόμενο Διδακτικό Υλικό")
-        
-        # Download button
-        clean_title = t_subject.split()[1] if len(t_subject.split()) > 1 else "mathima"
-        today_str = datetime.date.today().strftime("%Y%m%d")
-        fname = f"didaktiko_yliko_{t_grade[:2]}_{clean_title}_{today_str}.md"
-        
-        col_d1, col_d2 = st.columns([3, 1])
-        with col_d1:
-            st.download_button(
-                label="📥 Λήψη Υλικού σε Markdown (.md)",
-                data=st.session_state.teacher_output.encode("utf-8"),
-                file_name=fname,
-                mime="text/markdown",
-                use_container_width=True
+            docx_bytes = build_school_docx(
+                title=f"Φύλλο Εργασίας — {t_subject}",
+                subtitle=f"{t_grade}  •  {difficulty_level}  •  {today_gr}",
+                markdown_body=st.session_state.teacher_output,
+                include_student_header=True,
+                split_solutions_page=True,
             )
-        with col_d2:
-            if st.button("🗑️ Καθαρισμός Υλικού", use_container_width=True):
-                st.session_state.teacher_output = ""
-                st.rerun()
 
+            col_d1, col_d2, col_d3 = st.columns([2, 2, 1])
+            with col_d1:
+                if docx_bytes:
+                    st.download_button(
+                        label="🖨️ Λήψη σε Word (.docx)",
+                        data=docx_bytes,
+                        file_name=f"Fyllo_Ergasias_{t_grade[:2]}_{clean_title}_{today_str}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        type="primary",
+                        use_container_width=True
+                    )
+            with col_d2:
+                st.download_button(
+                    label="📥 Λήψη Κειμένου (.md)",
+                    data=st.session_state.teacher_output.encode("utf-8"),
+                    file_name=f"didaktiko_yliko_{t_grade[:2]}_{clean_title}_{today_str}.md",
+                    mime="text/markdown",
+                    use_container_width=True
+                )
+            with col_d3:
+                if st.button("🗑️ Καθαρισμός", key="clear_ws_btn", use_container_width=True):
+                    st.session_state.teacher_output = ""
+                    st.rerun()
+
+            st.markdown("""
+            <div style="background:#ffffff; border:1px solid #bfdbfe; border-radius:12px; padding:20px; box-shadow: 0 4px 12px rgba(15, 60, 120, 0.05); color:#0f172a;">
+            """, unsafe_allow_html=True)
+            st.markdown(st.session_state.teacher_output)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    # ==========================================================
+    # ΚΑΡΤΕΛΑ 2: ΑΠΛΟΠΟΙΗΤΗΣ ΚΕΙΜΕΝΟΥ (ΕΙΔΙΚΗ ΑΓΩΓΗ / ΠΑΡΑΛΛΗΛΗ)
+    # ==========================================================
+    with tab_simplifier:
         st.markdown("""
-        <div style="background:#ffffff; border:1px solid #bfdbfe; border-radius:12px; padding:22px; box-shadow: 0 4px 12px rgba(15, 60, 120, 0.05); color:#0f172a;">
+        <div style="background: #f0f9ff; border: 1.5px solid #93c5fd; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.88rem; color: #0c335e;">
+            ✂️ <b>Απλοποιητής Σχολικού Κειμένου:</b> Κάντε επικόλληση οποιαδήποτε δύσκολη παράγραφο ή σελίδα βιβλίου. 
+            Ο Σωκράτης τη μετατρέπει αμέσως σε εύληπτο κείμενο (Easy-to-Read), λέξεις-κλειδιά και 3 απλές ερωτήσεις, έτοιμα για Word!
+        </div>
         """, unsafe_allow_html=True)
-        st.markdown(st.session_state.teacher_output)
-        st.markdown("</div>", unsafe_allow_html=True)
+
+        raw_source_text = st.text_area(
+            "📄 Επικολλήστε εδώ το απόσπασμα του σχολικού βιβλίου:",
+            height=150,
+            placeholder="π.χ. Αντιγράψτε 1-2 παραγράφους από το βιβλίο Ιστορίας, Θρησκευτικών, Αρχαίων ή Βιολογίας...",
+            key="simp_source_text"
+        )
+        simp_level = st.radio(
+            "🎯 Επίπεδο Απλοποίησης:",
+            [
+                "🟢 Επίπεδο 1: Πολύ απλές προτάσεις (4-7 λέξεις, Easy-to-Read / Ειδική Αγωγή)",
+                "🟡 Επίπεδο 2: Απλοποιημένο & Δομημένο (Δυσλεξία, ΔΕΠΥ, Παράλληλη Στήριξη)",
+            ],
+            key="simp_level_radio"
+        )
+
+        if st.button("✨ Απλοποίηση Κειμένου & Ερωτήσεις", type="primary", use_container_width=True, key="btn_run_simp"):
+            if len(raw_source_text.strip()) < 20:
+                st.warning("⚠️ Επικολλήστε πρώτα τουλάχιστον 1-2 προτάσεις κειμένου.")
+            else:
+                simp_prompt = f"""
+Είσαι ειδικός παιδαγωγός Δευτεροβάθμιας Εκπαίδευσης στην Ελλάδα.
+Μετάτρεψε το παρακάτω σχολικό κείμενο σύμφωνα με το επιλεγμένο επίπεδο: {simp_level}.
+
+ΑΡΧΙΚΟ ΚΕΙΜΕΝΟ:
+\"\"\"{raw_source_text.strip()[:3500]}\"\"\"
+
+ΠΑΡΑΓΕ ΑΚΡΙΒΩΣ ΑΥΤΕΣ ΤΙΣ 3 ΕΝΟΤΗΤΕΣ (σε καθαρό, ζεστό ελληνικό κείμενο):
+## 1. ΑΠΛΟΠΟΙΗΜΕΝΟ ΚΕΙΜΕΝΟ
+- 4 έως 6 πολύ σύντομες, καθαρές, αυτοτελείς προτάσεις (ενεργητική φωνή, χωρίς δύσκολες λέξεις).
+
+## 2. ΛΕΞΕΙΣ-ΚΛΕΙΔΙΑ
+- 3 έως 5 βασικές λέξεις με εξήγηση 1 σύντομης πρότασης από την καθημερινή ζωή.
+
+## 3. ΓΡΗΓΟΡΟΣ ΕΛΕΓΧΟΣ ΚΑΤΑΝΟΗΣΗΣ (ΣΩΣΤΟ / ΛΑΘΟΣ)
+- 3 πολύ απλές προτάσεις (Σωστό ή Λάθος;) χωρίς παγίδες.
+
+## ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ (ΓΙΑ ΤΟΝ ΕΚΠΑΙΔΕΥΤΙΚΟ)
+- Οι 3 σωστές απαντήσεις με σύντομη αιτιολόγηση.
+"""
+                simp_container = st.empty()
+                try:
+                    s_out, s_m, s_sec = run_teacher_ai_stream(simp_prompt, simp_container, max_tokens=1200)
+                    if s_out:
+                        st.session_state.teacher_simplified_output = s_out
+                        st.success(f"⚡ Έτοιμο σε {s_sec:.1f}δλ.! (Μοντέλο: `{s_m}`)")
+                    else:
+                        st.error("⚠️ Δεν υπήρξε άμεση απόκριση. Δοκιμάστε ξανά.")
+                except Exception as e:
+                    st.error(f"⚠️ Σφάλμα: {e}")
+
+        if st.session_state.get("teacher_simplified_output", ""):
+            st.markdown("---")
+            today_str = datetime.date.today().strftime("%Y%m%d")
+            today_gr = datetime.date.today().strftime("%d/%m/%Y")
+            simp_docx = build_school_docx(
+                title="Απλοποιημένο Κείμενο Μελέτης",
+                subtitle=f"{selected_grade}  •  {selected_subject}  •  {today_gr}",
+                markdown_body=st.session_state.teacher_simplified_output,
+                include_student_header=True,
+                split_solutions_page=True,
+            )
+            col_s1, col_s2 = st.columns([3, 1])
+            with col_s1:
+                if simp_docx:
+                    st.download_button(
+                        label="🖨️ Λήψη Απλοποιημένου Κειμένου σε Word (.docx)",
+                        data=simp_docx,
+                        file_name=f"Aplopoiimeno_Keimeno_{today_str}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        type="primary",
+                        use_container_width=True
+                    )
+            with col_s2:
+                if st.button("🗑️ Καθαρισμός", key="clear_simp_btn", use_container_width=True):
+                    st.session_state.teacher_simplified_output = ""
+                    st.rerun()
+
+            st.markdown(st.session_state.teacher_simplified_output)
+
+    # ==========================================================
+    # ΚΑΡΤΕΛΑ 3: ΠΑΙΔΑΓΩΓΙΚΗ ΑΠΟΤΙΜΗΣΗ ΔΙΑΛΟΓΟΥ (GDPR-SAFE)
+    # ==========================================================
+    with tab_eval:
+        chat_msgs = st.session_state.get("messages", [])
+        student_msgs_count = len([m for m in chat_msgs if m.get("role") == "user"])
+
+        st.markdown(f"""
+        <div style="background: #f0f9ff; border: 1.5px solid #93c5fd; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.88rem; color: #0c335e;">
+            📊 <b>Παιδαγωγική Αποτίμηση Τρέχουσας Συνεδρίας:</b> Αναλύει τον διάλογο που μόλις έγινε με τον Σωκράτη 
+            (<b>{student_msgs_count}</b> απαντήσεις μαθητή) και παράγει ανώνυμη έκθεση προόδου για φάκελο μαθητή ή ΚΕ.Δ.Α.Σ.Υ.<br>
+            🔒 <i>Πλήρης συμμόρφωση GDPR: κανένα προσωπικό στοιχείο δεν αποθηκεύεται στο διαδίκτυο.</i>
+        </div>
+        """, unsafe_allow_html=True)
+
+        student_code_label = st.text_input(
+            "🏷️ Κωδικός Μαθητή για το έγγραφο Word (προαιρετικό, χωρίς επώνυμο):",
+            placeholder="π.χ. Α1-Μαθητής 04",
+            key="eval_student_code"
+        )
+
+        if student_msgs_count == 0:
+            st.info("ℹ️ Δεν υπάρχει ακόμη διάλογος μαθητή σε αυτή τη συνεδρία. Μόλις συνομιλήσει ένας μαθητής με τον Σωκράτη, επιστρέψτε εδώ για να παραχθεί η αποτίμηση με 1 κλικ.")
+        else:
+            if st.button("📊 Δημιουργία Παιδαγωγικής Αποτίμησης", type="primary", use_container_width=True, key="btn_run_eval"):
+                transcript_lines = []
+                for m in chat_msgs[-24:]:
+                    who = "ΜΑΘΗΤΗΣ" if m["role"] == "user" else "ΣΩΚΡΑΤΗΣ"
+                    transcript_lines.append(f"{who}: {m['content'][:450]}")
+                transcript_text = "\n".join(transcript_lines)
+
+                eval_prompt = f"""
+Είσαι έμπειρος εκπαιδευτικός και ειδικός παιδαγωγός Γυμνασίου.
+Μελέτησε τον παρακάτω ανώνυμο διάλογο μαθητή ({selected_grade}, Μάθημα: {selected_subject}) με τον Σωκράτη AI Tutor και γράψε μια αντικειμενική, χρήσιμη παιδαγωγική αποτίμηση για τον εκπαιδευτικό (κατάλληλη για φάκελο μαθητή / ΚΕ.Δ.Α.Σ.Υ.).
+
+ΔΙΑΛΟΓΟΣ:
+{transcript_text}
+
+ΔΟΜΗ ΑΝΑΦΟΡΑΣ (σε καθαρό Markdown):
+## 1. ΣΥΝΟΨΗ ΘΕΜΑΤΟΣ & ΣΥΜΜΕΤΟΧΗΣ
+- Ποιο θέμα δουλεύτηκε και πώς συμμετείχε ο μαθητής.
+
+## 2. ΔΥΝΑΤΑ ΣΗΜΕΙΑ (ΤΙ ΚΑΤΕΚΤΗΣΕ ΚΑΛΑ)
+- Συγκεκριμένες έννοιες ή δεξιότητες που έδειξε ότι κατανοεί.
+
+## 3. ΔΥΣΚΟΛΙΕΣ & ΠΑΡΑΝΟΗΣΕΙΣ ΠΟΥ ΕΝΤΟΠΙΣΤΗΚΑΝ
+- Πού κόλλησε, τι μπέρδεψε ή τι χρειάζεται επανάληψη.
+
+## 4. ΠΡΟΤΑΣΗ ΕΠΟΜΕΝΟΥ ΔΙΔΑΚΤΙΚΟΥ ΒΗΜΑΤΟΣ
+- 2-3 πρακτικές, συγκεκριμένες παιδαγωγικές προτάσεις για τον εκπαιδευτικό.
+"""
+                eval_container = st.empty()
+                try:
+                    e_out, e_m, e_sec = run_teacher_ai_stream(eval_prompt, eval_container, max_tokens=1200)
+                    if e_out:
+                        st.session_state.teacher_eval_output = e_out
+                        st.success(f"⚡ Η αποτίμηση ολοκληρώθηκε σε {e_sec:.1f}δλ.! (Μοντέλο: `{e_m}`)")
+                    else:
+                        st.error("⚠️ Δεν υπήρξε άμεση απόκριση. Δοκιμάστε ξανά.")
+                except Exception as e:
+                    st.error(f"⚠️ Σφάλμα: {e}")
+
+        if st.session_state.get("teacher_eval_output", ""):
+            st.markdown("---")
+            today_str = datetime.date.today().strftime("%Y%m%d")
+            today_gr = datetime.date.today().strftime("%d/%m/%Y")
+            code_part = f"  •  Κωδικός: {student_code_label.strip()}" if student_code_label.strip() else ""
+            eval_docx = build_school_docx(
+                title="Παιδαγωγική Αποτίμηση Συνεδρίας",
+                subtitle=f"{selected_grade}  •  {selected_subject}{code_part}  •  {today_gr}",
+                markdown_body=st.session_state.teacher_eval_output,
+                include_student_header=False,
+                split_solutions_page=False,
+            )
+            col_e1, col_e2 = st.columns([3, 1])
+            with col_e1:
+                if eval_docx:
+                    st.download_button(
+                        label="🖨️ Λήψη Αναφοράς σε Word (.docx)",
+                        data=eval_docx,
+                        file_name=f"Apotimisi_Mathiti_{today_str}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        type="primary",
+                        use_container_width=True
+                    )
+            with col_e2:
+                if st.button("🗑️ Καθαρισμός", key="clear_eval_btn", use_container_width=True):
+                    st.session_state.teacher_eval_output = ""
+                    st.rerun()
+
+            st.markdown(st.session_state.teacher_eval_output)
 
     st.stop()
 
