@@ -441,7 +441,7 @@ if "teacher_unlocked" not in st.session_state:
 if "teacher_output" not in st.session_state:
     st.session_state.teacher_output = ""
 if "active_model" not in st.session_state:
-    st.session_state.active_model = "gemini-2.5-flash-lite"
+    st.session_state.active_model = "gemini-flash-lite-latest"
 if "support_level" not in st.session_state:
     st.session_state.support_level = "LEVEL_3"
 if "show_visual_gallery" not in st.session_state:
@@ -886,9 +886,9 @@ def get_genai_client(key: str):
         )
     )
 
-def build_fast_config(model_name: str, **kwargs):
-    """Δημιουργεί ρυθμίσεις άμεσης απόκρισης (χωρίς καθυστέρηση εσωτερικής σκέψης στα 2.5 μοντέλα)."""
-    if "2.5" in model_name:
+def build_fast_config(model_name: str, disable_thinking: bool = True, **kwargs):
+    """Δημιουργεί ρυθμίσεις άμεσης απόκρισης (με ασφαλή απενεργοποίηση εσωτερικής σκέψης)."""
+    if disable_thinking:
         try:
             kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
         except Exception:
@@ -934,12 +934,12 @@ if not api_key:
 # 9. Υπερταχέα Μοντέλα AI & Πλαϊνή Στήλη με Δυναμικά Μαθήματα
 # -------------------------------------------------------------
 MODEL_OPTIONS = {
-    "gemini-2.5-flash-lite": "🚀 Gemini 2.5 Flash Lite (~0.6s - Υπερταχύ & Προτεινόμενο)",
-    "gemini-2.5-flash": "⚡ Gemini 2.5 Flash (~1.2s - Υψηλή Ακρίβεια & Ισορροπία)",
-    "gemini-2.0-flash": "🛡️ Gemini 2.0 Flash (Εφεδρικό Μοντέλο Σταθερότητας)",
+    "gemini-flash-lite-latest": "🚀 Gemini Flash Lite Latest (Υπερταχύ & Προτεινόμενο)",
+    "gemini-flash-latest": "⚡ Gemini Flash Latest (Υψηλή Ακρίβεια & Ισορροπία)",
+    "gemini-2.5-flash-lite": "🛡️ Gemini 2.5 Flash Lite (Εφεδρικό Μοντέλο)",
 }
 FAST_CHAT_MODELS = list(MODEL_OPTIONS.keys())
-active_model = st.session_state.get("active_model", "gemini-2.5-flash-lite")
+active_model = st.session_state.get("active_model", "gemini-flash-lite-latest")
 total_violations = get_violation_count()
 
 with st.sidebar:
@@ -1070,13 +1070,13 @@ with st.sidebar:
     with st.expander("⚡ Ταχύτητα & Μοντέλο AI", expanded=False):
         model_keys = list(MODEL_OPTIONS.keys())
         model_labels = list(MODEL_OPTIONS.values())
-        curr_m = st.session_state.get("active_model", "gemini-2.5-flash-lite")
+        curr_m = st.session_state.get("active_model", "gemini-flash-lite-latest")
         curr_idx = model_keys.index(curr_m) if curr_m in model_keys else 0
         selected_model_label = st.selectbox(
             "Μοντέλο:",
             options=model_labels,
             index=curr_idx,
-            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα. Το Gemini 2.5 Flash Lite απαντά σε λιγότερο από 1 δευτερόλεπτο!"
+            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα. Το Gemini Flash Lite Latest απαντά σε ~1 δευτερόλεπτο!"
         )
         st.session_state.active_model = model_keys[model_labels.index(selected_model_label)]
         active_model = st.session_state.active_model
@@ -1374,10 +1374,10 @@ if st.session_state.active_mode == "teacher":
         try:
             client = get_genai_client(api_key)
             models_to_try = [
-                st.session_state.get("active_model", "gemini-2.5-flash-lite"),
+                st.session_state.get("active_model", "gemini-flash-lite-latest"),
+                "gemini-flash-lite-latest",
+                "gemini-flash-latest",
                 "gemini-2.5-flash-lite",
-                "gemini-2.5-flash",
-                "gemini-2.0-flash",
             ]
             seen_m = set()
             ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
@@ -1820,10 +1820,10 @@ if prompt:
             full_response = ""
             success = False
             models_to_try = [
-                st.session_state.get("active_model", "gemini-2.5-flash-lite"),
+                st.session_state.get("active_model", "gemini-flash-lite-latest"),
+                "gemini-flash-lite-latest",
+                "gemini-flash-latest",
                 "gemini-2.5-flash-lite",
-                "gemini-2.5-flash",
-                "gemini-2.0-flash",
             ]
             seen_m = set()
             models_to_try = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
@@ -1894,33 +1894,43 @@ if prompt:
                     t_start = time.time()
                     try:
                         full_response = ""
-                        fast_cfg = build_fast_config(
-                            model_name,
-                            system_instruction=system_instruction,
-                            temperature=0.6,
-                            max_output_tokens=300,
-                            safety_settings=safety_settings,
-                        )
-                        chat = client.chats.create(
-                            model=model_name,
-                            config=fast_cfg,
-                            history=history if history else None,
-                        )
-                        response = chat.send_message_stream(message_parts)
-                        last_ui_update = time.time()
-                        first_chunk = True
-                        for chunk in response:
+                        for try_no_think in (True, False):
                             try:
-                                text_piece = chunk.text
-                            except Exception:
-                                text_piece = ""
-                            if text_piece:
-                                full_response += text_piece
-                                now_t = time.time()
-                                if first_chunk or (now_t - last_ui_update >= 0.03):
-                                    response_container.markdown(full_response + "▌")
-                                    last_ui_update = now_t
-                                    first_chunk = False
+                                fast_cfg = build_fast_config(
+                                    model_name,
+                                    disable_thinking=try_no_think,
+                                    system_instruction=system_instruction,
+                                    temperature=0.6,
+                                    max_output_tokens=300,
+                                    safety_settings=safety_settings,
+                                )
+                                chat = client.chats.create(
+                                    model=model_name,
+                                    config=fast_cfg,
+                                    history=history if history else None,
+                                )
+                                response = chat.send_message_stream(message_parts)
+                                last_ui_update = time.time()
+                                first_chunk = True
+                                for chunk in response:
+                                    try:
+                                        text_piece = chunk.text
+                                    except Exception:
+                                        text_piece = ""
+                                    if text_piece:
+                                        full_response += text_piece
+                                        now_t = time.time()
+                                        if first_chunk or (now_t - last_ui_update >= 0.03):
+                                            response_container.markdown(full_response + "▌")
+                                            last_ui_update = now_t
+                                            first_chunk = False
+                                break
+                            except Exception as stream_err:
+                                err_txt = str(stream_err).lower()
+                                if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                                    full_response = ""
+                                    continue
+                                raise stream_err
 
                         if full_response.strip():
                             success = True
@@ -1992,6 +2002,9 @@ if prompt:
                         st.warning("⏳ Πολλά ταυτόχρονα αιτήματα στο δωρεάν όριο του AI. Περιμένετε 15-20 δευτερόλεπτα και ξαναστείλτε την ερώτηση.")
                     else:
                         st.warning("⚠️ Προσωρινό πρόβλημα επικοινωνίας με το μοντέλο AI. Παρακαλώ ξαναστείλτε την ερώτηση.")
+                    if last_api_error:
+                        with st.expander("🔍 Τεχνική λεπτομέρεια (για τον εκπαιδευτικό)", expanded=False):
+                            st.code(last_api_error[:400])
 
             except Exception as e:
                 st.error(f"⚠️ Παρουσιάστηκε πρόβλημα επικοινωνίας: {e}")
