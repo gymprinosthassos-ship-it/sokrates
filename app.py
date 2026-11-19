@@ -467,6 +467,10 @@ if "teacher_simplified_output" not in st.session_state:
     st.session_state.teacher_simplified_output = ""
 if "teacher_eval_output" not in st.session_state:
     st.session_state.teacher_eval_output = ""
+if "lesson_slides_data" not in st.session_state:
+    st.session_state.lesson_slides_data = None
+if "lesson_slide_idx" not in st.session_state:
+    st.session_state.lesson_slide_idx = 0
 if "active_model" not in st.session_state:
     st.session_state.active_model = "gemini-3.5-flash-lite"
 if "support_level" not in st.session_state:
@@ -1268,6 +1272,165 @@ if st.session_state.is_locked:
     st.stop()
 
 import io
+import json
+import html as html_lib
+
+def generate_45min_lesson_json(grade: str, subject: str, topic: str, book_topics: str, extra_notes: str = ""):
+    """Παράγει δομημένη 45λεπτη παρουσίαση (5 διαφάνειες, κάρτες εννοιών, διάγραμμα & κουίζ) σε καθαρό JSON."""
+    client = get_genai_client(api_key)
+    models_to_try = [
+        st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+        "gemini-3.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+    ]
+    seen_m = set()
+    ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
+
+    prompt_json = f"""
+Είσαι έμπειρος εκπαιδευτικός Γυμνασίου στην Ελλάδα. Ετοίμασε μια ολοκληρωμένη 45λεπτη διδασκαλία σε στυλ σύνοψης για προβολή στον διαδραστικό πίνακα.
+
+ΣΤΟΙΧΕΙΑ:
+- Τάξη: {grade}
+- Μάθημα: {subject}
+- Επίσημη ύλη: {book_topics}
+- Θέμα / Κεφάλαιο της ώρας: {topic}
+{f'- Επιπλέον οδηγίες καθηγητή: {extra_notes}' if extra_notes.strip() else ''}
+
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON (χωρίς κανένα επιπλέον κείμενο γύρω του) με ΑΚΡΙΒΩΣ αυτή τη δομή:
+{{
+  "title": "Καθαρός τίτλος μαθήματος",
+  "hook_question": "Μία έξυπνη, προκλητική σωκρατική ερώτηση αφόρμησης για την τάξη",
+  "hook_context": "Σύντομη εισαγωγή 2 προτάσεων που συνδέει το θέμα με τη ζωή των μαθητών",
+  "key_cards": [
+    {{"icon": "🏛️", "term": "Έννοια-Κλειδί 1", "desc": "Καθαρή, απλή επεξήγηση 1-2 σύντομων προτάσεων"}},
+    {{"icon": "📜", "term": "Έννοια-Κλειδί 2", "desc": "Καθαρή, απλή επεξήγηση 1-2 σύντομων προτάσεων"}},
+    {{"icon": "⚖️", "term": "Έννοια-Κλειδί 3", "desc": "Καθαρή, απλή επεξήγηση 1-2 σύντομων προτάσεων"}},
+    {{"icon": "🌟", "term": "Έννοια-Κλειδί 4", "desc": "Καθαρή, απλή επεξήγηση 1-2 σύντομων προτάσεων"}}
+  ],
+  "diagram": {{
+    "type": "flow",
+    "center": "Κεντρικός Άξονας Μαθήματος (3-6 λέξεις)",
+    "nodes": [
+      {{"step": "1", "label": "Τίτλος 1ου σταδίου/κλάδου", "detail": "Σύντομη φράση 5-10 λέξεων"}},
+      {{"step": "2", "label": "Τίτλος 2ου σταδίου/κλάδου", "detail": "Σύντομη φράση 5-10 λέξεων"}},
+      {{"step": "3", "label": "Τίτλος 3ου σταδίου/κλάδου", "detail": "Σύντομη φράση 5-10 λέξεων"}},
+      {{"step": "4", "label": "Τίτλος 4ου σταδίου/κλάδου", "detail": "Σύντομη φράση 5-10 λέξεων"}}
+    ]
+  }},
+  "discussion_questions": [
+    "Ερώτηση κριτικής σκέψης 1 για την ολομέλεια",
+    "Ερώτηση κριτικής σκέψης 2 (σύγκριση ή δίλημμα)",
+    "Σύντομη ομαδική δραστηριότητα 5-10 λεπτών στην τάξη"
+  ],
+  "summary_points": [
+    "Βασικό συμπέρασμα 1 που πρέπει να θυμούνται οι μαθητές",
+    "Βασικό συμπέρασμα 2",
+    "Βασικό συμπέρασμα 3"
+  ],
+  "mini_quiz": [
+    {{"q": "Ερώτηση γρήγορου ελέγχου 1", "a": "Σαφής σύντομη απάντηση 1"}},
+    {{"q": "Ερώτηση γρήγορου ελέγχου 2", "a": "Σαφής σύντομη απάντηση 2"}},
+    {{"q": "Ερώτηση γρήγορου ελέγχου 3", "a": "Σαφής σύντομη απάντηση 3"}}
+  ]
+}}
+"""
+    t0 = time.time()
+    for m_name in ordered_models:
+        for try_no_think in (True, False):
+            try:
+                cfg = build_fast_config(
+                    m_name,
+                    disable_thinking=try_no_think,
+                    temperature=0.5,
+                    max_output_tokens=1800,
+                    response_mime_type="application/json",
+                )
+                resp = client.models.generate_content(
+                    model=m_name,
+                    contents=prompt_json,
+                    config=cfg,
+                )
+                raw = (resp.text or "").strip()
+                raw = re.sub(r'^```(?:json)?\s*', '', raw)
+                raw = re.sub(r'\s*```$', '', raw)
+                parsed = json.loads(raw)
+                if isinstance(parsed, dict) and parsed.get("title") and parsed.get("key_cards"):
+                    return parsed, m_name, (time.time() - t0)
+            except Exception as err:
+                err_txt = str(err).lower()
+                if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                    continue
+                break
+    return None, "", (time.time() - t0)
+
+def render_lesson_diagram_html(diagram_data: dict) -> str:
+    """Δημιουργεί 100% καθαρό, ανθεκτικό οπτικό διάγραμμα (εννοιολογικό χάρτη / ροή) για τον διαδραστικό πίνακα."""
+    center = html_lib.escape(str(diagram_data.get("center", "Κεντρική Έννοια")))
+    nodes = diagram_data.get("nodes", [])[:4]
+    palette = [
+        ("#eff6ff", "#2563eb", "#1e3a8a"),
+        ("#ecfdf5", "#059669", "#065f46"),
+        ("#fffbeb", "#d97706", "#78350f"),
+        ("#faf5ff", "#7c3aed", "#4c1d95"),
+    ]
+    cards_html = []
+    for idx, n in enumerate(nodes):
+        bg, brd, txt = palette[idx % len(palette)]
+        step = html_lib.escape(str(n.get("step", idx + 1)))
+        lbl = html_lib.escape(str(n.get("label", "")))
+        det = html_lib.escape(str(n.get("detail", "")))
+        cards_html.append(
+            f'<div style="background:{bg}; border:2px solid {brd}; border-radius:14px; padding:14px 16px; box-shadow:0 3px 10px rgba(15,23,42,0.06);">'
+            f'  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">'
+            f'    <span style="background:{brd}; color:#fff; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; flex-shrink:0;">{step}</span>'
+            f'    <span style="font-weight:800; color:{txt}; font-size:1.02rem; line-height:1.25;">{lbl}</span>'
+            f'  </div>'
+            f'  <div style="color:#334155; font-size:0.93rem; line-height:1.4;">{det}</div>'
+            f'</div>'
+        )
+
+    return (
+        f'<div style="background:#ffffff; border:2px solid #bfdbfe; border-radius:16px; padding:20px; margin:8px 0;">'
+        f'  <div style="text-align:center; margin-bottom:14px;">'
+        f'    <div style="display:inline-block; background:linear-gradient(135deg,#1d4ed8,#0c335e); color:#ffffff; padding:10px 24px; border-radius:999px; font-weight:800; font-size:1.12rem; box-shadow:0 4px 12px rgba(29,78,216,0.25);">🗺️ {center}</div>'
+        f'  </div>'
+        f'  <div style="text-align:center; color:#2563eb; font-size:1.25rem; font-weight:800; margin-bottom:12px;">⬇️ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ⬇️</div>'
+        f'  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">'
+        f'    {"".join(cards_html)}'
+        f'  </div>'
+        f'</div>'
+    )
+
+def lesson_json_to_markdown(data: dict) -> str:
+    """Μετατρέπει την 45λεπτη παρουσίαση σε καθαρό Markdown για εξαγωγή σε Word (.docx)."""
+    lines = [
+        f"## 1. ΑΦΟΡΜΗΣΗ (5')",
+        f"- **Κεντρική Ερώτηση:** {data.get('hook_question', '')}",
+        f"- {data.get('hook_context', '')}",
+        "",
+        f"## 2. ΕΝΝΟΙΕΣ-ΚΛΕΙΔΙΑ (15')",
+    ]
+    for c in data.get("key_cards", []):
+        lines.append(f"- **{c.get('term', '')}:** {c.get('desc', '')}")
+    diag = data.get("diagram", {})
+    lines.append("")
+    lines.append(f"## 3. ΟΠΤΙΚΟ ΔΙΑΓΡΑΜΜΑ / ΔΟΜΗ (10') — {diag.get('center', '')}")
+    for n in diag.get("nodes", []):
+        lines.append(f"- **Βήμα {n.get('step', '')} — {n.get('label', '')}:** {n.get('detail', '')}")
+    lines.append("")
+    lines.append("## 4. ΕΡΩΤΗΣΕΙΣ ΣΥΖΗΤΗΣΗΣ & ΔΡΑΣΤΗΡΙΟΤΗΤΑ (10')")
+    for q in data.get("discussion_questions", []):
+        lines.append(f"- {q}")
+    lines.append("")
+    lines.append("## 5. ΣΥΝΟΨΗ «ΤΙ ΚΡΑΤΑΜΕ» (5')")
+    for s in data.get("summary_points", []):
+        lines.append(f"- {s}")
+    lines.append("")
+    lines.append("## ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ (ΜΙΝΙ-ΚΟΥΙΖ)")
+    for i, item in enumerate(data.get("mini_quiz", []), 1):
+        lines.append(f"- **Ερώτηση {i}:** {item.get('q', '')} — *Απάντηση:* {item.get('a', '')}")
+    return "\n".join(lines)
 
 def build_school_docx(
     title: str,
@@ -1479,10 +1642,11 @@ if st.session_state.active_mode == "teacher":
             st.session_state.teacher_unlocked = False
             st.rerun()
 
-    tab_worksheets, tab_simplifier, tab_eval = st.tabs([
-        "📝 Φύλλα Εργασίας & Ασκήσεις",
-        "✂️ Απλοποιητής Κειμένου (ΕΑΕ)",
+    tab_worksheets, tab_simplifier, tab_eval, tab_lesson = st.tabs([
+        "📝 Φύλλα Εργασίας",
+        "✂️ Απλοποιητής (ΕΑΕ)",
         "📊 Αποτίμηση Διαλόγου",
+        "🎬 45λεπτη Παρουσίαση",
     ])
 
     # ==========================================================
@@ -1815,6 +1979,220 @@ if st.session_state.active_mode == "teacher":
                     st.rerun()
 
             st.markdown(st.session_state.teacher_eval_output)
+
+    # ==========================================================
+    # ΚΑΡΤΕΛΑ 4: 45ΛΕΠΤΗ ΠΑΡΟΥΣΙΑΣΗ ΤΑΞΗΣ (ΔΙΑΦΑΝΕΙΕΣ, ΚΑΡΤΕΣ & ΔΙΑΓΡΑΜΜΑ)
+    # ==========================================================
+    with tab_lesson:
+        st.markdown("""
+        <div style="background: #f0f9ff; border: 1.5px solid #93c5fd; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-size: 0.88rem; color: #0c335e;">
+            🎬 <b>45λεπτη Διαδραστική Παρουσίαση Τάξης:</b> Ο Σωκράτης στήνει 5 έτοιμες διαφάνειες για τον διαδραστικό πίνακα 
+            (<i>Αφόρμηση 5' ➔ Κάρτες Εννοιών 15' ➔ Οπτικό Διάγραμμα 10' ➔ Συζήτηση 10' ➔ Σύνοψη & Κουίζ 5'</i>) με αφήγηση & εξαγωγή σε Word!
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_l1, col_l2 = st.columns([1, 2])
+        with col_l1:
+            l_grade = st.selectbox(
+                "🏫 Τάξη:",
+                list(GYMNASIO_DATA.keys()),
+                index=list(GYMNASIO_DATA.keys()).index(selected_grade),
+                key="l_grade_select"
+            )
+        with col_l2:
+            l_subjects = list(GYMNASIO_DATA[l_grade]["subjects"].keys())
+            ls_idx = l_subjects.index(selected_subject) if selected_subject in l_subjects else 0
+            l_subject = st.selectbox("📚 Μάθημα:", l_subjects, index=ls_idx, key="l_subj_select")
+
+        l_topic = st.text_input(
+            "📌 Θέμα / Κεφάλαιο της 45λεπτης διδασκαλίας:",
+            placeholder="π.χ. Ο Ιουστινιανός και η Αγία Σοφία, Η Δημιουργία του Κόσμου, Εξισώσεις 1ου βαθμού...",
+            key="l_topic_input"
+        )
+        l_notes = st.text_input(
+            "💡 Προαιρετικές οδηγίες (π.χ. έμφαση σε απλή γλώσσα ή συγκεκριμένες χρονολογίες):",
+            placeholder="Προαιρετικό...",
+            key="l_notes_input"
+        )
+
+        if st.button("✨ Δημιουργία 45λεπτης Παρουσίασης", type="primary", use_container_width=True, key="btn_gen_45min"):
+            if len(l_topic.strip()) < 3:
+                st.warning("⚠️ Γράψτε πρώτα το θέμα ή το κεφάλαιο της διδασκαλίας.")
+            else:
+                l_book_topics = GYMNASIO_DATA[l_grade]["subjects"][l_subject].get("topics", "")
+                with st.spinner("🎬 Ο Σωκράτης ετοιμάζει τις 5 διαφάνειες, τις κάρτες εννοιών και το διάγραμμα (~5 δλ.)..."):
+                    parsed_lesson, used_m, dur = generate_45min_lesson_json(
+                        l_grade, l_subject, l_topic.strip(), l_book_topics, l_notes
+                    )
+                if parsed_lesson:
+                    st.session_state.lesson_slides_data = parsed_lesson
+                    st.session_state.lesson_slide_idx = 0
+                    st.success(f"⚡ Η 45λεπτη παρουσίαση είναι έτοιμη σε {dur:.1f}δλ.! (Μοντέλο: `{used_m}`)")
+                else:
+                    st.error("⚠️ Δεν ήταν δυνατή η δημιουργία της παρουσίασης αυτή τη στιγμή. Δοκιμάστε ξανά.")
+
+        lesson_data = st.session_state.get("lesson_slides_data", None)
+        if lesson_data:
+            st.markdown("---")
+            slide_titles = [
+                "1️⃣ Αφόρμηση (5')",
+                "2️⃣ Κάρτες Εννοιών (15')",
+                "3️⃣ Διάγραμμα (10')",
+                "4️⃣ Συζήτηση (10')",
+                "5️⃣ Σύνοψη & Κουίζ (5')",
+            ]
+            cur_s = st.session_state.get("lesson_slide_idx", 0)
+            cur_s = max(0, min(4, cur_s))
+
+            # Μπάρα επιλογής διαφάνειας (5 καθαρά κουμπιά)
+            pill_cols = st.columns(5)
+            for idx_p, stitle in enumerate(slide_titles):
+                with pill_cols[idx_p]:
+                    if st.button(
+                        stitle,
+                        key=f"slide_pill_{idx_p}",
+                        type="primary" if cur_s == idx_p else "secondary",
+                        use_container_width=True,
+                    ):
+                        st.session_state.lesson_slide_idx = idx_p
+                        st.rerun()
+
+            l_title_safe = html_lib.escape(str(lesson_data.get("title", l_topic)))
+            st.markdown(
+                f'<div style="background:linear-gradient(135deg,#0c335e,#1d4ed8); color:#fff; border-radius:14px; padding:14px 20px; margin:10px 0 12px 0; display:flex; justify-content:space-between; align-items:center;">'
+                f'  <div style="font-size:1.25rem; font-weight:800;">🏛️ {l_title_safe}</div>'
+                f'  <div style="font-size:0.88rem; font-weight:700; background:rgba(255,255,255,0.18); padding:4px 12px; border-radius:999px;">{slide_titles[cur_s]}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            narration_text = ""
+
+            if cur_s == 0:
+                hq = html_lib.escape(str(lesson_data.get("hook_question", "")))
+                hc = html_lib.escape(str(lesson_data.get("hook_context", "")))
+                st.markdown(
+                    f'<div style="background:#ffffff; border:2px solid #93c5fd; border-radius:16px; padding:26px; box-shadow:0 4px 16px rgba(15,52,96,0.08);">'
+                    f'  <div style="font-size:0.9rem; font-weight:800; color:#1d4ed8; text-transform:uppercase; margin-bottom:10px;">⏱️ Φάση 1 (5 λεπτά) — Σωκρατική Αφόρμηση</div>'
+                    f'  <div style="font-size:1.45rem; font-weight:800; color:#0c335e; line-height:1.35; margin-bottom:14px;">«{hq}»</div>'
+                    f'  <div style="font-size:1.08rem; color:#334155; line-height:1.55;">{hc}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                narration_text = f"{lesson_data.get('title', '')}. {lesson_data.get('hook_question', '')} {lesson_data.get('hook_context', '')}"
+
+            elif cur_s == 1:
+                cards = lesson_data.get("key_cards", [])
+                card_colors = [
+                    ("#eff6ff", "#2563eb", "#1e3a8a"),
+                    ("#ecfdf5", "#059669", "#065f46"),
+                    ("#fffbeb", "#d97706", "#78350f"),
+                    ("#faf5ff", "#7c3aed", "#4c1d95"),
+                    ("#fef2f2", "#dc2626", "#7f1d1d"),
+                    ("#f0fdfa", "#0d9488", "#134e4a"),
+                ]
+                cards_blocks = []
+                narr_parts = ["Ας δούμε τις βασικές έννοιες-κλειδιά του μαθήματος."]
+                for ci, c in enumerate(cards):
+                    bg, brd, txt = card_colors[ci % len(card_colors)]
+                    ic = html_lib.escape(str(c.get("icon", "📌")))
+                    tm = html_lib.escape(str(c.get("term", "")))
+                    ds = html_lib.escape(str(c.get("desc", "")))
+                    cards_blocks.append(
+                        f'<div style="background:{bg}; border:2px solid {brd}; border-radius:14px; padding:16px; box-shadow:0 3px 10px rgba(15,23,42,0.06);">'
+                        f'  <div style="font-size:1.15rem; font-weight:800; color:{txt}; margin-bottom:6px;">{ic} {tm}</div>'
+                        f'  <div style="font-size:0.98rem; color:#1e293b; line-height:1.45;">{ds}</div>'
+                        f'</div>'
+                    )
+                    narr_parts.append(f"{c.get('term', '')}: {c.get('desc', '')}")
+                st.markdown(
+                    f'<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin:6px 0;">'
+                    f'{"".join(cards_blocks)}'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                narration_text = " ".join(narr_parts)
+
+            elif cur_s == 2:
+                diag = lesson_data.get("diagram", {})
+                st.markdown(render_lesson_diagram_html(diag), unsafe_allow_html=True)
+                d_parts = [f"Ας δούμε πώς συνδέονται οι έννοιες στο διάγραμμα: {diag.get('center', '')}."]
+                for n in diag.get("nodes", []):
+                    d_parts.append(f"Βήμα {n.get('step', '')}, {n.get('label', '')}: {n.get('detail', '')}.")
+                narration_text = " ".join(d_parts)
+
+            elif cur_s == 3:
+                d_qs = lesson_data.get("discussion_questions", [])
+                q_blocks = []
+                for qi, qtxt in enumerate(d_qs, 1):
+                    q_blocks.append(
+                        f'<div style="background:#f8fafc; border-left:5px solid #1d4ed8; border-radius:10px; padding:14px 16px; margin-bottom:10px;">'
+                        f'  <span style="font-weight:800; color:#1d4ed8;">Ερώτημα {qi}:</span> '
+                        f'  <span style="font-size:1.08rem; color:#0f172a;">{html_lib.escape(str(qtxt))}</span>'
+                        f'</div>'
+                    )
+                st.markdown(
+                    f'<div style="background:#ffffff; border:2px solid #93c5fd; border-radius:16px; padding:22px;">'
+                    f'  <div style="font-size:0.95rem; font-weight:800; color:#1d4ed8; margin-bottom:12px;">👥 Φάση 4 (10 λεπτά) — Συζήτηση & Ομαδική Δραστηριότητα</div>'
+                    f'  {"".join(q_blocks)}'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                narration_text = "Ώρα για συζήτηση στην τάξη. " + " ".join([str(q) for q in d_qs])
+
+            elif cur_s == 4:
+                s_pts = lesson_data.get("summary_points", [])
+                s_items = "".join(
+                    f'<li style="margin-bottom:8px; font-size:1.08rem; color:#0f172a;"><b>{html_lib.escape(str(sp))}</b></li>'
+                    for sp in s_pts
+                )
+                st.markdown(
+                    f'<div style="background:#ecfdf5; border:2px solid #10b981; border-radius:16px; padding:20px; margin-bottom:14px;">'
+                    f'  <div style="font-size:1.02rem; font-weight:800; color:#065f46; margin-bottom:10px;">✅ Τι κρατάμε από το σημερινό μάθημα:</div>'
+                    f'  <ul style="margin:0; padding-left:20px;">{s_items}</ul>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown("#### 🎯 Γρήγορο Κουίζ Κλεισίματος (3 Ερωτήσεις)")
+                for qi, qitem in enumerate(lesson_data.get("mini_quiz", []), 1):
+                    st.markdown(f"**{qi}. {qitem.get('q', '')}**")
+                    with st.expander(f"👁️ Εμφάνιση Απάντησης #{qi}", expanded=False):
+                        st.success(qitem.get("a", ""))
+                narration_text = "Ας κάνουμε τη σύνοψη του μαθήματος. " + " ".join([str(s) for s in s_pts])
+
+            # Πλοήγηση Προηγούμενη / Επόμενη + Αφήγηση + Εξαγωγή Word
+            st.write("")
+            nav1, nav2, nav3 = st.columns([1, 2, 1])
+            with nav1:
+                if st.button("⬅️ Προηγούμενη", disabled=(cur_s == 0), use_container_width=True, key="slide_prev"):
+                    st.session_state.lesson_slide_idx = cur_s - 1
+                    st.rerun()
+            with nav2:
+                lesson_md = lesson_json_to_markdown(lesson_data)
+                today_str = datetime.date.today().strftime("%Y%m%d")
+                today_gr = datetime.date.today().strftime("%d/%m/%Y")
+                lesson_docx = build_school_docx(
+                    title=f"45λεπτη Διδασκαλία — {lesson_data.get('title', '')}",
+                    subtitle=f"{l_grade}  •  {l_subject}  •  {today_gr}",
+                    markdown_body=lesson_md,
+                    include_student_header=False,
+                    split_solutions_page=True,
+                )
+                if lesson_docx:
+                    st.download_button(
+                        label="🖨️ Λήψη Πλάνου σε Word (.docx)",
+                        data=lesson_docx,
+                        file_name=f"Parousiasi_45min_{today_str}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True
+                    )
+            with nav3:
+                if st.button("Επόμενη ➡️", disabled=(cur_s == 4), type="primary", use_container_width=True, key="slide_next"):
+                    st.session_state.lesson_slide_idx = cur_s + 1
+                    st.rerun()
+
+            if narration_text:
+                render_tts_widget(narration_text, msg_idx=9000 + cur_s)
 
     st.stop()
 
