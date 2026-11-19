@@ -417,6 +417,27 @@ def detect_policy_violation(text):
             return True, "ΥΒΡΙΣΤΙΚΟ / ΑΚΑΤΑΛΛΗΛΟ ΠΕΡΙΕΧΟΜΕΝΟ ΓΙΑ ΑΝΗΛΙΚΟΥΣ"
     return False, None
 
+DIRECT_ANSWER_DEMAND_PATTERNS = [
+    "πες μου τη λυση", "πες μου την λυση", "δωσε μου τη λυση", "δωσε μου την λυση",
+    "πες μου την απαντηση", "πες μου τη σωστη απαντηση", "δωσε μου την απαντηση",
+    "δωσε μου τη σωστη απαντηση", "ετοιμη απαντηση", "ετοιμη λυση",
+    "λυσε μου την ασκηση", "λυσε μου το", "λυσε το εσυ", "λυσε την ασκηση",
+    "καντο εσυ", "κανε το εσυ", "κανε μου την ασκηση", "γραψε μου την εκθεση",
+    "γραψε μου την απαντηση", "γραψε μου τη λυση", "γραψε μου την ασκηση",
+    "πες το κατευθειαν", "πες μου κατευθειαν", "απαντησε ευθεως",
+    "πες μου απλα την απαντηση", "πες μου απλα τη λυση", "πες μου απλα το αποτελεσμα",
+    "δωσε μου το αποτελεσμα", "πες μου το αποτελεσμα", "μην με ρωτας πες",
+    "σταματα να ρωτας", "θελω ετοιμη", "θελω την απαντηση",
+    "θελω τη λυση", "πες μου εσυ τη λυση", "πες μου εσυ την απαντηση",
+    "give me the answer", "just tell me the answer", "solve it for me",
+    "give me the solution", "direct answer"
+]
+
+def detect_direct_answer_demand(text: str) -> bool:
+    """Εντοπίζει ρητές απαιτήσεις για έτοιμη λύση/απάντηση στο πιάτο."""
+    norm = normalize_text(text)
+    return any(p in norm for p in DIRECT_ANSWER_DEMAND_PATTERNS)
+
 # -------------------------------------------------------------
 # 5. Αρχικοποίηση Κατάστασης Συνεδρίας (Session State)
 # -------------------------------------------------------------
@@ -452,6 +473,8 @@ if "stuck_counter" not in st.session_state:
     st.session_state.stuck_counter = 0
 if "stuck_level" not in st.session_state:
     st.session_state.stuck_level = 0
+if "direct_answer_strikes" not in st.session_state:
+    st.session_state.direct_answer_strikes = 0
 
 # -------------------------------------------------------------
 # 6. Προσαρμοσμένο CSS — Πλήρες Γαλάζιο & Απόλυτη Καθαρότητα
@@ -1097,6 +1120,7 @@ with st.sidebar:
         st.session_state.pending_prompt = None
         st.session_state.stuck_counter = 0
         st.session_state.stuck_level = 0
+        st.session_state.direct_answer_strikes = 0
         st.rerun()
 
     # Εξαγωγή Σημειώσεων Μελέτης (όταν υπάρχει διάλογος)
@@ -1229,6 +1253,7 @@ if st.session_state.is_locked:
                 st.session_state.lock_reason = ""
                 st.session_state.messages = []
                 st.session_state.violations_in_session = 0
+                st.session_state.direct_answer_strikes = 0
                 st.success("Η εφαρμογή ξεκλειδώθηκε επιτυχώς από τον εκπαιδευτικό!")
                 st.rerun()
             else:
@@ -1905,6 +1930,30 @@ if prompt:
         st.session_state.locked_at = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         st.session_state.violations_in_session += 1
         st.rerun()
+
+    # 🚨 ΒΗΜΑ 1.5: ΕΛΕΓΧΟΣ ΕΠΙΜΟΝΗΣ ΑΠΑΙΤΗΣΗΣ ΕΤΟΙΜΗΣ ΛΥΣΗΣ (ΚΛΕΙΔΩΜΑ ΣΤΙΣ 2 ΦΟΡΕΣ)
+    if detect_direct_answer_demand(prompt):
+        st.session_state.direct_answer_strikes = st.session_state.get("direct_answer_strikes", 0) + 1
+        if st.session_state.direct_answer_strikes >= 2:
+            violation_reason = "ΕΠΙΜΟΝΗ ΑΠΑΙΤΗΣΗ ΕΤΟΙΜΗΣ ΛΥΣΗΣ (ANTI-CHEATING)"
+            log_security_violation(violation_reason, prompt, selected_grade, selected_subject)
+            st.session_state.is_locked = True
+            st.session_state.lock_reason = violation_reason
+            st.session_state.locked_at = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            st.session_state.violations_in_session += 1
+            st.session_state.direct_answer_strikes = 0
+            st.rerun()
+        else:
+            warning_msg = (
+                "⚠️ **Προειδοποίηση (1 από 2):** Ο Σωκράτης δεν δίνει έτοιμες απαντήσεις στο πιάτο! "
+                "Προσπάθησε με δικά σου λόγια και θα σε καθοδηγήσω βήμα-βήμα.\n\n"
+                "*Αν επιμείνεις άλλη μία φορά για έτοιμη λύση, θα καταγραφεί ως παραβίαση και η εφαρμογή θα κλειδώσει!*"
+            )
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            st.session_state.messages.append({"role": "assistant", "content": warning_msg})
+            st.rerun()
+    else:
+        st.session_state.direct_answer_strikes = 0
 
     # 🚨 ΒΗΜΑ 2: ΕΛΕΓΧΟΣ ΠΡΩΤΟΚΟΛΛΟΥ ΚΡΙΣΗΣ (Ψυχική Υγεία / Bullying)
     if check_crisis_text(prompt):
