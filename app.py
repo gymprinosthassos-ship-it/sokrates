@@ -475,6 +475,8 @@ if "stuck_level" not in st.session_state:
     st.session_state.stuck_level = 0
 if "direct_answer_strikes" not in st.session_state:
     st.session_state.direct_answer_strikes = 0
+if "welcome_fireworks_shown" not in st.session_state:
+    st.session_state.welcome_fireworks_shown = False
 
 # -------------------------------------------------------------
 # 6. Προσαρμοσμένο CSS — Πλήρες Γαλάζιο & Απόλυτη Καθαρότητα
@@ -1532,6 +1534,166 @@ if len(st.session_state.messages) == 0:
     cur_lvl_badge = lvl_names.get(st.session_state.get("support_level", "LEVEL_3"), "Τυπικό Γυμνασίου")
     welcome_text = f"Χαίρε! 🌟\n\nΕίμαι ο Σωκράτης. Είμαι εδώ για να μελετήσουμε μαζί με απλά λόγια, παραδείγματα και εικόνες!\n\n*Ενεργό Προφίλ: {cur_lvl_badge}*\n\nΠοιο θέμα ή ποια άσκηση θέλεις να δούμε τώρα;"
     st.session_state.messages.append({"role": "assistant", "content": welcome_text})
+
+def render_welcome_fireworks():
+    """Εμφανίζει απαλά, γιορτινά βεγγαλικά με ήχο μία φορά στο άνοιγμα του Σωκράτη."""
+    components.html(
+        """
+        <script>
+        (function() {
+            const doc = window.parent ? window.parent.document : document;
+            const win = window.parent || window;
+            if (doc.getElementById("socrates_fireworks_canvas")) return;
+
+            const canvas = doc.createElement("canvas");
+            canvas.id = "socrates_fireworks_canvas";
+            canvas.style.position = "fixed";
+            canvas.style.top = "0";
+            canvas.style.left = "0";
+            canvas.style.width = "100vw";
+            canvas.style.height = "100vh";
+            canvas.style.pointerEvents = "none";
+            canvas.style.zIndex = "999999";
+            doc.body.appendChild(canvas);
+
+            const ctx = canvas.getContext("2d");
+            function resize() {
+                canvas.width = win.innerWidth;
+                canvas.height = win.innerHeight;
+            }
+            resize();
+
+            // Ήχος βεγγαλικών (Web Audio API - ήπιος & εορταστικός, χωρίς εξωτερικά αρχεία)
+            const AudioCtx = win.AudioContext || win.webkitAudioContext;
+            let audioCtx = null;
+            function playFireworkPop(delaySec) {
+                if (!AudioCtx) return;
+                try {
+                    if (!audioCtx) audioCtx = new AudioCtx();
+                    if (audioCtx.state === "suspended") {
+                        audioCtx.resume().catch(() => {});
+                    }
+                    const now = audioCtx.currentTime + delaySec;
+
+                    // Απαλό "μπουμ" έκρηξης
+                    const osc = audioCtx.createOscillator();
+                    const oscGain = audioCtx.createGain();
+                    osc.type = "triangle";
+                    osc.frequency.setValueAtTime(170, now);
+                    osc.frequency.exponentialRampToValueAtTime(42, now + 0.18);
+                    oscGain.gain.setValueAtTime(0.18, now);
+                    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                    osc.connect(oscGain);
+                    oscGain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.24);
+
+                    // Απαλό "σπινθήρισμα" (crackle)
+                    const bufferSize = Math.floor(audioCtx.sampleRate * 0.35);
+                    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const output = noiseBuffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+                    }
+                    const whiteNoise = audioCtx.createBufferSource();
+                    whiteNoise.buffer = noiseBuffer;
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = "bandpass";
+                    filter.frequency.setValueAtTime(1600, now);
+                    const noiseGain = audioCtx.createGain();
+                    noiseGain.gain.setValueAtTime(0.11, now);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+                    whiteNoise.connect(filter);
+                    filter.connect(noiseGain);
+                    noiseGain.connect(audioCtx.destination);
+                    whiteNoise.start(now);
+                } catch (e) {}
+            }
+
+            // Αν ο browser μπλοκάρει τον αυτόματο ήχο, ξεκλειδώνει στο 1ο κλικ/άγγιγμα
+            const unlockOnce = function() {
+                if (audioCtx && audioCtx.state === "suspended") {
+                    audioCtx.resume().then(() => playFireworkPop(0)).catch(() => {});
+                }
+                doc.removeEventListener("click", unlockOnce);
+                doc.removeEventListener("touchstart", unlockOnce);
+            };
+            doc.addEventListener("click", unlockOnce, { once: true });
+            doc.addEventListener("touchstart", unlockOnce, { once: true });
+
+            const colors = ["#fbbf24", "#38bdf8", "#f472b6", "#34d399", "#a78bfa", "#fb923c"];
+            const particles = [];
+
+            function createBurst(cx, cy) {
+                const count = 42;
+                const baseColor = colors[Math.floor(Math.random() * colors.length)];
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
+                    const speed = 2.2 + Math.random() * 4.5;
+                    particles.push({
+                        x: cx,
+                        y: cy,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        alpha: 1,
+                        decay: 0.015 + Math.random() * 0.012,
+                        radius: 2 + Math.random() * 2.5,
+                        color: Math.random() > 0.35 ? baseColor : colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+
+            const bursts = [
+                { t: 100, x: 0.32, y: 0.28 },
+                { t: 500, x: 0.68, y: 0.24 },
+                { t: 950, x: 0.50, y: 0.20 },
+                { t: 1350, x: 0.78, y: 0.34 }
+            ];
+            bursts.forEach((b, idx) => {
+                setTimeout(() => {
+                    createBurst(canvas.width * b.x, canvas.height * b.y);
+                    playFireworkPop(0);
+                }, b.t);
+            });
+
+            let startTime = performance.now();
+            function animate(now) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.06;
+                    p.vx *= 0.985;
+                    p.alpha -= p.decay;
+                    if (p.alpha <= 0) {
+                        particles.splice(i, 1);
+                        continue;
+                    }
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+                if (now - startTime < 3100 || particles.length > 0) {
+                    win.requestAnimationFrame(animate);
+                } else {
+                    if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+                }
+            }
+            win.requestAnimationFrame(animate);
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+if not st.session_state.welcome_fireworks_shown and not st.session_state.is_locked:
+    render_welcome_fireworks()
+    st.session_state.welcome_fireworks_shown = True
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
