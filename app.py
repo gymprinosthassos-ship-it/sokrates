@@ -23,6 +23,7 @@ AVATAR_PATH_PNG = os.path.join(BASE_DIR, "socrates_256.png")
 AVATAR_PATH_JPG = os.path.join(BASE_DIR, "socrates.jpg")
 SECURITY_LOG_PATH = os.path.join(BASE_DIR, "security_violations.csv")
 MISCONCEPTIONS_LOG_PATH = os.path.join(BASE_DIR, "misconceptions_log.json")
+DUEL_SETTINGS_PATH = os.path.join(BASE_DIR, "duel_settings.json")
 SECRETS_PATH = os.path.join(BASE_DIR, ".streamlit", "secrets.toml")
 import hmac
 
@@ -537,6 +538,16 @@ if "socratic_audits" not in st.session_state:
     st.session_state.socratic_audits = []
 if "consecutive_explanations" not in st.session_state:
     st.session_state.consecutive_explanations = 0
+if "duel_mode_active" not in st.session_state:
+    st.session_state.duel_mode_active = False
+if "duel_study_steps" not in st.session_state:
+    st.session_state.duel_study_steps = 0
+if "duel_confirmed_correct" not in st.session_state:
+    st.session_state.duel_confirmed_correct = 0
+if "duel_warning_penalty" not in st.session_state:
+    st.session_state.duel_warning_penalty = 0
+if "duel_state" not in st.session_state:
+    st.session_state.duel_state = None
 if "active_model" not in st.session_state:
     st.session_state.active_model = "gemini-3.5-flash-lite"
 if "support_level" not in st.session_state:
@@ -1274,6 +1285,190 @@ def format_misconceptions_markdown(records: list) -> str:
             lines.append(f"  - Παράδειγμα: `{ex_txt}`{suffix}")
     return "\n".join(lines) + "\n"
 
+# -------------------------------------------------------------
+# 7.7. Μονομαχία 2 Παικτών (Έλεγχος Ξεκλειδώματος, Πολιτική & AI Ερωτήσεις)
+# -------------------------------------------------------------
+def load_duel_policy() -> str:
+    """Επιστρέφει τη ρύθμιση Καθηγητή για τη Μονομαχία: 'study_goal' | 'unlocked_all' | 'disabled'."""
+    if not os.path.exists(DUEL_SETTINGS_PATH):
+        return "study_goal"
+    try:
+        with open(DUEL_SETTINGS_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            pol = data.get("policy", "study_goal")
+            return pol if pol in ("study_goal", "unlocked_all", "disabled") else "study_goal"
+    except Exception:
+        return "study_goal"
+
+def save_duel_policy(policy: str):
+    if policy not in ("study_goal", "unlocked_all", "disabled"):
+        policy = "study_goal"
+    try:
+        with open(DUEL_SETTINGS_PATH, "w", encoding="utf-8") as f:
+            json.dump({"policy": policy}, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def compute_duel_unlock_status(
+    policy: str,
+    support_level: str,
+    study_steps: int,
+    confirmed_correct: int,
+    warning_penalty: int,
+    has_active_warning: bool,
+) -> dict:
+    """Υπολογίζει αν είναι ξεκλείδωτη η Μονομαχία 2 Παικτών βάσει πολιτικής Καθηγητή & προόδου μαθητή."""
+    if policy == "disabled":
+        return {
+            "unlocked": False,
+            "disabled_by_teacher": True,
+            "progress": 0,
+            "target": 3,
+            "label": "🔒 Μονομαχία (Κλειστή)",
+            "help": "Η Μονομαχία είναι απενεργοποιημένη από τον εκπαιδευτικό.",
+        }
+    if policy == "unlocked_all":
+        return {
+            "unlocked": True,
+            "disabled_by_teacher": False,
+            "progress": 3,
+            "target": 3,
+            "label": "⚔️ Μονομαχία 2 Παικτών",
+            "help": "Ξεκλείδωτη για όλη την τάξη από τον εκπαιδευτικό!",
+        }
+
+    # Προεπιλογή: 'study_goal'
+    base_target = 2 if support_level == "LEVEL_1" else 3
+    target = base_target + max(0, warning_penalty)
+    progress = min(target, max(0, study_steps))
+
+    if support_level == "LEVEL_1":
+        unlocked = (study_steps >= target) and (not has_active_warning)
+    else:
+        unlocked = (study_steps >= target) and (confirmed_correct >= 1) and (not has_active_warning)
+
+    if unlocked:
+        return {
+            "unlocked": True,
+            "disabled_by_teacher": False,
+            "progress": target,
+            "target": target,
+            "label": f"⚔️ Μονομαχία 2 Παικτών (🔑 {target}/{target})",
+            "help": "Μπράβο! Ξεκλείδωσες 1 Μονομαχία 2 Παικτών!",
+        }
+
+    reason_hint = (
+        f"Κάνε {target} ουσιαστικές προσπάθειες στο μάθημα"
+        + (" (και τουλάχιστον 1 σωστό βήμα)" if support_level != "LEVEL_1" else "")
+        + " για να ξεκλειδώσεις 1 Μονομαχία!"
+    )
+    return {
+        "unlocked": False,
+        "disabled_by_teacher": False,
+        "progress": progress,
+        "target": target,
+        "label": f"🔒 Μονομαχία (🔑 {progress} / {target})",
+        "help": reason_hint,
+    }
+
+def generate_duel_questions_json(grade: str, subject: str, book_topics: str, support_level: str, chapter_focus: str = ""):
+    """Παράγει και τις 6 ερωτήσεις της Μονομαχίας σε ΜΙΑ (1) κλήση AI (με επιλογές, στοιχεία & κατηγορίες)."""
+    client = get_genai_client(api_key)
+    models_to_try = [
+        st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+        "gemini-3.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+    ]
+    seen_m = set()
+    ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
+
+    lvl_instr = (
+        "ΠΟΛΥ ΑΠΛΕΣ, σύντομες προτάσεις (4-8 λέξεις), κατάλληλες για Επίπεδο 1 / Ειδική Αγωγή, χωρίς παγίδες."
+        if support_level == "LEVEL_1"
+        else ("Απλή, καθαρή διατύπωση για Γυμνάσιο (Επίπεδο 2)." if support_level == "LEVEL_2" else "Ερωτήσεις κατανόησης & κριτικής σκέψης επιπέδου Γυμνασίου.")
+    )
+
+    duel_prompt = f"""
+Είσαι ο Σωκράτης, εκπαιδευτικός Γυμνασίου στην Ελλάδα.
+Ετοίμασε ΑΚΡΙΒΩΣ 6 σύντομες, διασκεδαστικές και παιδαγωγικές ερωτήσεις για μια «Μονομαχία 2 Παικτών» (3 γύροι ανά παίκτη).
+
+ΣΤΟΙΧΕΙΑ:
+- Τάξη: {grade}
+- Μάθημα: {subject}
+- Επίσημη ύλη: {book_topics}
+{f'- Ειδικό κεφάλαιο/θέμα: {chapter_focus}' if chapter_focus.strip() else ''}
+- Επίπεδο δυσκολίας: {lvl_instr}
+
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON (χωρίς κανένα επιπλέον κείμενο) με λίστα 6 αντικειμένων:
+{{
+  "questions": [
+    {{
+      "q": "Σύντομη, ξεκάθαρη ερώτηση",
+      "choices": ["Επιλογή Α", "Επιλογή Β", "Επιλογή Γ"],
+      "correct_choice": "Επιλογή Α",
+      "expected_answer": "Σύντομη σωστή απάντηση (1 πρόταση)",
+      "hint": "Ένα μικρό σωκρατικό στοιχείο για 2η ευκαιρία (ΧΩΡΙΣ να δίνει την έτοιμη απάντηση!)",
+      "topic": "Σύντομη κατηγορία 2-3 λέξεων (π.χ. Δυνάμεις, Περσικοί Πόλεμοι)"
+    }}
+  ]
+}}
+Βεβαιώσου ότι το correct_choice ταιριάζει ΑΚΡΙΒΩΣ με μία από τις 3 choices και ότι υπάρχουν ακριβώς 6 ερωτήσεις.
+"""
+    for m_name in ordered_models:
+        for try_no_think in (True, False):
+            try:
+                cfg = build_fast_config(
+                    m_name,
+                    disable_thinking=try_no_think,
+                    temperature=0.6,
+                    max_output_tokens=1600,
+                    response_mime_type="application/json",
+                )
+                resp = client.models.generate_content(model=m_name, contents=duel_prompt, config=cfg)
+                raw = (resp.text or "").strip()
+                raw = re.sub(r'^```(?:json)?\s*', '', raw)
+                raw = re.sub(r'\s*```$', '', raw)
+                parsed = json.loads(raw)
+                qs = parsed.get("questions", []) if isinstance(parsed, dict) else []
+                if isinstance(qs, list) and len(qs) >= 6:
+                    return qs[:6]
+            except Exception as err:
+                err_txt = str(err).lower()
+                if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                    continue
+                break
+    return None
+
+def judge_duel_free_answer(question_text: str, expected_answer: str, student_answer: str) -> bool:
+    """Ελέγχει γρήγορα και δίκαια (δέχεται συνώνυμα/μικρά ορθογραφικά) ελεύθερη απάντηση στη Μονομαχία."""
+    norm_st = normalize_text(student_answer or "").strip()
+    if not norm_st or norm_st in ("δεν ξερω", "δεν εχω ιδεα", "πασο", "παραδιδω"):
+        return False
+    norm_exp = normalize_text(expected_answer or "").strip()
+    if norm_st == norm_exp or (len(norm_st) >= 4 and norm_st in norm_exp):
+        return True
+    try:
+        client = get_genai_client(api_key)
+        m_name = st.session_state.get("active_model", "gemini-3.5-flash-lite")
+        judge_p = (
+            f"Ερώτηση Γυμνασίου: {question_text}\n"
+            f"Αναμενόμενη σωστή απάντηση: {expected_answer}\n"
+            f"Απάντηση μαθητή: {student_answer}\n"
+            f"Είναι ουσιαστικά σωστή η απάντηση του μαθητή (αγνοώντας μικρά ορθογραφικά ή συνώνυμα); "
+            f"Απάντησε ΜΟΝΟ με μία λέξη: YES ή NO."
+        )
+        r = client.models.generate_content(
+            model=m_name,
+            contents=judge_p,
+            config=build_fast_config(m_name, disable_thinking=True, temperature=0.0, max_output_tokens=10),
+        )
+        return "YES" in (r.text or "").upper()
+    except Exception:
+        # Εφεδρικός έλεγχος λέξεων-κλειδιών αν υπάρξει πρόβλημα δικτύου
+        exp_words = [w for w in re.sub(r'[^\w\s]', ' ', norm_exp).split() if len(w) >= 4]
+        return bool(exp_words) and any(w in norm_st for w in exp_words)
+
 def evaluate_socratic_turn(
     student_prompt: str,
     final_response: str,
@@ -1702,7 +1897,39 @@ with st.sidebar:
         st.session_state.direct_answer_strikes = 0
         st.session_state.socratic_audits = []
         st.session_state.consecutive_explanations = 0
+        st.session_state.duel_mode_active = False
+        st.session_state.duel_state = None
         st.rerun()
+
+    # 🔒 Μονομαχία 2 Παικτών (με κίνητρο προόδου & έλεγχο Καθηγητή)
+    if st.session_state.active_mode == "student" and not st.session_state.is_locked:
+        duel_policy = load_duel_policy()
+        duel_info = compute_duel_unlock_status(
+            policy=duel_policy,
+            support_level=st.session_state.get("support_level", "LEVEL_3"),
+            study_steps=st.session_state.get("duel_study_steps", 0),
+            confirmed_correct=st.session_state.get("duel_confirmed_correct", 0),
+            warning_penalty=st.session_state.get("duel_warning_penalty", 0),
+            has_active_warning=(st.session_state.get("direct_answer_strikes", 0) >= 1),
+        )
+        if duel_info["unlocked"]:
+            if st.button(
+                duel_info["label"],
+                key="side_btn_duel_open",
+                type="primary" if st.session_state.duel_mode_active else "secondary",
+                use_container_width=True,
+                help=duel_info["help"],
+            ):
+                st.session_state.duel_mode_active = not st.session_state.duel_mode_active
+                st.rerun()
+        else:
+            st.button(
+                duel_info["label"],
+                key="side_btn_duel_locked",
+                disabled=True,
+                use_container_width=True,
+                help=duel_info["help"],
+            )
 
     # Εξαγωγή Σημειώσεων Μελέτης (όταν υπάρχει διάλογος)
     if len(st.session_state.messages) > 1 and not st.session_state.is_locked:
@@ -2232,6 +2459,30 @@ if st.session_state.active_mode == "teacher":
         if st.button("🔒 Κλείδωμα για Μαθητές", use_container_width=True):
             st.session_state.teacher_unlocked = False
             st.rerun()
+
+    # Διακόπτης 3 Θέσεων Καθηγητή για τη «Μονομαχία 2 Παικτών»
+    duel_pol_labels = {
+        "study_goal": "🎯 Με στόχο μελέτης (3/3)",
+        "unlocked_all": "🔓 Ξεκλείδωτο για όλους τώρα",
+        "disabled": "🚫 Κλειστό",
+    }
+    cur_duel_pol = load_duel_policy()
+    col_dp1, col_dp2 = st.columns([1, 2])
+    with col_dp1:
+        st.markdown('<div style="padding-top:6px; font-weight:700; color:#0c335e; font-size:0.88rem;">⚔️ Μονομαχία 2 Παικτών:</div>', unsafe_allow_html=True)
+    with col_dp2:
+        chosen_pol = st.radio(
+            "Ρύθμιση Μονομαχίας:",
+            options=list(duel_pol_labels.keys()),
+            format_func=lambda k: duel_pol_labels[k],
+            index=list(duel_pol_labels.keys()).index(cur_duel_pol),
+            horizontal=True,
+            label_visibility="collapsed",
+            key="teacher_duel_policy_radio",
+        )
+        if chosen_pol != cur_duel_pol:
+            save_duel_policy(chosen_pol)
+            st.toast(f"✅ Ρύθμιση Μονομαχίας: {duel_pol_labels[chosen_pol]}")
 
     tab_worksheets, tab_simplifier, tab_eval, tab_lesson, tab_misconceptions = st.tabs([
         "📝 Φύλλα Εργασίας",
@@ -3010,6 +3261,240 @@ if st.session_state.active_mode == "teacher":
     st.stop()
 
 # -------------------------------------------------------------
+# 10.8. ΑΡΕΝΑ «ΜΟΝΟΜΑΧΙΑ 2 ΠΑΙΚΤΩΝ» (3 ΓΥΡΟΙ × 2 ΠΑΙΚΤΕΣ = 6 ΕΡΩΤΗΣΕΙΣ)
+# -------------------------------------------------------------
+if st.session_state.active_mode == "student" and st.session_state.get("duel_mode_active", False):
+    cur_duel_pol = load_duel_policy()
+    if cur_duel_pol == "disabled":
+        st.session_state.duel_mode_active = False
+        st.session_state.duel_state = None
+        st.rerun()
+
+    cur_lvl_duel = st.session_state.get("support_level", "LEVEL_3")
+    d_state = st.session_state.get("duel_state", None)
+
+    st.markdown(f"""
+    <div style="background:linear-gradient(135deg,#0c335e,#1d4ed8); color:#fff; border-radius:16px; padding:14px 20px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div style="font-size:1.3rem; font-weight:800;">⚔️ Μονομαχία 2 Παικτών — Σωκράτης</div>
+        <div style="font-size:0.88rem; font-weight:700; background:rgba(255,255,255,0.18); padding:4px 12px; border-radius:999px;">{selected_grade} • {selected_subject}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- ΟΘΟΝΗ 1: ΡΥΘΜΙΣΗ ΟΝΟΜΑΤΩΝ & ΕΝΑΡΞΗ ---
+    if d_state is None:
+        st.markdown("""
+        <div style="background:#ffffff; border:1.5px solid #93c5fd; border-radius:14px; padding:16px 20px; margin-bottom:14px; color:#1e293b;">
+            <b>🎯 Κανόνες Μονομαχίας (3 γύροι ανά παίκτη — 6 ερωτήσεις):</b><br>
+            • Σωστή απάντηση με την 1η προσπάθεια: <b>+2 ⭐</b><br>
+            • Λάθος ή «δεν ξέρω»: ο Σωκράτης δίνει <b>1 σωκρατικό στοιχείο</b> για 2η ευκαιρία (<b>+1 ⭐</b> αν το βρεις!)<br>
+            • Χωρίς χρονόμετρο — παίζουμε ήρεμα και μαθαίνουμε μαζί!
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_dn1, col_dn2 = st.columns(2)
+        with col_dn1:
+            p1_name = st.text_input("🧑 Όνομα Παίκτη 1:", value="Παίκτης 1", max_chars=24, key="duel_p1_in")
+        with col_dn2:
+            p2_name = st.text_input("🧑 Όνομα Παίκτη 2:", value="Παίκτης 2", max_chars=24, key="duel_p2_in")
+
+        duel_chapter = st.text_input(
+            "📌 Κεφάλαιο ή Θέμα (Προαιρετικό):",
+            placeholder="π.χ. Κλάσματα, Περσικοί Πόλεμοι, Κύτταρο...",
+            key="duel_chapter_in",
+        )
+
+        col_db1, col_db2 = st.columns([2, 1])
+        with col_db1:
+            if st.button("🚀 Έναρξη Μονομαχίας (6 Ερωτήσεις)", type="primary", use_container_width=True, key="btn_start_duel"):
+                with st.spinner("⚔️ Ο Σωκράτης ετοιμάζει τις 6 ερωτήσεις της Μονομαχίας..."):
+                    qs = generate_duel_questions_json(selected_grade, selected_subject, book_topics, cur_lvl_duel, duel_chapter)
+                if qs:
+                    st.session_state.duel_state = {
+                        "p1": p1_name.strip() or "Παίκτης 1",
+                        "p2": p2_name.strip() or "Παίκτης 2",
+                        "scores": [0, 0],
+                        "questions": qs,
+                        "q_idx": 0,
+                        "attempt": 1,
+                        "feedback": "",
+                        "feedback_type": "info",
+                        "awaiting_next": False,
+                    }
+                    st.rerun()
+                else:
+                    st.error("⚠️ Δεν ήταν δυνατή η δημιουργία των ερωτήσεων αυτή τη στιγμή. Δοκιμάστε ξανά.")
+        with col_db2:
+            if st.button("↩️ Επιστροφή στο Μάθημα", use_container_width=True, key="btn_cancel_duel"):
+                st.session_state.duel_mode_active = False
+                st.session_state.duel_state = None
+                st.rerun()
+        st.stop()
+
+    # --- ΟΘΟΝΗ 3: ΤΕΛΟΣ ΜΟΝΟΜΑΧΙΑΣ (ΘΕΤΙΚΟΙ ΤΙΤΛΟΙ & ΕΠΑΝΑΚΛΕΙΔΩΜΑ) ---
+    if d_state["q_idx"] >= len(d_state["questions"]):
+        p1, p2 = d_state["p1"], d_state["p2"]
+        s1, s2 = d_state["scores"][0], d_state["scores"][1]
+
+        if s1 > s2:
+            t1, t2 = "🏆 Πρωταθλητής Στοχασμού", "🌟 Άξιος Εξερευνητής της Γνώσης"
+        elif s2 > s1:
+            t1, t2 = "🌟 Άξιος Εξερευνητής της Γνώσης", "🏆 Πρωταθλητής Στοχασμού"
+        else:
+            t1, t2 = "🤝 Ισόπαλος Φιλόσοφος", "🤝 Ισόπαλος Φιλόσοφος"
+
+        st.markdown(f"""
+        <div style="background:#ffffff; border:2px solid #1d4ed8; border-radius:18px; padding:24px; text-align:center; box-shadow:0 6px 20px rgba(15,52,96,0.1); margin-bottom:16px;">
+            <div style="font-size:2rem; margin-bottom:6px;">🎉 ⚔️ 🎉</div>
+            <h2 style="color:#0c335e; margin:0 0 14px 0;">Τέλος Μονομαχίας! Μπράβο και στους δύο!</h2>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+                <div style="background:#eff6ff; border:2px solid #2563eb; border-radius:14px; padding:16px;">
+                    <div style="font-size:1.15rem; font-weight:800; color:#1e3a8a;">{html_lib.escape(p1)}</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:#d97706; margin:6px 0;">{s1} ⭐</div>
+                    <div style="font-size:0.95rem; font-weight:700; color:#1d4ed8;">{t1}</div>
+                </div>
+                <div style="background:#ecfdf5; border:2px solid #059669; border-radius:14px; padding:16px;">
+                    <div style="font-size:1.15rem; font-weight:800; color:#065f46;">{html_lib.escape(p2)}</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:#d97706; margin:6px 0;">{s2} ⭐</div>
+                    <div style="font-size:0.95rem; font-weight:700; color:#047857;">{t2}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("↩️ Επιστροφή στο Μάθημα", type="primary", use_container_width=True, key="btn_finish_duel_return"):
+            # Αυτόματο επανακλείδωμα (0/3 ή 0/2) μετά το τέλος της 1 Μονομαχίας!
+            st.session_state.duel_mode_active = False
+            st.session_state.duel_state = None
+            st.session_state.duel_study_steps = 0
+            st.session_state.duel_confirmed_correct = 0
+            st.session_state.duel_warning_penalty = 0
+            st.rerun()
+        st.stop()
+
+    # --- ΟΘΟΝΗ 2: ΖΩΝΤΑΝΗ ΜΟΝΟΜΑΧΙΑ (ΕΝΑΛΛΑΞ ΣΕΙΡΑ) ---
+    q_idx = d_state["q_idx"]
+    p_turn = q_idx % 2  # 0 -> Παίκτης 1, 1 -> Παίκτης 2
+    cur_player = d_state["p1"] if p_turn == 0 else d_state["p2"]
+    cur_round = (q_idx // 2) + 1
+    cur_q = d_state["questions"][q_idx]
+
+    # Πίνακας Σκορ + Ένδειξη Σειράς
+    st.markdown(f"""
+    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; margin-bottom:12px;">
+        <div style="background:{'#dbeafe' if p_turn == 0 else '#f8fafc'}; border:2px solid {'#1d4ed8' if p_turn == 0 else '#cbd5e1'}; border-radius:12px; padding:10px; text-align:center;">
+            <div style="font-weight:800; color:#0c335e;">{html_lib.escape(d_state['p1'])}</div>
+            <div style="font-size:1.3rem; font-weight:800; color:#d97706;">{d_state['scores'][0]} ⭐</div>
+        </div>
+        <div style="background:#ffffff; border:1.5px solid #93c5fd; border-radius:12px; padding:8px 14px; text-align:center; font-size:0.86rem; font-weight:700; color:#1e3a5f;">
+            Γύρος {cur_round} / 3<br>Ερώτηση {q_idx + 1} / 6
+        </div>
+        <div style="background:{'#d1fae5' if p_turn == 1 else '#f8fafc'}; border:2px solid {'#059669' if p_turn == 1 else '#cbd5e1'}; border-radius:12px; padding:10px; text-align:center;">
+            <div style="font-weight:800; color:#065f46;">{html_lib.escape(d_state['p2'])}</div>
+            <div style="font-size:1.3rem; font-weight:800; color:#d97706;">{d_state['scores'][1]} ⭐</div>
+        </div>
+    </div>
+    <div style="background:#fffbeb; border:2px solid #f59e0b; border-radius:12px; padding:10px 16px; text-align:center; font-size:1.15rem; font-weight:800; color:#92400e; margin-bottom:12px;">
+        🎯 Σειρά του: {html_lib.escape(cur_player)}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Κάρτα Ερώτησης
+    st.markdown(f"""
+    <div style="background:#ffffff; border:2px solid #93c5fd; border-radius:16px; padding:20px; margin-bottom:12px; box-shadow:0 4px 12px rgba(15,52,96,0.06);">
+        <div style="font-size:1.22rem; font-weight:800; color:#0c335e; line-height:1.4;">{html_lib.escape(str(cur_q.get('q', '')))}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Αν είμαστε στη 2η ευκαιρία, δείξε το Σωκρατικό Στοιχείο
+    if d_state["attempt"] == 2 and not d_state["awaiting_next"]:
+        st.markdown(f"""
+        <div style="background:#fef9c3; border:1.5px solid #eab308; border-radius:12px; padding:12px 16px; margin-bottom:12px; color:#713f12;">
+            💡 <b>Σωκρατικό Στοιχείο (2η ευκαιρία για +1 ⭐):</b> {html_lib.escape(str(cur_q.get('hint', 'Σκέψου ξανά με ηρεμία!')))}
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Μήνυμα ανατροφοδότησης
+    if d_state["feedback"]:
+        if d_state["feedback_type"] == "success":
+            st.success(d_state["feedback"])
+        elif d_state["feedback_type"] == "warning":
+            st.warning(d_state["feedback"])
+        else:
+            st.info(d_state["feedback"])
+
+    def _process_duel_submission(is_correct: bool, student_ans_text: str):
+        if is_correct:
+            pts = 2 if d_state["attempt"] == 1 else 1
+            d_state["scores"][p_turn] += pts
+            d_state["feedback"] = f"🌟 Μπράβο, {cur_player}! Σωστή απάντηση (+{pts} ⭐)!"
+            d_state["feedback_type"] = "success"
+            d_state["awaiting_next"] = True
+        else:
+            # Αθόρυβη & ανώνυμη (GDPR) καταγραφή λάθους στον Χάρτη Παρανοήσεων Καθηγητή
+            record_misconception(
+                grade=selected_grade,
+                subject=selected_subject,
+                topic=str(cur_q.get("topic", "Μονομαχία")),
+                example=f"{str(cur_q.get('q', ''))[:55]} → {student_ans_text[:55]}",
+                status="CAUGHT",
+            )
+            if d_state["attempt"] == 1:
+                d_state["attempt"] = 2
+                d_state["feedback"] = f"🤔 Όχι ακριβώς, {cur_player}! Διάβασε το στοιχείο του Σωκράτη και δοκίμασε 2η φορά (+1 ⭐)!"
+                d_state["feedback_type"] = "warning"
+            else:
+                d_state["feedback"] = f"📘 Καλή προσπάθεια, {cur_player}! Η σωστή απάντηση είναι: **{cur_q.get('expected_answer', cur_q.get('correct_choice', ''))}**"
+                d_state["feedback_type"] = "info"
+                d_state["awaiting_next"] = True
+        st.rerun()
+
+    if d_state["awaiting_next"]:
+        next_lbl = "🏁 Δες τα Τελικά Αποτελέσματα!" if q_idx == 5 else "➡️ Επόμενη Ερώτηση"
+        if st.button(next_lbl, type="primary", use_container_width=True, key=f"btn_duel_next_{q_idx}"):
+            d_state["q_idx"] += 1
+            d_state["attempt"] = 1
+            d_state["feedback"] = ""
+            d_state["awaiting_next"] = False
+            st.rerun()
+    else:
+        # Επίπεδο 1: 3 κουμπιά επιλογής, ΧΩΡΙΣ χρονόμετρο
+        if cur_lvl_duel == "LEVEL_1":
+            choices = cur_q.get("choices", [])[:3]
+            correct_ch = str(cur_q.get("correct_choice", "")).strip()
+            for ci, ch_txt in enumerate(choices):
+                if st.button(f"🔘 {ch_txt}", key=f"duel_ch_{q_idx}_{d_state['attempt']}_{ci}", use_container_width=True):
+                    is_ok = normalize_text(str(ch_txt)) == normalize_text(correct_ch)
+                    _process_duel_submission(is_ok, str(ch_txt))
+            if d_state["attempt"] == 1:
+                if st.button("🤷 Δεν ξέρω (Δώσε μου στοιχείο!)", key=f"duel_idk_l1_{q_idx}", use_container_width=True):
+                    _process_duel_submission(False, "Δεν ξέρω")
+        else:
+            # Επίπεδα 2 & 3: Ελεύθερη απάντηση + 2η ευκαιρία με στοιχείο
+            ans_in = st.text_input(
+                f"✍️ Η απάντηση του {cur_player}:",
+                placeholder="Γράψε εδώ την απάντησή σου...",
+                key=f"duel_ans_in_{q_idx}_{d_state['attempt']}",
+            )
+            col_da1, col_da2 = st.columns([2, 1])
+            with col_da1:
+                if st.button("✅ Υποβολή Απάντησης", type="primary", use_container_width=True, key=f"duel_sub_{q_idx}_{d_state['attempt']}"):
+                    if not ans_in.strip():
+                        st.warning("Γράψε πρώτα την απάντησή σου (ή πάτα «Δεν ξέρω»).")
+                    else:
+                        is_ok = judge_duel_free_answer(
+                            str(cur_q.get("q", "")),
+                            str(cur_q.get("expected_answer", cur_q.get("correct_choice", ""))),
+                            ans_in.strip(),
+                        )
+                        _process_duel_submission(is_ok, ans_in.strip())
+            with col_da2:
+                if d_state["attempt"] == 1:
+                    if st.button("🤷 Δεν ξέρω", use_container_width=True, key=f"duel_idk_{q_idx}"):
+                        _process_duel_submission(False, "Δεν ξέρω")
+
+    st.stop()
+
+# -------------------------------------------------------------
 # 11. Μήνυμα Υποδοχής & Εμφάνιση Ιστορικού (Κανονική Λειτουργία)
 # -------------------------------------------------------------
 if len(st.session_state.messages) == 0:
@@ -3449,6 +3934,7 @@ if prompt:
                 "*Αν επιμείνεις άλλη μία φορά για έτοιμη λύση, θα καταγραφεί ως παραβίαση και η εφαρμογή θα κλειδώσει!*"
             )
             # Απομόνωση της μπλόφας από το ιστορικό του AI ώστε να μην επηρεαστεί στον επόμενο γύρο
+            st.session_state.duel_warning_penalty = st.session_state.get("duel_warning_penalty", 0) + 1
             st.session_state.messages.append({"role": "user", "content": prompt, "exclude_from_history": True})
             st.session_state.messages.append({"role": "assistant", "content": warning_msg, "exclude_from_history": True})
             st.rerun()
@@ -3728,10 +4214,21 @@ if prompt:
                                 card_html = render_visual_card_html(matched_card)
                                 components.html(card_html, height=520, scrolling=True)
 
-                            praise_words = ["εύγε", "μπράβο", "συγχαρητήρια", "πολύ σωστά", "ακριβώς", "το βρήκες", "εξαιρετική σκέψη"]
-                            if any(w in full_response.lower() for w in praise_words):
+                            praise_words = ["εύγε", "μπράβο", "συγχαρητήρια", "πολύ σωστά", "ακριβώς", "το βρήκες", "εξαιρετική σκέψη", "σωστά", "τέλεια", "πολύ καλά"]
+                            got_confirmation = any(w in full_response.lower() for w in praise_words)
+                            if got_confirmation:
                                 st.session_state.stuck_counter = 0
                                 st.session_state.stuck_level = 0
+
+                            # 🔑 Ενημέρωση προόδου ξεκλειδώματος Μονομαχίας 2 Παικτών (μόνο με ουσιαστική προσπάθεια!)
+                            cur_lvl_prog = st.session_state.get("support_level", "LEVEL_3")
+                            if is_student_real_attempt(prompt):
+                                st.session_state.duel_study_steps = st.session_state.get("duel_study_steps", 0) + 1
+                                if got_confirmation:
+                                    st.session_state.duel_confirmed_correct = st.session_state.get("duel_confirmed_correct", 0) + 1
+                            elif cur_lvl_prog == "LEVEL_1" and got_confirmation:
+                                st.session_state.duel_study_steps = st.session_state.get("duel_study_steps", 0) + 1
+                                st.session_state.duel_confirmed_correct = st.session_state.get("duel_confirmed_correct", 0) + 1
                             
                             render_tts_widget(full_response, msg_idx=len(st.session_state.messages) - 1)
                             break
