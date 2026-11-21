@@ -553,6 +553,8 @@ if "duel_warning_penalty" not in st.session_state:
     st.session_state.duel_warning_penalty = 0
 if "duel_state" not in st.session_state:
     st.session_state.duel_state = None
+if "mini_game_state" not in st.session_state:
+    st.session_state.mini_game_state = None
 if "active_model" not in st.session_state:
     st.session_state.active_model = "gemini-3.5-flash-lite"
 if "support_level" not in st.session_state:
@@ -1486,6 +1488,114 @@ def judge_duel_free_answer(question_text: str, expected_answer: str, student_ans
         exp_words = [w for w in re.sub(r'[^\w\s]', ' ', norm_exp).split() if len(w) >= 4]
         return bool(exp_words) and any(w in norm_st for w in exp_words)
 
+def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topics: str, support_level: str, chapter_focus: str = ""):
+    """Παράγει σε ΜΙΑ (1) κλήση AI όλο το περιεχόμενο για: 'detective', 'myth_truth' ή 'escape'."""
+    client = get_genai_client(api_key)
+    models_to_try = [
+        st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+        "gemini-3.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+    ]
+    seen_m = set()
+    ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
+
+    lvl_instr = (
+        "ΠΟΛΥ ΑΠΛΕΣ προτάσεις (4-8 λέξεις), Easy-to-Read για Επίπεδο 1 / Ειδική Αγωγή, χωρίς παγίδες."
+        if support_level == "LEVEL_1"
+        else ("Απλή, καθαρή διατύπωση (Επίπεδο 2 Γυμνασίου)." if support_level == "LEVEL_2" else "Επίπεδο Γυμνασίου με κριτική σκέψη.")
+    )
+    focus_line = f"- Ειδικό κεφάλαιο/θέμα: {chapter_focus}" if chapter_focus.strip() else ""
+
+    if game_type == "detective":
+        schema_instr = """
+Ετοίμασε ΑΚΡΙΒΩΣ 5 σύντομες προτάσεις για το παιχνίδι «🕵️ Βρες το Λάθος του Σωκράτη!».
+Σε κάθε πρόταση, ο Σωκράτης κάνει ΕΠΙΤΗΔΕΣ 1 ξεκάθαρο λάθος (ιστορικό, μαθηματικό, επιστημονικό ή εννοιολογικό).
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{
+  "items": [
+    {
+      "statement": "Η πρόταση του Σωκράτη που περιέχει 1 λάθος",
+      "choices": ["Διόρθωση Α (σωστή)", "Διόρθωση Β", "Διόρθωση Γ"],
+      "correct_choice": "Διόρθωση Α (σωστή)",
+      "explanation": "Σύντομη επεξήγηση 1 πρότασης γιατί αυτό ήταν το λάθος",
+      "hint": "Ένα μικρό σωκρατικό στοιχείο χωρίς να δίνει την έτοιμη απάντηση",
+      "topic": "Σύντομη κατηγορία 2-3 λέξεων"
+    }
+  ]
+}"""
+        expected_len = 5
+    elif game_type == "myth_truth":
+        schema_instr = """
+Ετοίμασε ΑΚΡΙΒΩΣ 5 ζωντανές δηλώσεις (μείγμα Αλήθειας & Μύθου) για το παιχνίδι «⚖️ Μύθος ή Αλήθεια;».
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{
+  "items": [
+    {
+      "statement": "Σαφής δήλωση από την ύλη του μαθήματος",
+      "is_true": true,
+      "explanation": "Σύντομη, ζεστή εξήγηση 1 πρότασης από τον Σωκράτη",
+      "topic": "Σύντομη κατηγορία 2-3 λέξεων"
+    }
+  ]
+}"""
+        expected_len = 5
+    else:  # escape
+        schema_instr = """
+Ετοίμασε ΑΚΡΙΒΩΣ 4 διαδοχικούς γρίφους-λουκέτα για το παιχνίδι «🔐 Απόδραση από τη Βιβλιοθήκη του Σωκράτη».
+Κάθε λουκέτο έχει ένα μικρό ατμοσφαιρικό σενάριο 1 πρότασης και 1 ερώτηση γνώσεων από το μάθημα.
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{
+  "items": [
+    {
+      "lock_title": "Λουκέτο 1: Η Πύλη των Χειρογράφων",
+      "riddle": "Σύντομος γρίφος/ερώτηση από το μάθημα",
+      "choices": ["Επιλογή Α", "Επιλογή Β", "Επιλογή Γ"],
+      "correct_choice": "Επιλογή Α",
+      "hint": "Μικρό σωκρατικό στοιχείο για 2η ευκαιρία (χωρίς έτοιμη λύση)",
+      "explanation": "Τι ξεκλείδωσε (1 σύντομη πρόταση εμπέδωσης)",
+      "topic": "Σύντομη κατηγορία 2-3 λέξεων"
+    }
+  ]
+}"""
+        expected_len = 4
+
+    full_p = f"""
+Είσαι ο Σωκράτης, εκπαιδευτικός Γυμνασίου στην Ελλάδα.
+- Τάξη: {grade}
+- Μάθημα: {subject}
+- Επίσημη ύλη: {book_topics}
+{focus_line}
+- Επίπεδο: {lvl_instr}
+
+{schema_instr}
+Βεβαιώσου ότι οι επιλογές (choices) είναι ανακατεμένες και ότι το correct_choice ταιριάζει ΑΚΡΙΒΩΣ με μία από τις choices.
+"""
+    for m_name in ordered_models:
+        for try_no_think in (True, False):
+            try:
+                cfg = build_fast_config(
+                    m_name,
+                    disable_thinking=try_no_think,
+                    temperature=0.6,
+                    max_output_tokens=1600,
+                    response_mime_type="application/json",
+                )
+                resp = client.models.generate_content(model=m_name, contents=full_p, config=cfg)
+                raw = (resp.text or "").strip()
+                raw = re.sub(r'^```(?:json)?\s*', '', raw)
+                raw = re.sub(r'\s*```$', '', raw)
+                parsed = json.loads(raw)
+                items = parsed.get("items", []) if isinstance(parsed, dict) else []
+                if isinstance(items, list) and len(items) >= expected_len:
+                    return items[:expected_len]
+            except Exception as err:
+                err_txt = str(err).lower()
+                if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                    continue
+                break
+    return None
+
 def evaluate_socratic_turn(
     student_prompt: str,
     final_response: str,
@@ -1917,6 +2027,7 @@ with st.sidebar:
         st.session_state.duel_mode_active = False
         st.session_state.active_game_id = None
         st.session_state.duel_state = None
+        st.session_state.mini_game_state = None
         st.rerun()
 
     # 🔒 Παιχνίδια & Κουίζ (με κίνητρο προόδου & έλεγχο Καθηγητή)
@@ -3289,11 +3400,12 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         st.session_state.duel_mode_active = False
         st.session_state.active_game_id = None
         st.session_state.duel_state = None
+        st.session_state.mini_game_state = None
         st.rerun()
 
     cur_lvl_duel = st.session_state.get("support_level", "LEVEL_3")
 
-    # --- ΟΘΟΝΗ ΕΠΙΛΟΓΗΣ ΠΑΙΧΝΙΔΙΩΝ (GAMES HUB — ΕΠΕΚΤΑΣΙΜΟ ΠΛΕΓΜΑ ΚΑΡΤΩΝ) ---
+    # --- ΟΘΟΝΗ ΕΠΙΛΟΓΗΣ ΠΑΙΧΝΙΔΙΩΝ (GAMES HUB — 4 ΔΙΑΔΡΑΣΤΙΚΑ ΠΑΙΧΝΙΔΙΑ 2x2) ---
     if st.session_state.get("active_game_id") is None:
         st.markdown(f"""
         <div style="background:linear-gradient(135deg,#0c335e,#1d4ed8); color:#fff; border-radius:16px; padding:16px 20px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -3302,14 +3414,13 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         </div>
         """, unsafe_allow_html=True)
 
-        col_g1, col_g2 = st.columns(2)
-        with col_g1:
+        row1_c1, row1_c2 = st.columns(2)
+        with row1_c1:
             st.markdown("""
-            <div style="background:#ffffff; border:2px solid #2563eb; border-radius:16px; padding:18px; box-shadow:0 4px 14px rgba(29,78,216,0.1); min-height:165px;">
-                <div style="font-size:1.25rem; font-weight:800; color:#0c335e; margin-bottom:6px;">⚔️ Μονομαχία 2 Παικτών</div>
-                <div style="font-size:0.92rem; color:#334155; line-height:1.45;">
-                    3 γύροι ανά παίκτη (6 ερωτήσεις) πάνω στο μάθημά σου! Σωστή απάντηση με την 1η = <b>+2 ⭐</b>, 
-                    με σωκρατικό στοιχείο στη 2η ευκαιρία = <b>+1 ⭐</b>. Χωρίς χρονόμετρο!
+            <div style="background:#ffffff; border:2px solid #2563eb; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(29,78,216,0.08); min-height:145px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#0c335e; margin-bottom:6px;">⚔️ Μονομαχία 2 Παικτών</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    3 γύροι ανά παίκτη (6 ερωτήσεις) εναλλάξ! Σωστό με την 1η = <b>+2 ⭐</b>, 2η ευκαιρία με σωκρατικό στοιχείο = <b>+1 ⭐</b>.
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -3318,20 +3429,282 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 st.session_state.duel_state = None
                 st.rerun()
 
-        with col_g2:
+        with row1_c2:
             st.markdown("""
-            <div style="background:#f8fafc; border:2px dashed #94a3b8; border-radius:16px; padding:18px; min-height:165px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
-                <div style="font-size:1.6rem; margin-bottom:6px;">✨ 🧩 🏆</div>
-                <div style="font-size:1.05rem; font-weight:800; color:#475569;">Νέα Εκπαιδευτικά Παιχνίδια</div>
-                <div style="font-size:0.86rem; color:#64748b; margin-top:4px;">Σύντομα εδώ κι άλλα διαδραστικά κουίζ & προκλήσεις του Σωκράτη!</div>
+            <div style="background:#ffffff; border:2px solid #7c3aed; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(124,58,237,0.08); min-height:145px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#4c1d95; margin-bottom:6px;">🕵️ Βρες το Λάθος του Σωκράτη!</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    5 προτάσεις όπου ο Σωκράτης έκανε <b>επίτηδες 1 πονηρό λάθος</b>. Γίνε εσύ ο δάσκαλος και διόρθωσέ τον!
+                </div>
             </div>
             """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: 🕵️ Βρες το Λάθος!", type="primary", use_container_width=True, key="btn_open_game_detective"):
+                st.session_state.active_game_id = "detective"
+                st.session_state.mini_game_state = None
+                st.rerun()
+
+        st.write("")
+        row2_c1, row2_c2 = st.columns(2)
+        with row2_c1:
+            st.markdown("""
+            <div style="background:#ffffff; border:2px solid #059669; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(5,150,105,0.08); min-height:145px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#065f46; margin-bottom:6px;">⚖️ Μύθος ή Αλήθεια;</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    5 γρήγορες δηλώσεις από την ύλη με 2 μεγάλα κουμπιά (<b>✅ Αλήθεια</b> / <b>❌ Μύθος</b>) και άμεση εξήγηση!
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: ⚖️ Μύθος ή Αλήθεια;", type="primary", use_container_width=True, key="btn_open_game_myth"):
+                st.session_state.active_game_id = "myth_truth"
+                st.session_state.mini_game_state = None
+                st.rerun()
+
+        with row2_c2:
+            st.markdown("""
+            <div style="background:#ffffff; border:2px solid #d97706; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(217,119,6,0.08); min-height:145px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#78350f; margin-bottom:6px;">🔐 Απόδραση από τη Βιβλιοθήκη</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    Άνοιξε <b>4 διαδοχικά λουκέτα-γρίφους</b> από το μάθημα για να κερδίσεις το Χρυσό Κλειδί της Βιβλιοθήκης!
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: 🔐 Απόδραση!", type="primary", use_container_width=True, key="btn_open_game_escape"):
+                st.session_state.active_game_id = "escape"
+                st.session_state.mini_game_state = None
+                st.rerun()
 
         st.write("")
         if st.button("↩️ Επιστροφή στο Μάθημα", use_container_width=True, key="btn_hub_return"):
             st.session_state.duel_mode_active = False
             st.session_state.active_game_id = None
             st.rerun()
+        st.stop()
+
+    # ==============================================================
+    # ΠΑΙΧΝΙΔΙΑ 2, 3 & 4: ΝΤΕΤΕΚΤΙΒ, ΜΥΘΟΣ/ΑΛΗΘΕΙΑ & ΑΠΟΔΡΑΣΗ
+    # ==============================================================
+    active_gid = st.session_state.get("active_game_id")
+    if active_gid in ("detective", "myth_truth", "escape"):
+        meta_map = {
+            "detective": ("🕵️ Βρες το Λάθος του Σωκράτη!", "#4c1d95", "#7c3aed", "5 προτάσεις με 1 επίτηδες λάθος η καθεμία — γίνε εσύ ο δάσκαλος!"),
+            "myth_truth": ("⚖️ Μύθος ή Αλήθεια;", "#065f46", "#059669", "5 ζωντανές δηλώσεις από το μάθημα — πάτησε Αλήθεια ή Μύθος!"),
+            "escape": ("🔐 Απόδραση από τη Βιβλιοθήκη του Σωκράτη", "#78350f", "#d97706", "Ξεκλείδωσε και τα 4 λουκέτα-γρίφους για να ανοίξεις την πύλη!"),
+        }
+        g_title, g_dark, g_accent, g_desc = meta_map[active_gid]
+        mg = st.session_state.get("mini_game_state", None)
+
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,{g_dark},{g_accent}); color:#fff; border-radius:16px; padding:14px 20px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:1.25rem; font-weight:800;">{g_title}</div>
+            <div style="font-size:0.86rem; font-weight:700; background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:999px;">{selected_grade} • {selected_subject}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ΟΘΟΝΗ ΕΝΑΡΞΗΣ ΜΙΝΙ-ΠΑΙΧΝΙΔΙΟΥ
+        if mg is None:
+            st.markdown(f"""
+            <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; padding:16px 20px; margin-bottom:12px; color:#1e293b;">
+                <b>🎯 Πώς παίζεται:</b> {g_desc}<br>
+                • Χωρίς χρονόμετρο — παίζουμε ήρεμα και μαζεύουμε αστέρια (<b>⭐</b>)!
+            </div>
+            """, unsafe_allow_html=True)
+            mg_chapter = st.text_input(
+                "📌 Κεφάλαιο ή Θέμα (Προαιρετικό):",
+                placeholder="π.χ. Κλάσματα, Ιουστινιανός, Δημιουργία...",
+                key=f"mg_chap_{active_gid}",
+            )
+            c_m1, c_m2 = st.columns([2, 1])
+            with c_m1:
+                if st.button(f"🚀 Έναρξη: {g_title}", type="primary", use_container_width=True, key=f"btn_start_mg_{active_gid}"):
+                    with st.spinner("🎮 Ο Σωκράτης ετοιμάζει το παιχνίδι..."):
+                        items = generate_mini_game_json(active_gid, selected_grade, selected_subject, book_topics, cur_lvl_duel, mg_chapter)
+                    if items:
+                        st.session_state.mini_game_state = {
+                            "type": active_gid,
+                            "items": items,
+                            "idx": 0,
+                            "score": 0,
+                            "attempt": 1,
+                            "feedback": "",
+                            "feedback_type": "info",
+                            "awaiting_next": False,
+                            "unlocked_locks": 0,
+                        }
+                        st.rerun()
+                    else:
+                        st.error("⚠️ Δεν ήταν δυνατή η δημιουργία του παιχνιδιού αυτή τη στιγμή. Δοκιμάστε ξανά.")
+            with c_m2:
+                if st.button("↩️ Πίσω στα Παιχνίδια", use_container_width=True, key=f"btn_back_hub_{active_gid}"):
+                    st.session_state.active_game_id = None
+                    st.session_state.mini_game_state = None
+                    st.rerun()
+            st.stop()
+
+        # ΟΘΟΝΗ ΤΕΛΟΥΣ ΜΙΝΙ-ΠΑΙΧΝΙΔΙΟΥ
+        total_items = len(mg["items"])
+        if mg["idx"] >= total_items:
+            max_stars = total_items * 2
+            stars = mg["score"]
+            if active_gid == "escape":
+                end_badge = "🔑 Πήρες το Χρυσό Κλειδί της Βιβλιοθήκης!" if mg["unlocked_locks"] >= total_items else "🌟 Εξαιρετική προσπάθεια στη Βιβλιοθήκη!"
+            elif active_gid == "detective":
+                end_badge = "🕵️ Αρχι-Ντετέκτιβ του Σωκράτη!" if stars >= max_stars - 2 else "🌟 Άξιος Διορθωτής της Τάξης!"
+            else:
+                end_badge = "⚖️ Κριτής της Αλήθειας!" if stars >= max_stars - 2 else "🌟 Ερευνητής της Γνώσης!"
+
+            st.markdown(f"""
+            <div style="background:#ffffff; border:2px solid {g_accent}; border-radius:18px; padding:26px; text-align:center; box-shadow:0 6px 20px rgba(15,52,96,0.1); margin-bottom:16px;">
+                <div style="font-size:2.2rem; margin-bottom:6px;">🎉 ⭐ 🎉</div>
+                <h2 style="color:#0c335e; margin:0 0 8px 0;">Μπράβο! Ολοκλήρωσες το παιχνίδι!</h2>
+                <div style="font-size:2rem; font-weight:800; color:#d97706; margin:10px 0;">{stars} / {max_stars} ⭐</div>
+                <div style="font-size:1.1rem; font-weight:800; color:{g_dark};">{end_badge}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if cur_duel_pol == "unlocked_all":
+                ce1, ce2 = st.columns(2)
+                with ce1:
+                    if st.button("🔄 Παίξε Ξανά", type="primary", use_container_width=True, key=f"btn_mg_replay_{active_gid}"):
+                        st.session_state.mini_game_state = None
+                        st.rerun()
+                with ce2:
+                    if st.button("↩️ Επιστροφή στο Μάθημα", use_container_width=True, key=f"btn_mg_exit_all_{active_gid}"):
+                        st.session_state.duel_mode_active = False
+                        st.session_state.active_game_id = None
+                        st.session_state.mini_game_state = None
+                        st.rerun()
+            else:
+                if st.button("↩️ Επιστροφή στο Μάθημα", type="primary", use_container_width=True, key=f"btn_mg_exit_{active_gid}"):
+                    st.session_state.duel_mode_active = False
+                    st.session_state.active_game_id = None
+                    st.session_state.mini_game_state = None
+                    st.session_state.duel_study_steps = 0
+                    st.session_state.duel_confirmed_correct = 0
+                    st.session_state.duel_warning_penalty = 0
+                    st.rerun()
+            st.stop()
+
+        # ΖΩΝΤΑΝΟΣ ΓΥΡΟΣ ΜΙΝΙ-ΠΑΙΧΝΙΔΙΟΥ
+        cur_i = mg["idx"]
+        item = mg["items"][cur_i]
+
+        # Επάνω μπάρα προόδου / λουκέτων
+        if active_gid == "escape":
+            locks_bar = "  ".join("🔓" if k < mg["unlocked_locks"] else "🔒" for k in range(total_items))
+            st.markdown(f"""
+            <div style="background:#fffbeb; border:2px solid #f59e0b; border-radius:12px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-weight:800; color:#78350f; font-size:1.05rem;">Λουκέτα: {locks_bar}</span>
+                <span style="font-weight:800; color:#d97706; font-size:1.1rem;">{mg['score']} ⭐</span>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:12px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-weight:800; color:#0c335e;">Πρόκληση {cur_i + 1} από {total_items}</span>
+                <span style="font-weight:800; color:#d97706; font-size:1.1rem;">Σκορ: {mg['score']} ⭐</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Εμφάνιση της κάρτας πρότασης / γρίφου
+        if active_gid == "escape":
+            lock_hdr = html_lib.escape(str(item.get("lock_title", f"Λουκέτο {cur_i+1}")))
+            riddle_txt = html_lib.escape(str(item.get("riddle", "")))
+            st.markdown(f"""
+            <div style="background:#ffffff; border:2px solid #f59e0b; border-radius:16px; padding:20px; margin-bottom:12px;">
+                <div style="font-size:0.9rem; font-weight:800; color:#b45309; margin-bottom:6px;">🔐 {lock_hdr}</div>
+                <div style="font-size:1.2rem; font-weight:800; color:#0c335e; line-height:1.4;">{riddle_txt}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            stmt_txt = html_lib.escape(str(item.get("statement", "")))
+            prefix = "🧔 Ο Σωκράτης είπε (βρες το λάθος!):" if active_gid == "detective" else "⚖️ Είναι Αλήθεια ή Μύθος;"
+            st.markdown(f"""
+            <div style="background:#ffffff; border:2px solid {g_accent}; border-radius:16px; padding:20px; margin-bottom:12px;">
+                <div style="font-size:0.88rem; font-weight:800; color:{g_dark}; margin-bottom:6px;">{prefix}</div>
+                <div style="font-size:1.22rem; font-weight:800; color:#0c335e; line-height:1.4;">«{stmt_txt}»</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        if mg["attempt"] == 2 and not mg["awaiting_next"] and item.get("hint"):
+            st.markdown(f"""
+            <div style="background:#fef9c3; border:1.5px solid #eab308; border-radius:12px; padding:12px 16px; margin-bottom:12px; color:#713f12;">
+                💡 <b>Σωκρατικό Στοιχείο (2η ευκαιρία για +1 ⭐):</b> {html_lib.escape(str(item.get('hint', '')))}
+            </div>
+            """, unsafe_allow_html=True)
+
+        if mg["feedback"]:
+            if mg["feedback_type"] == "success":
+                st.success(mg["feedback"])
+            elif mg["feedback_type"] == "warning":
+                st.warning(mg["feedback"])
+            else:
+                st.info(mg["feedback"])
+
+        if mg["awaiting_next"]:
+            next_mg_lbl = "🏁 Δες το Αποτέλεσμα!" if cur_i == total_items - 1 else "➡️ Επόμενο"
+            if st.button(next_mg_lbl, type="primary", use_container_width=True, key=f"btn_mg_next_{active_gid}_{cur_i}"):
+                mg["idx"] += 1
+                mg["attempt"] = 1
+                mg["feedback"] = ""
+                mg["awaiting_next"] = False
+                st.rerun()
+        else:
+            if active_gid == "myth_truth":
+                cm1, cm2 = st.columns(2)
+                actual_true = bool(item.get("is_true", True))
+                exp_txt = str(item.get("explanation", ""))
+                with cm1:
+                    if st.button("✅ ΑΛΗΘΕΙΑ", type="primary", use_container_width=True, key=f"mt_true_{cur_i}"):
+                        if actual_true:
+                            mg["score"] += 2
+                            mg["feedback"] = f"🌟 Σωστά! (+2 ⭐) {exp_txt}"
+                            mg["feedback_type"] = "success"
+                        else:
+                            record_misconception(selected_grade, selected_subject, str(item.get("topic", "Μύθος/Αλήθεια")), f"{str(item.get('statement',''))[:60]} → Είπε Αλήθεια", "CAUGHT")
+                            mg["feedback"] = f"📘 Ήταν Μύθος! {exp_txt}"
+                            mg["feedback_type"] = "info"
+                        mg["awaiting_next"] = True
+                        st.rerun()
+                with cm2:
+                    if st.button("❌ ΜΥΘΟΣ", use_container_width=True, key=f"mt_false_{cur_i}"):
+                        if not actual_true:
+                            mg["score"] += 2
+                            mg["feedback"] = f"🌟 Σωστά! (+2 ⭐) {exp_txt}"
+                            mg["feedback_type"] = "success"
+                        else:
+                            record_misconception(selected_grade, selected_subject, str(item.get("topic", "Μύθος/Αλήθεια")), f"{str(item.get('statement',''))[:60]} → Είπε Μύθος", "CAUGHT")
+                            mg["feedback"] = f"📘 Ήταν Αλήθεια! {exp_txt}"
+                            mg["feedback_type"] = "info"
+                        mg["awaiting_next"] = True
+                        st.rerun()
+            else:
+                # Detective & Escape: 3 επιλογές + 2η ευκαιρία με Σωκρατικό στοιχείο!
+                choices = item.get("choices", [])[:3]
+                correct_ch = str(item.get("correct_choice", "")).strip()
+                exp_txt = str(item.get("explanation", ""))
+                for ci, ch_txt in enumerate(choices):
+                    if st.button(f"🔘 {ch_txt}", key=f"mg_ch_{active_gid}_{cur_i}_{mg['attempt']}_{ci}", use_container_width=True):
+                        is_ok = normalize_text(str(ch_txt)) == normalize_text(correct_ch)
+                        if is_ok:
+                            pts = 2 if mg["attempt"] == 1 else 1
+                            mg["score"] += pts
+                            if active_gid == "escape":
+                                mg["unlocked_locks"] += 1
+                            mg["feedback"] = f"🌟 {'Ξεκλείδωσε το λουκέτο!' if active_gid == 'escape' else 'Το έπιασες!'} (+{pts} ⭐) {exp_txt}"
+                            mg["feedback_type"] = "success"
+                            mg["awaiting_next"] = True
+                        else:
+                            record_misconception(selected_grade, selected_subject, str(item.get("topic", g_title)), f"{str(item.get('statement', item.get('riddle','')))[:50]} → {str(ch_txt)[:50]}", "CAUGHT")
+                            if mg["attempt"] == 1:
+                                mg["attempt"] = 2
+                                mg["feedback"] = "🤔 Όχι ακριβώς! Δες το σωκρατικό στοιχείο και δοκίμασε 2η φορά (+1 ⭐)!"
+                                mg["feedback_type"] = "warning"
+                            else:
+                                mg["feedback"] = f"📘 Η σωστή απάντηση ήταν: **{correct_ch}**. {exp_txt}"
+                                mg["feedback_type"] = "info"
+                                mg["awaiting_next"] = True
+                        st.rerun()
+
         st.stop()
 
     # --- ΠΑΙΧΝΙΔΙ 1: ⚔️ ΜΟΝΟΜΑΧΙΑ 2 ΠΑΙΚΤΩΝ ---
