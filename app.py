@@ -22,6 +22,7 @@ BASE_DIR = os.path.dirname(__file__)
 AVATAR_PATH_PNG = os.path.join(BASE_DIR, "socrates_256.png")
 AVATAR_PATH_JPG = os.path.join(BASE_DIR, "socrates.jpg")
 SECURITY_LOG_PATH = os.path.join(BASE_DIR, "security_violations.csv")
+MISCONCEPTIONS_LOG_PATH = os.path.join(BASE_DIR, "misconceptions_log.json")
 SECRETS_PATH = os.path.join(BASE_DIR, ".streamlit", "secrets.toml")
 import hmac
 
@@ -1066,24 +1067,177 @@ def detect_leaked_solution_in_reply(reply_text: str) -> bool:
             return True
     return False
 
-def parse_self_audit_tag(raw_text: str):
-    """Εξάγει και αφαιρεί το κρυφό tag [SELF_AUDIT: ...] ώστε να μην το δει ποτέ ο μαθητής."""
+def parse_self_audit_full(raw_text: str):
+    """Εξάγει και αφαιρεί το κρυφό tag [SELF_AUDIT: ...] μαζί με κατηγορία & παράδειγμα παρανόησης."""
     gave_solution = False
     misconception = "NONE"
+    topic = ""
+    example = ""
     match = re.search(
         r'\[SELF_AUDIT\s*:\s*([^\]]+)\]',
         raw_text or "",
         flags=re.IGNORECASE,
     )
     if match:
-        body = match.group(1).upper()
-        if re.search(r'SOLUTION\s*=\s*YES', body):
+        body = match.group(1)
+        body_up = body.upper()
+        if re.search(r'SOLUTION\s*=\s*YES', body_up):
             gave_solution = True
-        m_misc = re.search(r'MISCONCEPTION\s*=\s*(CAUGHT|IGNORED|NONE)', body)
+        m_misc = re.search(r'MISCONCEPTION\s*=\s*(CAUGHT|IGNORED|NONE)', body_up)
         if m_misc:
             misconception = m_misc.group(1)
+        m_topic = re.search(r'topic\s*=\s*([^;\]\n]+)', body, flags=re.IGNORECASE)
+        if m_topic:
+            t_val = m_topic.group(1).strip().strip('"\'')
+            if t_val.upper() not in ("NONE", "N/A", "-", "ΚΑΜΙΑ"):
+                topic = t_val[:60]
+        m_ex = re.search(r'example\s*=\s*([^;\]\n]+)', body, flags=re.IGNORECASE)
+        if m_ex:
+            e_val = m_ex.group(1).strip().strip('"\'')
+            if e_val.upper() not in ("NONE", "N/A", "-", "ΚΑΝΕΝΑ"):
+                example = e_val[:140]
     cleaned = re.sub(r'\[SELF_AUDIT\s*:[^\]]*\]', '', raw_text or "", flags=re.IGNORECASE).strip()
+    return cleaned, gave_solution, misconception, topic, example
+
+def parse_self_audit_tag(raw_text: str):
+    """Συμβατότητα προς τα πίσω: επιστρέφει (clean_text, gave_solution, misconception)."""
+    cleaned, gave_solution, misconception, _, _ = parse_self_audit_full(raw_text)
     return cleaned, gave_solution, misconception
+
+# -------------------------------------------------------------
+# 7.6. Χάρτης Παρανοήσεων Μαθητών (Αποθήκευση, Ομαδοποίηση & Συγχώνευση)
+# -------------------------------------------------------------
+def _normalize_topic_key(topic: str) -> str:
+    norm = normalize_text(topic or "")
+    norm = re.sub(r'[^\w\s]', ' ', norm)
+    stop_words = {"ο", "η", "το", "οι", "τα", "του", "της", "των", "στο", "στη", "στην", "στα", "στις", "σε"}
+    tokens = [w for w in norm.split() if w and w not in stop_words]
+    return " ".join(tokens) if tokens else norm.strip()
+
+def load_misconceptions_log() -> list:
+    if not os.path.exists(MISCONCEPTIONS_LOG_PATH):
+        return []
+    try:
+        with open(MISCONCEPTIONS_LOG_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+def save_misconceptions_log(records: list):
+    try:
+        with open(MISCONCEPTIONS_LOG_PATH, "w", encoding="utf-8") as f:
+            json.dump(records, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def record_misconception(grade: str, subject: str, topic: str, example: str, status: str = "CAUGHT"):
+    """Καταγράφει ανώνυμα (GDPR) μία παρανόηση μαθητή στον Χάρτη Παρανοήσεων."""
+    clean_topic = (topic or "").strip()[:60]
+    if not clean_topic or clean_topic.upper() in ("NONE", "N/A"):
+        return None
+    clean_example = (example or "").strip()[:140]
+    now = datetime.datetime.now()
+    rec = {
+        "uid": f"{now.strftime('%Y%m%d%H%M%S%f')}_{abs(hash((grade, subject, clean_topic, clean_example))) % 100000}",
+        "date": now.strftime("%Y-%m-%d"),
+        "timestamp": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "grade": grade,
+        "subject": subject,
+        "topic": clean_topic,
+        "example": clean_example,
+        "status": status,
+    }
+    records = load_misconceptions_log()
+    records.append(rec)
+    save_misconceptions_log(records)
+    return rec
+
+def merge_misconceptions_records(existing: list, incoming: list):
+    """Ενώνει στατιστικά από πολλές συσκευές/τάμπλετ χωρίς διπλοεγγραφές."""
+    seen = set()
+    merged = []
+    for r in existing:
+        if not isinstance(r, dict) or not r.get("topic"):
+            continue
+        key = r.get("uid") or f"{r.get('timestamp','')}|{r.get('grade','')}|{r.get('subject','')}|{_normalize_topic_key(r.get('topic',''))}|{r.get('example','')}"
+        if key not in seen:
+            seen.add(key)
+            merged.append(r)
+    added = 0
+    for r in incoming:
+        if not isinstance(r, dict) or not r.get("topic"):
+            continue
+        key = r.get("uid") or f"{r.get('timestamp','')}|{r.get('grade','')}|{r.get('subject','')}|{_normalize_topic_key(r.get('topic',''))}|{r.get('example','')}"
+        if key not in seen:
+            seen.add(key)
+            merged.append(r)
+            added += 1
+    return merged, added
+
+def aggregate_misconceptions(records: list, grade_filter: str = "Όλες", subject_filter: str = "Όλα", period_filter: str = "Όλο το διάστημα") -> list:
+    """Φιλτράρει, ομαδοποιεί και ταξινομεί τις παρανοήσεις από τη συχνότερη προς τη σπανιότερη."""
+    cutoff_date = (datetime.date.today() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+    grouped = {}
+    for r in records:
+        if not isinstance(r, dict) or not r.get("topic"):
+            continue
+        if grade_filter != "Όλες" and r.get("grade") != grade_filter:
+            continue
+        if subject_filter != "Όλα" and r.get("subject") != subject_filter:
+            continue
+        if period_filter == "Αυτή την εβδομάδα" and str(r.get("date", "")) < cutoff_date:
+            continue
+        t_key = _normalize_topic_key(r.get("topic", ""))
+        if not t_key:
+            continue
+        if t_key not in grouped:
+            grouped[t_key] = {
+                "key": t_key,
+                "label": r.get("topic", "").strip(),
+                "count": 0,
+                "examples": {},
+                "subjects": set(),
+                "grades": set(),
+            }
+        grouped[t_key]["count"] += 1
+        if r.get("subject"):
+            grouped[t_key]["subjects"].add(r["subject"])
+        if r.get("grade"):
+            grouped[t_key]["grades"].add(r["grade"])
+        ex = (r.get("example") or "").strip()
+        if ex:
+            grouped[t_key]["examples"][ex] = grouped[t_key]["examples"].get(ex, 0) + 1
+
+    result = []
+    for item in grouped.values():
+        sorted_ex = sorted(item["examples"].items(), key=lambda x: x[1], reverse=True)[:3]
+        result.append({
+            "key": item["key"],
+            "label": item["label"],
+            "count": item["count"],
+            "top_examples": sorted_ex,
+            "subjects": sorted(list(item["subjects"])),
+            "grades": sorted(list(item["grades"])),
+        })
+    result.sort(key=lambda x: x["count"], reverse=True)
+    return result
+
+def format_misconceptions_markdown(records: list) -> str:
+    """Δημιουργεί σύνοψη του Χάρτη Παρανοήσεων για την αναφορά του Καθηγητή (.md)."""
+    agg = aggregate_misconceptions(records)
+    if not agg:
+        return ""
+    lines = [
+        "\n---\n",
+        f"## 🗺️ Χάρτης Παρανοήσεων Μαθητών ({len(records)} καταγραφές)",
+    ]
+    for idx, cat in enumerate(agg[:10], 1):
+        lines.append(f"- **{idx}. {cat['label']}: {cat['count']} φορές**")
+        for ex_txt, ex_cnt in cat["top_examples"]:
+            suffix = f" ({ex_cnt}×)" if ex_cnt > 1 else ""
+            lines.append(f"  - Παράδειγμα: `{ex_txt}`{suffix}")
+    return "\n".join(lines) + "\n"
 
 def evaluate_socratic_turn(
     student_prompt: str,
@@ -1526,9 +1680,13 @@ with st.sidebar:
         for m in st.session_state.messages:
             sender = "🎓 Μαθητής" if m["role"] == "user" else "🧔 Σωκράτης"
             notes_md += f"### {sender}\n{m['content']}\n\n"
-        # Η κρυφή βαθμολογία προστίθεται ΜΟΝΟ όταν η Πύλη Καθηγητή είναι ξεκλειδωμένη!
-        if st.session_state.get("teacher_unlocked", False) and st.session_state.get("socratic_audits"):
-            notes_md += format_socratic_audit_markdown(st.session_state.socratic_audits)
+        # Η κρυφή βαθμολογία & ο Χάρτης Παρανοήσεων προστίθενται ΜΟΝΟ όταν η Πύλη Καθηγητή είναι ξεκλειδωμένη!
+        if st.session_state.get("teacher_unlocked", False):
+            if st.session_state.get("socratic_audits"):
+                notes_md += format_socratic_audit_markdown(st.session_state.socratic_audits)
+            misc_recs_dl = load_misconceptions_log()
+            if misc_recs_dl:
+                notes_md += format_misconceptions_markdown(misc_recs_dl)
         st.download_button(
             label="📥 Λήψη Σημειώσεων",
             data=notes_md.encode("utf-8"),
@@ -2040,11 +2198,12 @@ if st.session_state.active_mode == "teacher":
             st.session_state.teacher_unlocked = False
             st.rerun()
 
-    tab_worksheets, tab_simplifier, tab_eval, tab_lesson = st.tabs([
+    tab_worksheets, tab_simplifier, tab_eval, tab_lesson, tab_misconceptions = st.tabs([
         "📝 Φύλλα Εργασίας",
         "✂️ Απλοποιητής (ΕΑΕ)",
         "📊 Αποτίμηση Διαλόγου",
         "🎬 45λεπτη Παρουσίαση",
+        "🗺️ Χάρτης Παρανοήσεων",
     ])
 
     # ==========================================================
@@ -2350,6 +2509,9 @@ if st.session_state.active_mode == "teacher":
                     sender = "🎓 Μαθητής" if m["role"] == "user" else "🧔 Σωκράτης"
                     t_notes_md += f"### {sender}\n{m['content']}\n\n"
                 t_notes_md += format_socratic_audit_markdown(audits)
+                misc_recs_t = load_misconceptions_log()
+                if misc_recs_t:
+                    t_notes_md += format_misconceptions_markdown(misc_recs_t)
                 st.download_button(
                     label="📥 Λήψη Πλήρων Σημειώσεων Καθηγητή με Βαθμολογία (.md)",
                     data=t_notes_md.encode("utf-8"),
@@ -2659,6 +2821,156 @@ if st.session_state.active_mode == "teacher":
 
             if narration_text:
                 render_tts_widget(narration_text, msg_idx=9000 + cur_s)
+
+    # ==========================================================
+    # ΚΑΡΤΕΛΑ 5: ΧΑΡΤΗΣ ΠΑΡΑΝΟΗΣΕΩΝ ΜΑΘΗΤΩΝ (100% ΑΟΡΑΤΟΣ ΣΤΟΝ ΜΑΘΗΤΗ)
+    # ==========================================================
+    with tab_misconceptions:
+        all_misc_records = load_misconceptions_log()
+        st.markdown(f"""
+        <div style="background: #f0f9ff; border: 1.5px solid #93c5fd; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; color: #0c335e;">
+            <div style="font-size: 1.05rem; font-weight: 800; margin-bottom: 4px;">🗺️ Χάρτης Παρανοήσεων Μαθητών</div>
+            <div style="font-size: 0.86rem; color: #334155;">
+                Καταγράφει αυτόματα και ανώνυμα (GDPR) τα λάθη σκέψης που εντοπίζει ο Σωκράτης, 
+                ώστε να βλέπετε αμέσως ποια θέματα χρειάζονται στοχευμένη επανάληψη στην τάξη.
+                (<b>{len(all_misc_records)}</b> συνολικές καταγραφές)
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # 3 Φίλτρα: Τάξη, Μάθημα, Χρονική Περίοδος
+        col_f1, col_f2, col_f3 = st.columns(3)
+        with col_f1:
+            mf_grade = st.selectbox(
+                "🏫 Τάξη:",
+                ["Όλες"] + list(GYMNASIO_DATA.keys()),
+                key="misc_filter_grade"
+            )
+        with col_f2:
+            recorded_subjects = sorted({r.get("subject", "") for r in all_misc_records if r.get("subject")})
+            base_subjects = list(GYMNASIO_DATA[selected_grade]["subjects"].keys()) if mf_grade == "Όλες" else list(GYMNASIO_DATA[mf_grade]["subjects"].keys())
+            all_subj_opts = ["Όλα"] + list(dict.fromkeys(recorded_subjects + base_subjects))
+            mf_subject = st.selectbox("📚 Μάθημα:", all_subj_opts, key="misc_filter_subj")
+        with col_f3:
+            mf_period = st.selectbox(
+                "📅 Χρονική Περίοδος:",
+                ["Όλο το διάστημα", "Αυτή την εβδομάδα"],
+                key="misc_filter_period"
+            )
+
+        ranked_misc = aggregate_misconceptions(all_misc_records, mf_grade, mf_subject, mf_period)
+
+        if not ranked_misc:
+            st.info("ℹ️ Δεν υπάρχουν ακόμη καταγεγραμμένες παρανοήσεις για τα επιλεγμένα φίλτρα. Μόλις οι μαθητές συζητήσουν με τον Σωκράτη (ή συγχωνεύσετε αρχεία `.json` από άλλες συσκευές), ο Χάρτης θα γεμίσει αυτόματα εδώ!")
+        else:
+            max_cnt = ranked_misc[0]["count"]
+            for idx_m, cat in enumerate(ranked_misc, 1):
+                pct = int(round((cat["count"] / max_cnt) * 100)) if max_cnt > 0 else 0
+                bar_color = "#dc2626" if idx_m == 1 else ("#d97706" if idx_m <= 3 else "#2563eb")
+                times_word = "φορά" if cat["count"] == 1 else "φορές"
+                cat_label_safe = html_lib.escape(cat["label"])
+                meta_txt = html_lib.escape(" • ".join(cat["grades"][:2] + cat["subjects"][:1]))
+
+                ex_html_items = ""
+                if cat["top_examples"]:
+                    ex_list = []
+                    for ex_t, ex_c in cat["top_examples"]:
+                        cnt_tag = f' <span style="color:#64748b; font-size:0.8rem;">({ex_c}×)</span>' if ex_c > 1 else ""
+                        ex_list.append(f'<li style="margin:3px 0;"><code>{html_lib.escape(ex_t)}</code>{cnt_tag}</li>')
+                    ex_html_items = f'<ul style="margin:6px 0 0 0; padding-left:18px; font-size:0.88rem; color:#334155;">{"".join(ex_list)}</ul>'
+                else:
+                    ex_html_items = '<div style="font-size:0.84rem; color:#64748b; margin-top:4px;"><i>Δεν καταγράφηκε συγκεκριμένο παράδειγμα.</i></div>'
+
+                st.markdown(f"""
+                <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-left:5px solid {bar_color}; border-radius:12px; padding:12px 16px; margin-bottom:6px; box-shadow:0 2px 6px rgba(15,23,42,0.04);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:1.02rem; font-weight:800; color:#0f172a;">{idx_m}. {cat_label_safe}</span>
+                        <span style="background:{bar_color}; color:#fff; padding:2px 10px; border-radius:999px; font-size:0.82rem; font-weight:800;">{cat["count"]} {times_word}</span>
+                    </div>
+                    <div style="background:#e2e8f0; border-radius:999px; height:10px; width:100%; overflow:hidden; margin-bottom:6px;">
+                        <div style="background:{bar_color}; height:100%; width:{max(8, pct)}%; border-radius:999px;"></div>
+                    </div>
+                    <div style="font-size:0.78rem; color:#64748b; margin-bottom:4px;">{meta_txt}</div>
+                    <div style="font-size:0.84rem; font-weight:700; color:#1e3a5f;">Συχνότερα παραδείγματα λαθών μαθητών:</div>
+                    {ex_html_items}
+                </div>
+                """, unsafe_allow_html=True)
+
+                rev_key = f"rev5_plan_{cat['key']}"
+                if st.button(
+                    f"⚡ Πρόταση 5λεπτης επανάληψης για την τάξη ({cat['label']})",
+                    key=f"btn_rev5_{idx_m}_{cat['key']}",
+                    use_container_width=True,
+                ):
+                    examples_str = ", ".join([e[0] for e in cat["top_examples"]]) if cat["top_examples"] else "Γενική σύγχυση στη θεματική"
+                    rev_prompt = f"""
+Είσαι έμπειρος εκπαιδευτικός Γυμνασίου. Οι μαθητές έκαναν επανειλημμένα ({cat['count']} φορές) την εξής παρανόηση:
+- Κατηγορία λάθους: "{cat['label']}"
+- Τάξη/Μάθημα: {', '.join(cat['grades']) or selected_grade} / {', '.join(cat['subjects']) or selected_subject}
+- Συγκεκριμένα παραδείγματα λαθών μαθητών: {examples_str}
+
+Ετοίμασε μια ΠΟΛΥ ΣΥΝΤΟΜΗ & ΣΤΟΧΕΥΜΕΝΗ **5λεπτη επανάληψη για τον πίνακα της τάξης**:
+1. **Τι μπερδεύουν τα παιδιά (1 πρόταση)**
+2. **2 Στοχευμένα Παραδείγματα για τον Πίνακα** (δείξε καθαρά το «Λάθος» vs «Σωστό» βήμα-βήμα)
+3. **1 Γρήγορη Ερώτηση Ελέγχου** (30 δευτερολέπτων για όλη την τάξη)
+"""
+                    rev_box = st.empty()
+                    rev_out, _, rev_sec = run_teacher_ai_stream(rev_prompt, rev_box, max_tokens=700)
+                    if rev_out:
+                        st.session_state[rev_key] = rev_out
+                        st.success(f"⚡ Έτοιμη η 5λεπτη επανάληψη σε {rev_sec:.1f}δλ.!")
+
+                if st.session_state.get(rev_key):
+                    with st.expander(f"📋 5λεπτη Επανάληψη: {cat['label']}", expanded=True):
+                        st.markdown(st.session_state[rev_key])
+
+        # Εργαλεία Διαχείρισης: Εξαγωγή, Συγχώνευση από Πολλές Συσκευές & Μηδενισμός
+        st.markdown("---")
+        st.markdown("#### 🔄 Εξαγωγή, Συγχώνευση Συσκευών & Μηδενισμός")
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+            export_json_str = json.dumps(all_misc_records, ensure_ascii=False, indent=2)
+            st.download_button(
+                label="📤 Εξαγωγή Δεδομένων Τάξης (.json)",
+                data=export_json_str.encode("utf-8"),
+                file_name=f"xartis_paranoiseon_{datetime.date.today().strftime('%Y%m%d')}.json",
+                mime="application/json",
+                use_container_width=True,
+                key="btn_export_misc_json",
+            )
+        with col_ex2:
+            confirm_reset = st.checkbox("Επιβεβαίωση μηδενισμού στατιστικών", key="chk_confirm_reset_misc")
+            if st.button(
+                "🗑️ Μηδενισμός Στατιστικών",
+                disabled=not confirm_reset,
+                use_container_width=True,
+                key="btn_reset_misc_stats",
+            ):
+                save_misconceptions_log([])
+                st.success("✅ Τα στατιστικά του Χάρτη Παρανοήσεων μηδενίστηκαν.")
+                st.rerun()
+
+        uploaded_misc_files = st.file_uploader(
+            "📥 Συγχώνευση Δεδομένων Τάξης (ανεβάστε 1 ή περισσότερα αρχεία .json από άλλα τάμπλετ/λάπτοπ):",
+            type=["json"],
+            accept_multiple_files=True,
+            key="uploader_merge_misc",
+        )
+        if uploaded_misc_files:
+            if st.button("🔗 Συγχώνευση Αρχείων στον Ενιαίο Πίνακα", type="primary", use_container_width=True, key="btn_do_merge_misc"):
+                current_recs = load_misconceptions_log()
+                total_added = 0
+                for uf in uploaded_misc_files:
+                    try:
+                        inc_data = json.loads(uf.read().decode("utf-8"))
+                        if isinstance(inc_data, list):
+                            current_recs, added_n = merge_misconceptions_records(current_recs, inc_data)
+                            total_added += added_n
+                    except Exception:
+                        st.warning(f"⚠️ Το αρχείο `{uf.name}` δεν μπόρεσε να διαβαστεί.")
+                save_misconceptions_log(current_recs)
+                st.success(f"✅ Η συγχώνευση ολοκληρώθηκε! Προστέθηκαν **{total_added}** νέες μοναδικές καταγραφές (σύνολο: {len(current_recs)}).")
+                st.rerun()
 
     st.stop()
 
@@ -3043,16 +3355,20 @@ def build_socratic_master_prompt(
 3. ΠΡΟΣΤΑΣΙΑ ΑΝΗΛΙΚΩΝ & GDPR: Καμία αναφορά σε ακατάλληλο περιεχόμενο και καμία συλλογή προσωπικών δεδομένων.
 
 ═════════════════════════════════════════════════════════════════════
-6. ΚΡΥΦΟΣ ΑΥΤΟΕΛΕΓΧΟΣ ΣΩΚΡΑΤΙΚΗΣ ΠΟΙΟΤΗΤΑΣ (ΑΠΑΡΑΙΤΗΤΟ ΣΤΟ ΤΕΛΟΣ)
+6. ΚΡΥΦΟΣ ΑΥΤΟΕΛΕΓΧΟΣ ΣΩΚΡΑΤΙΚΗΣ ΠΟΙΟΤΗΤΑΣ & ΠΑΡΑΝΟΗΣΕΩΝ (ΑΠΑΡΑΙΤΗΤΟ ΣΤΟ ΤΕΛΟΣ)
 ═════════════════════════════════════════════════════════════════════
-Στην ΠΟΛΥ ΤΕΛΕΥΤΑΙΑ γραμμή της απάντησής σου (μετά το [ΚΑΡΤΑ: ...]), αξιολόγησε ειλικρινά τον εαυτό σου γράφοντας ΑΚΡΙΒΩΣ αυτό το κρυφό tag (δεν θα το δει ο μαθητής):
-[SELF_AUDIT: solution=NO; misconception=NONE]
+Στην ΠΟΛΥ ΤΕΛΕΥΤΑΙΑ γραμμή της απάντησής σου (μετά το [ΚΑΡΤΑ: ...]), αξιολόγησε ειλικρινά τον εαυτό σου γράφοντας ΑΚΡΙΒΩΣ αυτό το κρυφό tag (δεν θα το δει ποτέ ο μαθητής):
+[SELF_AUDIT: solution=NO; misconception=NONE; topic=NONE; example=NONE]
 
 Κανόνες συμπλήρωσης:
 - solution=YES ΜΟΝΟ αν έδωσες κατά λάθος την τελική έτοιμη λύση/απάντηση σε άσκηση ή ερώτηση του μαθητή. Προσοχή: στο Επίπεδο 1 (Easy-to-Read), η απλή επεξήγηση της θεωρίας ή ενός ορισμού ΔΕΝ είναι έτοιμη λύση (βάλε solution=NO).
 - misconception=CAUGHT αν ο μαθητής είχε λάθος σκέψης/παρανόηση και την εντόπισες & τη διόρθωσες σωκρατικά.
 - misconception=IGNORED αν ο μαθητής είχε λάθος σκέψης/παρανόηση και την αγνόησες.
 - misconception=NONE αν δεν υπήρχε παρανόηση στο μήνυμα του μαθητή.
+- Αν misconception=CAUGHT ή IGNORED, συμπλήρωσε:
+  • topic= σύντομη σταθερή σχολική κατηγορία 2-3 λέξεων (π.χ. Προτεραιότητα πράξεων, Δυνάμεις, Κλάσματα, Εξισώσεις, Συντακτικό)
+  • example= πολύ σύντομο ανώνυμο παράδειγμα του λάθους του μαθητή (π.χ. 2 × 3³ → 6³, χωρίς ονόματα!)
+- Αν misconception=NONE, βάλε topic=NONE; example=NONE.
 """
 
 # -------------------------------------------------------------
@@ -3274,7 +3590,17 @@ if prompt:
 
                         if raw_response.strip():
                             # 1. Αφαίρεση & ανάλυση κρυφού [SELF_AUDIT: ...] ΠΡΙΝ δει οτιδήποτε ο μαθητής
-                            full_response, gave_solution, misconception_status = parse_self_audit_tag(raw_response)
+                            full_response, gave_solution, misconception_status, misc_topic, misc_example = parse_self_audit_full(raw_response)
+
+                            # 1b. Κρυφή, ανώνυμη (GDPR) καταγραφή παρανόησης στον Χάρτη Παρανοήσεων Καθηγητή
+                            if misconception_status in ("CAUGHT", "IGNORED") and misc_topic:
+                                record_misconception(
+                                    grade=selected_grade,
+                                    subject=selected_subject,
+                                    topic=misc_topic,
+                                    example=misc_example or prompt[:80],
+                                    status=misconception_status,
+                                )
 
                             # 2. Αφαίρεση & επιλογή κάρτας [ΚΑΡΤΑ: <id>]
                             matched_card = None
