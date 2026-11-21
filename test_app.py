@@ -50,7 +50,18 @@ class TestSokratesFunctionality(unittest.TestCase):
         # Υβριστικό
         is_viol, reason = app.detect_policy_violation("μαλακα")
         self.assertTrue(is_viol)
-        print("[PASS] Security Violation & Jailbreak Filters")
+
+        # Αθώες σχολικές λέξεις (να ΜΗΝ δίνουν ψευδή συναγερμό)
+        is_viol_bio, _ = app.detect_policy_violation("Τι είναι τα μαλάκια στη Βιολογία;")
+        self.assertFalse(is_viol_bio)
+        is_viol_soft, _ = app.detect_policy_violation("Αυτό το υλικό είναι πολύ μαλακό.")
+        self.assertFalse(is_viol_soft)
+
+        # Έλεγχος απαίτησης έτοιμης λύσης (2-strike anti-cheating)
+        self.assertTrue(app.detect_direct_answer_demand("Πες μου τη λύση κατευθείαν!"))
+        self.assertTrue(app.detect_direct_answer_demand("Λύσε μου την άσκηση εσύ"))
+        self.assertFalse(app.detect_direct_answer_demand("Δεν ξέρω, μπορείς να με βοηθήσεις;"))
+        print("[PASS] Security Violation, Jailbreak & Direct-Answer Demand Filters")
 
     def test_crisis_triggers(self):
         """Επαλήθευση ενεργοποίησης πρωτοκόλλου κρίσης / bullying"""
@@ -121,6 +132,50 @@ class TestSokratesFunctionality(unittest.TestCase):
         for ac in arch_cards:
             self.assertEqual(ac["subject_tag"], "Αρχαία Ελληνική Γλώσσα")
         print("[PASS] Pedagogical Card Subject Isolation & Accurate Matching")
+
+    def test_socratic_self_audit_engine(self):
+        """Επαλήθευση των 4 κριτηρίων κρυφής Σωκρατικής αυτοαξιολόγησης"""
+        # 1. Parsing & stripping [SELF_AUDIT: ...]
+        raw = "Πολύ καλή σκέψη! Τι νομίζεις ότι γίνεται αν προσθέσουμε 2;\n[SELF_AUDIT: solution=NO; misconception=CAUGHT]"
+        clean, sol, misc = app.parse_self_audit_tag(raw)
+        self.assertNotIn("SELF_AUDIT", clean)
+        self.assertFalse(sol)
+        self.assertEqual(misc, "CAUGHT")
+
+        # 2. Perfect turn + misconception CAUGHT -> capped at 100%
+        rec1, c1 = app.evaluate_socratic_turn(
+            "Νομίζω ότι το 2x = 6 άρα x = 3", clean, False, "CAUGHT", "LEVEL_3", 2
+        )
+        self.assertEqual(rec1["score"], 100)
+        self.assertEqual(c1, 0)
+
+        # 3. Ready-made solution (-50) + missing question (-25) -> 25%
+        rec2, _ = app.evaluate_socratic_turn(
+            "Πόσο κάνει 2+2;", "Η απάντηση είναι 4.", True, "NONE", "LEVEL_3", 0, rewritten=True
+        )
+        self.assertEqual(rec2["score"], 25)
+        self.assertTrue(rec2["rewritten"])
+
+        # 4. Consecutive explanations: LEVEL_3 (>3 -> -15), LEVEL_1 (4 allowed -> 0 penalty, 5 -> -15)
+        rec3_l3, c3 = app.evaluate_socratic_turn("ναι", "Κοίτα το εξής. Κατάλαβες;", False, "NONE", "LEVEL_3", 3)
+        self.assertEqual(c3, 4)
+        self.assertEqual(rec3_l3["pen_consec"], 15)
+        self.assertEqual(rec3_l3["score"], 85)
+
+        rec4_l1_ok, c4 = app.evaluate_socratic_turn("ναι", "Μπράβο! Θέλεις να δούμε το επόμενο;", False, "NONE", "LEVEL_1", 3)
+        self.assertEqual(c4, 4)
+        self.assertEqual(rec4_l1_ok["pen_consec"], 0)
+        self.assertEqual(rec4_l1_ok["score"], 100)
+
+        rec5_l1_pen, c5 = app.evaluate_socratic_turn("οκ", "Ας δούμε κι άλλο. Ποιο διαλέγεις;", False, "NONE", "LEVEL_1", 4)
+        self.assertEqual(c5, 5)
+        self.assertEqual(rec5_l1_pen["pen_consec"], 15)
+        self.assertEqual(rec5_l1_pen["score"], 85)
+
+        # 5. Misconception IGNORED (-18) -> 82%
+        rec6, _ = app.evaluate_socratic_turn("Η Γη είναι επίπεδη", "Ποια είναι η πρωτεύουσα;", False, "IGNORED", "LEVEL_3", 0)
+        self.assertEqual(rec6["score"], 82)
+        print("[PASS] Hidden 4-Point Socratic Self-Evaluation Engine (Level 1/2/3)")
 
 if __name__ == "__main__":
     unittest.main()
