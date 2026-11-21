@@ -476,10 +476,29 @@ DIRECT_ANSWER_DEMAND_PATTERNS = [
     "give me the solution", "direct answer"
 ]
 
-def detect_direct_answer_demand(text: str) -> bool:
-    """Εντοπίζει ρητές απαιτήσεις για έτοιμη λύση/απάντηση στο πιάτο."""
-    norm = normalize_text(text)
-    return any(p in norm for p in DIRECT_ANSWER_DEMAND_PATTERNS)
+_SHORT_PRESSURE_COMMANDS = {
+    "πες", "πες το", "πεστο", "πες μου", "γραψ το", "γραψτο", "γραψε το",
+    "τελειωνε", "δωσε", "δωσ το", "δωστο", "λεγε", "απαντα", "απαντησε",
+    "απαντησε μου", "γρηγορα", "βιαζομαι", "βιαζομαστε", "αντε", "αντε πες",
+    "ελα πες", "μιλα", "πες γρηγορα", "πες το γρηγορα", "tell me", "answer", "hurry"
+}
+
+def detect_direct_answer_demand(text: str, has_active_warning: bool = False) -> bool:
+    """Εντοπίζει ρητές απαιτήσεις έτοιμης λύσης, μπλόφες ρόλου και κοφτές εντολές πίεσης."""
+    norm = normalize_text(text or "")
+    if any(p in norm for p in DIRECT_ANSWER_DEMAND_PATTERNS):
+        return True
+    cleaned_cmd = re.sub(r'[^\w\s]', ' ', norm)
+    cleaned_cmd = re.sub(r'\s+', ' ', cleaned_cmd).strip()
+    if cleaned_cmd in _SHORT_PRESSURE_COMMANDS:
+        return True
+    if has_active_warning:
+        # Με ενεργή προειδοποίηση, κάθε κοφτή πίεση/εντολή ενεργοποιεί αμέσως το κλείδωμα (2η από 2)
+        pressure_tokens = ("πες", "γραψ", "τελειων", "δωσ", "βιαζ", "γρηγορ", "απαντ", "λεγε", "λυσε")
+        words = cleaned_cmd.split()
+        if len(words) <= 3 and any(any(w.startswith(pt) for pt in pressure_tokens) for w in words):
+            return True
+    return False
 
 # -------------------------------------------------------------
 # 5. Αρχικοποίηση Κατάστασης Συνεδρίας (Session State)
@@ -1059,12 +1078,22 @@ _LEAKED_SOLUTION_PATTERNS = [
     r"\bαρα\s+[a-zα-ω]\s*=\s*-?\d",
 ]
 
-def detect_leaked_solution_in_reply(reply_text: str) -> bool:
+_DIRECT_THEORY_SPOILER_PATTERNS = [
+    r"\bκαταλαβαινω τη βιασυνη σου\b",
+    r"\bγια να βρουμε την απαντηση γρηγορα\b",
+    r"\bπραγμα που σημαινει οτι εχει μεσα του\b",
+]
+
+def detect_leaked_solution_in_reply(reply_text: str, support_level: str = "LEVEL_3") -> bool:
     """Ανεξάρτητος φύλακας κώδικα: πιάνει έτοιμες λύσεις ακόμη κι αν το AI δεν το παραδεχτεί."""
     norm = normalize_text(reply_text or "")
     for pat in _LEAKED_SOLUTION_PATTERNS:
         if re.search(pat, norm):
             return True
+    if support_level != "LEVEL_1":
+        for pat in _DIRECT_THEORY_SPOILER_PATTERNS:
+            if re.search(pat, norm):
+                return True
     return False
 
 def parse_self_audit_full(raw_text: str):
@@ -3395,7 +3424,8 @@ if prompt:
         st.rerun()
 
     # 🚨 ΒΗΜΑ 1.5: ΕΛΕΓΧΟΣ ΕΠΙΜΟΝΗΣ ΑΠΑΙΤΗΣΗΣ ΕΤΟΙΜΗΣ ΛΥΣΗΣ (ΚΛΕΙΔΩΜΑ ΣΤΙΣ 2 ΦΟΡΕΣ)
-    if detect_direct_answer_demand(prompt):
+    has_active_warn = st.session_state.get("direct_answer_strikes", 0) >= 1
+    if detect_direct_answer_demand(prompt, has_active_warning=has_active_warn):
         st.session_state.direct_answer_strikes = st.session_state.get("direct_answer_strikes", 0) + 1
         if st.session_state.direct_answer_strikes >= 2:
             violation_reason = "ΕΠΙΜΟΝΗ ΑΠΑΙΤΗΣΗ ΕΤΟΙΜΗΣ ΛΥΣΗΣ (ANTI-CHEATING)"
@@ -3412,11 +3442,15 @@ if prompt:
                 "Προσπάθησε με δικά σου λόγια και θα σε καθοδηγήσω βήμα-βήμα.\n\n"
                 "*Αν επιμείνεις άλλη μία φορά για έτοιμη λύση, θα καταγραφεί ως παραβίαση και η εφαρμογή θα κλειδώσει!*"
             )
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            st.session_state.messages.append({"role": "assistant", "content": warning_msg})
+            # Απομόνωση της μπλόφας από το ιστορικό του AI ώστε να μην επηρεαστεί στον επόμενο γύρο
+            st.session_state.messages.append({"role": "user", "content": prompt, "exclude_from_history": True})
+            st.session_state.messages.append({"role": "assistant", "content": warning_msg, "exclude_from_history": True})
             st.rerun()
     else:
-        st.session_state.direct_answer_strikes = 0
+        # Η ενεργή προειδοποίηση μηδενίζεται ΜΟΝΟ με πραγματική προσπάθεια (>= 3 λέξεις & ουσιαστική απάντηση)
+        word_cnt = len(re.sub(r'[^\w\s]', ' ', prompt or "").split())
+        if word_cnt >= 3 and is_student_real_attempt(prompt):
+            st.session_state.direct_answer_strikes = 0
 
     # 🚨 ΒΗΜΑ 2: ΕΛΕΓΧΟΣ ΠΡΩΤΟΚΟΛΛΟΥ ΚΡΙΣΗΣ (Ψυχική Υγεία / Bullying)
     if check_crisis_text(prompt):
@@ -3511,8 +3545,8 @@ if prompt:
                     ),
                 ]
 
-                # 🧠 Έξυπνη διατήρηση ιστορικού: Αφετηρία άσκησης (1ο μήνυμα) + 6 τελευταία
-                all_msgs = st.session_state.messages
+                # 🧠 Έξυπνη διατήρηση ιστορικού (εξαιρώντας μπλόφες/προειδοποιήσεις ώστε να μην επηρεάζουν το AI)
+                all_msgs = [m for m in st.session_state.messages if not m.get("exclude_from_history")]
                 if len(all_msgs) <= 8:
                     recent_messages = all_msgs
                 else:
@@ -3612,7 +3646,8 @@ if prompt:
                                     matched_card = PEDAGOGICAL_CARDS[selected_card_id]
 
                             # 3. Κριτήριο 1: Ανεξάρτητος φύλακας κώδικα + αυτοέλεγχος AI — αν έδωσε έτοιμη λύση, ξαναγράφει ΠΡΙΝ τη δει ο μαθητής!
-                            if not gave_solution and detect_leaked_solution_in_reply(full_response):
+                            cur_sup = st.session_state.get("support_level", "LEVEL_3")
+                            if not gave_solution and detect_leaked_solution_in_reply(full_response, support_level=cur_sup):
                                 gave_solution = True
                             was_rewritten = False
                             if gave_solution:
