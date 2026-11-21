@@ -1540,6 +1540,39 @@ def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topic
   ]
 }"""
         expected_len = 5
+    elif game_type == "ladder5":
+        lvl5_style = (
+            "ΚΑΙ ΤΑ 5 ΣΚΑΛΟΠΑΤΙΑ να είναι σε ΠΟΛΥ ΑΠΛΗ γλώσσα (1-2 μικρές προτάσεις), Easy-to-Read, με φιλικά εικονίδια (emoji), χωρίς παγίδες, και 3 ξεκάθαρες επιλογές (choices)."
+            if support_level == "LEVEL_1"
+            else "Κλιμάκωσε ΣΤΑΔΙΑΚΑ τη δυσκολία: το Επίπεδο 1 να είναι ΠΟΛΥ ΕΥΚΟΛΟ (για να πάρει θάρρος ο μαθητής), το 2 βασική κατανόηση, το 3 σύνδεση εννοιών, το 4 εφαρμογή/κρίση και το 5 απαιτητική ερώτηση σύνθεσης (Δάσκαλος της Ενότητας)."
+        )
+        schema_instr = f"""
+Ετοίμασε ΑΚΡΙΒΩΣ 5 διαδοχικές ερωτήσεις/μίνι ασκήσεις για το παιχνίδι «🏔️ Πρόκληση 5 Επιπέδων».
+Τα 5 σκαλοπάτια έχουν ΑΚΡΙΒΩΣ αυτούς τους τίτλους:
+1: "🌱 Ζέσταμα"
+2: "🧭 Εξερευνητής"
+3: "📚 Γνώστης"
+4: "♟️ Στρατηγός"
+5: "🏆 Δάσκαλος της Ενότητας"
+{lvl5_style}
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{{
+  "items": [
+    {{
+      "level_num": 1,
+      "level_name": "🌱 Ζέσταμα",
+      "icon": "🌱",
+      "question": "Σαφής ερώτηση/μίνι άσκηση για αυτό το σκαλοπάτι",
+      "choices": ["Επιλογή Α", "Επιλογή Β", "Επιλογή Γ"],
+      "correct_choice": "Επιλογή Α",
+      "expected_answer": "Σύντομη αναμενόμενη σωστή απάντηση (1-6 λέξεις)",
+      "hint": "Μικρό σωκρατικό στοιχείο για 2η ευκαιρία (ΧΩΡΙΣ έτοιμη λύση)",
+      "explanation": "Σύντομη, ενθαρρυντική επιβεβαίωση 1 πρότασης",
+      "topic": "Σύντομη κατηγορία 2-3 λέξεων"
+    }}
+  ]
+}}"""
+        expected_len = 5
     else:  # escape
         schema_instr = """
 Ετοίμασε ΑΚΡΙΒΩΣ 4 διαδοχικούς γρίφους-λουκέτα για το παιχνίδι «🔐 Απόδραση από τη Βιβλιοθήκη του Σωκράτη».
@@ -1578,7 +1611,7 @@ def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topic
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.6,
-                    max_output_tokens=1600,
+                    max_output_tokens=2000 if game_type == "ladder5" else 1600,
                     response_mime_type="application/json",
                 )
                 resp = client.models.generate_content(model=m_name, contents=full_p, config=cfg)
@@ -3474,6 +3507,20 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 st.rerun()
 
         st.write("")
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#f0fdfa,#ffffff); border:2px solid #0d9488; border-radius:16px; padding:16px 20px; box-shadow:0 4px 12px rgba(13,148,136,0.10);">
+            <div style="font-size:1.2rem; font-weight:800; color:#0f766e; margin-bottom:6px;">🏔️ Πρόκληση 5 Επιπέδων</div>
+            <div style="font-size:0.92rem; color:#334155; line-height:1.45;">
+                Ανέβα τη σκάλα της γνώσης σε <b>5 σκαλοπάτια</b> (🌱 Ζέσταμα → 🧭 Εξερευνητής → 📚 Γνώστης → ♟️ Στρατηγός → 🏆 Δάσκαλος της Ενότητας) και κέρδισε παράσημο!
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("▶️ Παίξε: 🏔️ Πρόκληση 5 Επιπέδων", type="primary", use_container_width=True, key="btn_open_game_ladder5"):
+            st.session_state.active_game_id = "ladder5"
+            st.session_state.mini_game_state = None
+            st.rerun()
+
+        st.write("")
         if st.button("↩️ Επιστροφή στο Μάθημα", use_container_width=True, key="btn_hub_return"):
             st.session_state.duel_mode_active = False
             st.session_state.active_game_id = None
@@ -3481,14 +3528,15 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         st.stop()
 
     # ==============================================================
-    # ΠΑΙΧΝΙΔΙΑ 2, 3 & 4: ΝΤΕΤΕΚΤΙΒ, ΜΥΘΟΣ/ΑΛΗΘΕΙΑ & ΑΠΟΔΡΑΣΗ
+    # ΠΑΙΧΝΙΔΙΑ 2, 3, 4 & 5: ΝΤΕΤΕΚΤΙΒ, ΜΥΘΟΣ/ΑΛΗΘΕΙΑ, ΑΠΟΔΡΑΣΗ & ΠΡΟΚΛΗΣΗ 5 ΕΠΙΠΕΔΩΝ
     # ==============================================================
     active_gid = st.session_state.get("active_game_id")
-    if active_gid in ("detective", "myth_truth", "escape"):
+    if active_gid in ("detective", "myth_truth", "escape", "ladder5"):
         meta_map = {
             "detective": ("🕵️ Βρες το Λάθος του Σωκράτη!", "#4c1d95", "#7c3aed", "5 προτάσεις με 1 επίτηδες λάθος η καθεμία — γίνε εσύ ο δάσκαλος!"),
             "myth_truth": ("⚖️ Μύθος ή Αλήθεια;", "#065f46", "#059669", "5 ζωντανές δηλώσεις από το μάθημα — πάτησε Αλήθεια ή Μύθος!"),
             "escape": ("🔐 Απόδραση από τη Βιβλιοθήκη του Σωκράτη", "#78350f", "#d97706", "Ξεκλείδωσε και τα 4 λουκέτα-γρίφους για να ανοίξεις την πύλη!"),
+            "ladder5": ("🏔️ Πρόκληση 5 Επιπέδων", "#115e59", "#0d9488", "Ανέβα τα 5 σκαλοπάτια από το Ζέσταμα μέχρι τον Δάσκαλο της Ενότητας!"),
         }
         g_title, g_dark, g_accent, g_desc = meta_map[active_gid]
         mg = st.session_state.get("mini_game_state", None)
@@ -3549,6 +3597,15 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 end_badge = "🔑 Πήρες το Χρυσό Κλειδί της Βιβλιοθήκης!" if mg["unlocked_locks"] >= total_items else "🌟 Εξαιρετική προσπάθεια στη Βιβλιοθήκη!"
             elif active_gid == "detective":
                 end_badge = "🕵️ Αρχι-Ντετέκτιβ του Σωκράτη!" if stars >= max_stars - 2 else "🌟 Άξιος Διορθωτής της Τάξης!"
+            elif active_gid == "ladder5":
+                if stars >= 9:
+                    end_badge = "🏔️ Παράσημο Κορυφής: Δάσκαλος της Ενότητας!"
+                elif stars >= 6:
+                    end_badge = "🥇 Χρυσό Παράσημο: Ατρόμητος Ορειβάτης της Γνώσης!"
+                elif stars >= 3:
+                    end_badge = "🥈 Ασημένιο Παράσημο: Επίμονος Εξερευνητής!"
+                else:
+                    end_badge = "🌟 Παράσημο Θάρρους: Κάθε βήμα προς την κορυφή μετράει!"
             else:
                 end_badge = "⚖️ Κριτής της Αλήθειας!" if stars >= max_stars - 2 else "🌟 Ερευνητής της Γνώσης!"
 
@@ -3588,8 +3645,35 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         cur_i = mg["idx"]
         item = mg["items"][cur_i]
 
-        # Επάνω μπάρα προόδου / λουκέτων
-        if active_gid == "escape":
+        # Επάνω μπάρα προόδου / λουκέτων / σκάλας 5 επιπέδων
+        if active_gid == "ladder5":
+            ladder_labels = [
+                "1. 🌱 Ζέσταμα",
+                "2. 🧭 Εξερευνητής",
+                "3. 📚 Γνώστης",
+                "4. ♟️ Στρατηγός",
+                "5. 🏆 Δάσκαλος",
+            ]
+            steps_html = []
+            for k, lbl in enumerate(ladder_labels):
+                if k < cur_i:
+                    steps_html.append(f"<span style='background:#dcfce7; color:#166534; border:1.5px solid #22c55e; padding:4px 9px; border-radius:999px; font-size:0.8rem; font-weight:700;'>✅ {lbl}</span>")
+                elif k == cur_i:
+                    steps_html.append(f"<span style='background:#0d9488; color:#ffffff; border:1.5px solid #115e59; padding:5px 11px; border-radius:999px; font-size:0.84rem; font-weight:800; box-shadow:0 2px 6px rgba(13,148,136,0.3);'>▶ {lbl}</span>")
+                else:
+                    steps_html.append(f"<span style='background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; padding:4px 9px; border-radius:999px; font-size:0.8rem; font-weight:600;'>{lbl}</span>")
+            st.markdown(f"""
+            <div style="background:#f0fdfa; border:2px solid #0d9488; border-radius:14px; padding:12px 14px; margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                    <span style="font-weight:800; color:#115e59; font-size:0.98rem;">🏔️ Σκάλα 5 Επιπέδων — Επίπεδο {cur_i + 1} από 5</span>
+                    <span style="font-weight:800; color:#d97706; font-size:1.1rem;">{mg['score']} ⭐</span>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+                    {" <span style='color:#94a3b8; font-weight:700;'>→</span> ".join(steps_html)}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        elif active_gid == "escape":
             locks_bar = "  ".join("🔓" if k < mg["unlocked_locks"] else "🔒" for k in range(total_items))
             st.markdown(f"""
             <div style="background:#fffbeb; border:2px solid #f59e0b; border-radius:12px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -3605,8 +3689,19 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
             </div>
             """, unsafe_allow_html=True)
 
-        # Εμφάνιση της κάρτας πρότασης / γρίφου
-        if active_gid == "escape":
+        # Εμφάνιση της κάρτας πρότασης / γρίφου / σκαλοπατιού
+        if active_gid == "ladder5":
+            lvl_default_names = ["🌱 Ζέσταμα", "🧭 Εξερευνητής", "📚 Γνώστης", "♟️ Στρατηγός", "🏆 Δάσκαλος της Ενότητας"]
+            lvl_hdr = html_lib.escape(str(item.get("level_name", lvl_default_names[min(cur_i, 4)])))
+            q_icon = html_lib.escape(str(item.get("icon", "🏔️")))
+            q_txt = html_lib.escape(str(item.get("question", "")))
+            st.markdown(f"""
+            <div style="background:#ffffff; border:2px solid #0d9488; border-radius:16px; padding:20px; margin-bottom:12px;">
+                <div style="font-size:0.9rem; font-weight:800; color:#0f766e; margin-bottom:6px;">{q_icon} Επίπεδο {cur_i + 1}: {lvl_hdr}</div>
+                <div style="font-size:1.22rem; font-weight:800; color:#0c335e; line-height:1.45;">{q_txt}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        elif active_gid == "escape":
             lock_hdr = html_lib.escape(str(item.get("lock_title", f"Λουκέτο {cur_i+1}")))
             riddle_txt = html_lib.escape(str(item.get("riddle", "")))
             st.markdown(f"""
@@ -3641,7 +3736,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 st.info(mg["feedback"])
 
         if mg["awaiting_next"]:
-            next_mg_lbl = "🏁 Δες το Αποτέλεσμα!" if cur_i == total_items - 1 else "➡️ Επόμενο"
+            next_mg_lbl = "🏁 Δες το Παράσημό σου!" if (active_gid == "ladder5" and cur_i == total_items - 1) else ("🏁 Δες το Αποτέλεσμα!" if cur_i == total_items - 1 else ("⬆️ Επόμενο Επίπεδο" if active_gid == "ladder5" else "➡️ Επόμενο"))
             if st.button(next_mg_lbl, type="primary", use_container_width=True, key=f"btn_mg_next_{active_gid}_{cur_i}"):
                 mg["idx"] += 1
                 mg["attempt"] = 1
@@ -3649,7 +3744,53 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 mg["awaiting_next"] = False
                 st.rerun()
         else:
-            if active_gid == "myth_truth":
+            if active_gid == "ladder5" and cur_lvl_duel != "LEVEL_1":
+                # Επίπεδα 2 & 3: Ελεύθερη απάντηση με 1 κλήση AI ανά γύρο (judge_duel_free_answer)
+                exp_ans = str(item.get("expected_answer", item.get("correct_choice", ""))).strip()
+                exp_txt = str(item.get("explanation", ""))
+                l5_ans = st.text_input(
+                    "✍️ Γράψε τη δική σου απάντηση:",
+                    key=f"l5_input_{cur_i}_{mg['attempt']}",
+                    placeholder="Γράψε εδώ την απάντησή σου...",
+                )
+                cl1, cl2 = st.columns([2, 1])
+                with cl1:
+                    if st.button("✅ Υποβολή Απάντησης", type="primary", use_container_width=True, key=f"l5_submit_{cur_i}_{mg['attempt']}"):
+                        if not (l5_ans or "").strip():
+                            st.warning("Γράψε πρώτα μια σύντομη απάντηση ή πάτησε «Δεν ξέρω» για βοήθεια!")
+                        else:
+                            with st.spinner("🤔 Ο Σωκράτης ελέγχει την απάντησή σου..."):
+                                is_ok = judge_duel_free_answer(str(item.get("question", "")), exp_ans, l5_ans)
+                            if is_ok:
+                                pts = 2 if mg["attempt"] == 1 else 1
+                                mg["score"] += pts
+                                mg["feedback"] = f"🌟 Μπράβο! Ανέβηκες σκαλοπάτι! (+{pts} ⭐) {exp_txt}"
+                                mg["feedback_type"] = "success"
+                                mg["awaiting_next"] = True
+                            else:
+                                record_misconception(selected_grade, selected_subject, str(item.get("topic", "Πρόκληση 5 Επιπέδων")), f"{str(item.get('question',''))[:50]} → {str(l5_ans)[:50]}", "CAUGHT")
+                                if mg["attempt"] == 1:
+                                    mg["attempt"] = 2
+                                    mg["feedback"] = "🤔 Πολύ κοντά! Δες το σωκρατικό στοιχείο και δοκίμασε 2η φορά (+1 ⭐)!"
+                                    mg["feedback_type"] = "warning"
+                                else:
+                                    mg["feedback"] = f"📘 Η απάντηση ήταν: **{exp_ans}**. {exp_txt}"
+                                    mg["feedback_type"] = "info"
+                                    mg["awaiting_next"] = True
+                            st.rerun()
+                with cl2:
+                    if st.button("🤷 Δεν ξέρω", use_container_width=True, key=f"l5_idk_{cur_i}_{mg['attempt']}"):
+                        record_misconception(selected_grade, selected_subject, str(item.get("topic", "Πρόκληση 5 Επιπέδων")), f"{str(item.get('question',''))[:50]} → Δεν ξέρω", "CAUGHT")
+                        if mg["attempt"] == 1:
+                            mg["attempt"] = 2
+                            mg["feedback"] = "💡 Κανένα πρόβλημα! Δες το σωκρατικό στοιχείο και προσπάθησε 2η φορά (+1 ⭐)!"
+                            mg["feedback_type"] = "warning"
+                        else:
+                            mg["feedback"] = f"📘 Η απάντηση ήταν: **{exp_ans}**. {exp_txt}"
+                            mg["feedback_type"] = "info"
+                            mg["awaiting_next"] = True
+                        st.rerun()
+            elif active_gid == "myth_truth":
                 cm1, cm2 = st.columns(2)
                 actual_true = bool(item.get("is_true", True))
                 exp_txt = str(item.get("explanation", ""))
@@ -3678,23 +3819,25 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                         mg["awaiting_next"] = True
                         st.rerun()
             else:
-                # Detective & Escape: 3 επιλογές + 2η ευκαιρία με Σωκρατικό στοιχείο!
+                # Detective, Escape & Ladder5 (Επίπεδο 1): 3 επιλογές + 2η ευκαιρία με Σωκρατικό στοιχείο!
                 choices = item.get("choices", [])[:3]
                 correct_ch = str(item.get("correct_choice", "")).strip()
                 exp_txt = str(item.get("explanation", ""))
+                choice_icons = ["1️⃣", "2️⃣", "3️⃣"] if active_gid == "ladder5" else ["🔘", "🔘", "🔘"]
                 for ci, ch_txt in enumerate(choices):
-                    if st.button(f"🔘 {ch_txt}", key=f"mg_ch_{active_gid}_{cur_i}_{mg['attempt']}_{ci}", use_container_width=True):
+                    if st.button(f"{choice_icons[ci]} {ch_txt}", key=f"mg_ch_{active_gid}_{cur_i}_{mg['attempt']}_{ci}", use_container_width=True):
                         is_ok = normalize_text(str(ch_txt)) == normalize_text(correct_ch)
                         if is_ok:
                             pts = 2 if mg["attempt"] == 1 else 1
                             mg["score"] += pts
                             if active_gid == "escape":
                                 mg["unlocked_locks"] += 1
-                            mg["feedback"] = f"🌟 {'Ξεκλείδωσε το λουκέτο!' if active_gid == 'escape' else 'Το έπιασες!'} (+{pts} ⭐) {exp_txt}"
+                            ok_msg = "Ξεκλείδωσε το λουκέτο!" if active_gid == "escape" else ("Μπράβο! Ανέβηκες σκαλοπάτι!" if active_gid == "ladder5" else "Το έπιασες!")
+                            mg["feedback"] = f"🌟 {ok_msg} (+{pts} ⭐) {exp_txt}"
                             mg["feedback_type"] = "success"
                             mg["awaiting_next"] = True
                         else:
-                            record_misconception(selected_grade, selected_subject, str(item.get("topic", g_title)), f"{str(item.get('statement', item.get('riddle','')))[:50]} → {str(ch_txt)[:50]}", "CAUGHT")
+                            record_misconception(selected_grade, selected_subject, str(item.get("topic", g_title)), f"{str(item.get('statement', item.get('riddle', item.get('question',''))))[:50]} → {str(ch_txt)[:50]}", "CAUGHT")
                             if mg["attempt"] == 1:
                                 mg["attempt"] = 2
                                 mg["feedback"] = "🤔 Όχι ακριβώς! Δες το σωκρατικό στοιχείο και δοκίμασε 2η φορά (+1 ⭐)!"
