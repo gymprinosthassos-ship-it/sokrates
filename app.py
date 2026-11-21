@@ -634,12 +634,18 @@ st.markdown("""
     [data-testid="block-container"],
     [data-testid="stMainBlockContainer"],
     .main .block-container {
-        padding-top: 0.5rem !important;
+        padding-top: 0.7rem !important;
         margin-top: 0rem !important;
-        padding-bottom: 13rem !important;
+        padding-bottom: 6.5rem !important;
         padding-left: 1.0rem !important;
         padding-right: 1.0rem !important;
         max-width: 960px !important;
+    }
+    iframe[height="0"] {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     /* Ισορροπημένες αποστάσεις (gaps) για άνετη πλοήγηση */
@@ -3757,5 +3763,28 @@ if prompt:
             except Exception as e:
                 st.error(f"⚠️ Παρουσιάστηκε πρόβλημα επικοινωνίας: {e}")
 
-# Καθαρός κενός χώρος στο τέλος ώστε το κάτω πλαίσιο γραφής (stChatInput) να ΜΗΝ καλύπτει ποτέ τις τελευταίες γραμμές ή κάρτες
-st.markdown('<div style="height: 150px;"></div>', unsafe_allow_html=True)
+# Κενός χώρος στο τέλος ΜΟΝΟ όταν έχει ξεκινήσει συζήτηση, ώστε στο 1ο άνοιγμα να φαίνεται ολόκληρο το καλωσόρισμα από την κορυφή
+if len(st.session_state.messages) > 1:
+    st.markdown('<div style="height: 85px;"></div>', unsafe_allow_html=True)
+else:
+    components.html(
+        """
+        <script>
+        (function() {
+            const win = window.parent || window;
+            const doc = win.document;
+            function scrollTopNow() {
+                try {
+                    win.scrollTo(0, 0);
+                    const mainEl = doc.querySelector('[data-testid="stAppViewContainer"]') || doc.querySelector('section.main');
+                    if (mainEl) mainEl.scrollTop = 0;
+                } catch(e) {}
+            }
+            scrollTopNow();
+            setTimeout(scrollTopNow, 180);
+            setTimeout(scrollTopNow, 450);
+        })();
+        </script>
+        """,
+        height=0,
+    )
