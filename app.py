@@ -18,12 +18,15 @@ from special_ed_visuals import (
 # -------------------------------------------------------------
 # 0. Διαδρομές Αρχείων & Εικονιδίων
 # -------------------------------------------------------------
+import tempfile
+
 BASE_DIR = os.path.dirname(__file__)
+WRITABLE_DATA_DIR = tempfile.gettempdir()
 AVATAR_PATH_PNG = os.path.join(BASE_DIR, "socrates_256.png")
 AVATAR_PATH_JPG = os.path.join(BASE_DIR, "socrates.jpg")
-SECURITY_LOG_PATH = os.path.join(BASE_DIR, "security_violations.csv")
-MISCONCEPTIONS_LOG_PATH = os.path.join(BASE_DIR, "misconceptions_log.json")
-DUEL_SETTINGS_PATH = os.path.join(BASE_DIR, "duel_settings.json")
+SECURITY_LOG_PATH = os.path.join(WRITABLE_DATA_DIR, "socrates_security_violations.csv")
+MISCONCEPTIONS_LOG_PATH = os.path.join(WRITABLE_DATA_DIR, "socrates_misconceptions_log.json")
+DUEL_SETTINGS_PATH = os.path.join(WRITABLE_DATA_DIR, "socrates_duel_settings.json")
 SECRETS_PATH = os.path.join(BASE_DIR, ".streamlit", "secrets.toml")
 import hmac
 
@@ -1288,23 +1291,35 @@ def format_misconceptions_markdown(records: list) -> str:
     return "\n".join(lines) + "\n"
 
 # -------------------------------------------------------------
-# 7.7. Μονομαχία 2 Παικτών (Έλεγχος Ξεκλειδώματος, Πολιτική & AI Ερωτήσεις)
+# 7.7. Μονομαχία 2 Παικτών (Κοινή Μνήμη Τάξης + Αρχείο, Πολιτική & AI Ερωτήσεις)
 # -------------------------------------------------------------
+@st.cache_resource(show_spinner=False)
+def get_shared_classroom_store() -> dict:
+    """Κοινή μνήμη μεταξύ όλων των συσκευών της τάξης στον ίδιο διακομιστή (δουλεύει 100% και στο Streamlit Cloud)."""
+    return {"duel_policy": None}
+
 def load_duel_policy() -> str:
-    """Επιστρέφει τη ρύθμιση Καθηγητή για τη Μονομαχία: 'study_goal' | 'unlocked_all' | 'disabled'."""
-    if not os.path.exists(DUEL_SETTINGS_PATH):
-        return "study_goal"
-    try:
-        with open(DUEL_SETTINGS_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            pol = data.get("policy", "study_goal")
-            return pol if pol in ("study_goal", "unlocked_all", "disabled") else "study_goal"
-    except Exception:
-        return "study_goal"
+    """Επιστρέφει τη ρύθμιση Καθηγητή για τα Παιχνίδια & Κουίζ: 'study_goal' | 'unlocked_all' | 'disabled'."""
+    store = get_shared_classroom_store()
+    if store.get("duel_policy") in ("study_goal", "unlocked_all", "disabled"):
+        return store["duel_policy"]
+    if os.path.exists(DUEL_SETTINGS_PATH):
+        try:
+            with open(DUEL_SETTINGS_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                pol = data.get("policy", "study_goal")
+                if pol in ("study_goal", "unlocked_all", "disabled"):
+                    store["duel_policy"] = pol
+                    return pol
+        except Exception:
+            pass
+    return "study_goal"
 
 def save_duel_policy(policy: str):
     if policy not in ("study_goal", "unlocked_all", "disabled"):
         policy = "study_goal"
+    store = get_shared_classroom_store()
+    store["duel_policy"] = policy
     try:
         with open(DUEL_SETTINGS_PATH, "w", encoding="utf-8") as f:
             json.dump({"policy": policy}, f, ensure_ascii=False, indent=2)
