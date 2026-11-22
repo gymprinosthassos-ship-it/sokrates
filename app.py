@@ -983,6 +983,27 @@ st.markdown("""
     }
 
     /* 10. Απαλά παστέλ χρώματα για κάθε κουμπί του αριστερού μενού */
+    [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="secondary"],
+    [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-secondary"] {
+        background-color: #dcfce7 !important;
+        border: 1.5px solid #4ade80 !important;
+        color: #14532d !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="secondary"]:hover,
+    [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-secondary"]:hover {
+        background-color: #bbf7d0 !important;
+        border-color: #22c55e !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="primary"],
+    [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-primary"] {
+        background-color: #15803d !important;
+        border: 1.5px solid #166534 !important;
+        color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="primary"] p,
+    [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-primary"] p {
+        color: #ffffff !important;
+    }
     [data-testid="stSidebar"] a[data-testid="stLinkButton"] {
         background-color: #d8f3ec !important;
         border: 1.5px solid #7dd3bd !important;
@@ -1458,44 +1479,30 @@ def add_effort_points(delta: int) -> int:
     return new_val
 
 def render_effort_score_banner():
-    """Εμφανίζει το μεγάλο κόκκινο πλαίσιο συνολικής επίδοσης προσπάθειας/σκορ (0–100) της συνεδρίας."""
+    """Εμφανίζει ένα μικρό απαλό πράσινο τετράγωνο πάνω δεξιά μόνο με το '0/100' της συνεδρίας."""
     score = max(0, min(100, int(st.session_state.get("effort_score", 0))))
-    if score >= 95:
-        badge_txt = "🏆 Κορυφαία Επίδοση!"
-    elif score >= 75:
-        badge_txt = "🌟 Εξαιρετική Πορεία!"
-    elif score >= 45:
-        badge_txt = "🔥 Δυνατή Προσπάθεια!"
-    elif score >= 15:
-        badge_txt = "💪 Καλή Αρχή!"
-    else:
-        badge_txt = "🚀 Ξεκινάμε!"
-
     st.markdown(f"""
-    <div style="
-        background: linear-gradient(135deg, #b91c1c 0%, #dc2626 55%, #ef4444 100%);
-        border: 3px solid #7f1d1d;
-        border-radius: 16px;
-        padding: 12px 20px;
-        margin-bottom: 12px;
-        color: #ffffff;
-        box-shadow: 0 5px 16px rgba(185, 28, 28, 0.25);
+    <div title="Συνολική επίδοση προσπάθειας συνεδρίας (μηδενίζει με το κλείσιμο)" style="
+        position: fixed;
+        top: 14px;
+        right: 18px;
+        z-index: 99990;
+        width: 68px;
+        height: 68px;
+        background-color: #dcfce7;
+        border: 2px solid #4ade80;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #14532d;
+        font-size: 1.05rem;
+        font-weight: 900;
+        letter-spacing: -0.3px;
+        box-shadow: 0 4px 12px rgba(22, 101, 52, 0.16);
+        user-select: none;
     ">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.55rem; line-height: 1;">🎯</span>
-                <div>
-                    <div style="font-size: 0.98rem; font-weight: 800; letter-spacing: 0.2px; color: #ffffff;">Συνολική Επίδοση Προσπάθειας</div>
-                    <div style="font-size: 0.8rem; font-weight: 600; color: #fee2e2;">{badge_txt} • Μηδενίζει με το κλείσιμο της εφαρμογής</div>
-                </div>
-            </div>
-            <div style="background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.45); border-radius: 12px; padding: 4px 14px; font-size: 1.55rem; font-weight: 900; color: #ffffff; line-height: 1.15;">
-                {score} <span style="font-size: 0.95rem; font-weight: 700; color: #fecaca;">/ 100</span>
-            </div>
-        </div>
-        <div style="background: rgba(127, 29, 29, 0.45); border-radius: 999px; height: 11px; width: 100%; overflow: hidden; border: 1px solid rgba(255,255,255,0.28);">
-            <div style="background: linear-gradient(90deg, #fde047 0%, #ffffff 100%); height: 100%; width: {max(2, score)}%; border-radius: 999px; transition: width 0.35s ease;"></div>
-        </div>
+        {score}/100
     </div>
     """, unsafe_allow_html=True)
 
@@ -2234,7 +2241,39 @@ with st.sidebar:
     st.markdown('<div style="border-top: 1px solid #8bbfe6; margin: 4px 0 4px 0;"></div>', unsafe_allow_html=True)
 
     GYMNASIO_GRADES = list(GYMNASIO_DATA.keys())
-    selected_grade = st.selectbox("🏫 Τάξη:", GYMNASIO_GRADES, index=0, label_visibility="collapsed")
+    grade_display_map = {
+        "Α' Γυμνασίου": "🔵 Α' Γυμνασίου",
+        "Β' Γυμνασίου": "🟡 Β' Γυμνασίου",
+        "Γ' Γυμνασίου": "🟣 Γ' Γυμνασίου",
+    }
+    selected_grade = st.selectbox(
+        "🏫 Τάξη:",
+        GYMNASIO_GRADES,
+        index=0,
+        format_func=lambda g: grade_display_map.get(g, g),
+        label_visibility="collapsed",
+        key="side_grade_select",
+    )
+    grade_color_map = {
+        "Α' Γυμνασίου": ("#dbeafe", "#60a5fa", "#1e3a8a"),
+        "Β' Γυμνασίου": ("#fef3c7", "#fbbf24", "#78350f"),
+        "Γ' Γυμνασίου": ("#ede9fe", "#a78bfa", "#4c1d95"),
+    }
+    g_bg, g_bd, g_fg = grade_color_map.get(selected_grade, ("#cce5f9", "#8bbfe6", "#0f172a"))
+    st.markdown(f"""
+    <style>
+        .st-key-side_grade_select div[data-baseweb="select"] > div,
+        .st-key-side_grade_select div[data-baseweb="select"] {{
+            background-color: {g_bg} !important;
+            border-color: {g_bd} !important;
+            color: {g_fg} !important;
+        }}
+        .st-key-side_grade_select div[data-baseweb="select"] * {{
+            color: {g_fg} !important;
+            font-weight: 700 !important;
+        }}
+    </style>
+    """, unsafe_allow_html=True)
 
     class_subjects = list(GYMNASIO_DATA[selected_grade]["subjects"].keys())
     selected_subject = st.selectbox("📚 Μάθημα:", class_subjects, index=0, label_visibility="collapsed")
