@@ -1390,6 +1390,33 @@ def compute_duel_unlock_status(
         "help": reason_hint,
     }
 
+def question_references_choices(question_text: str) -> bool:
+    """Εντοπίζει αν η διατύπωση μιας ερώτησης αναφέρεται σε επιλογές ('παρακάτω', 'επόμενα' κ.λπ.)."""
+    norm_q = normalize_text(question_text or "")
+    patterns = [
+        r"\bπαρακατω\b",
+        r"\bεπομεν[αοηω]\w*\b",
+        r"\bεπιλογ\w*\b",
+        r"\bαπο τα παραπανω\b",
+        r"\bαπο τις παραπανω\b",
+        r"\bποιο απο τα\b",
+        r"\bποια απο τις\b",
+        r"\bποιος απο τους\b",
+    ]
+    return any(re.search(p, norm_q) for p in patterns)
+
+def choices_match(chosen_text: str, correct_text: str) -> bool:
+    """Ασφαλής σύγκριση επιλεγμένου κουμπιού με τη σωστή επιλογή (αγνοεί προθέματα 'Α)', '1.' κ.λπ.)."""
+    def _strip_prefix(s: str) -> str:
+        t = normalize_text(str(s or "")).strip()
+        t = re.sub(r'^(?:[αβγδα-δ1-4]\s*[\)\.\-:]\s*)', '', t).strip()
+        return t
+    c1 = _strip_prefix(chosen_text)
+    c2 = _strip_prefix(correct_text)
+    if not c1 or not c2:
+        return False
+    return c1 == c2 or (len(c2) >= 4 and c2 in c1) or (len(c1) >= 4 and c1 in c2)
+
 def generate_duel_questions_json(grade: str, subject: str, book_topics: str, support_level: str, chapter_focus: str = ""):
     """Παράγει και τις 6 ερωτήσεις της Μονομαχίας σε ΜΙΑ (1) κλήση AI (με επιλογές, στοιχεία & κατηγορίες)."""
     client = get_genai_client(api_key)
@@ -1407,6 +1434,11 @@ def generate_duel_questions_json(grade: str, subject: str, book_topics: str, sup
         if support_level == "LEVEL_1"
         else ("Απλή, καθαρή διατύπωση για Γυμνάσιο (Επίπεδο 2)." if support_level == "LEVEL_2" else "Ερωτήσεις κατανόησης & κριτικής σκέψης επιπέδου Γυμνασίου.")
     )
+    open_q_rule = (
+        ""
+        if support_level == "LEVEL_1"
+        else "- ΑΥΣΤΗΡΟΣ ΚΑΝΟΝΑΣ: Οι ερωτήσεις πρέπει να είναι ΑΝΟΙΧΤΕΣ (χωρίς να προϋποθέτουν ότι ο μαθητής βλέπει επιλογές). ΑΠΑΓΟΡΕΥΕΤΑΙ να γράφεις «Ποια από τις παρακάτω...», «Ποιο από τα επόμενα...» ή παρόμοιες φράσεις!"
+    )
 
     duel_prompt = f"""
 Είσαι ο Σωκράτης, εκπαιδευτικός Γυμνασίου στην Ελλάδα.
@@ -1418,12 +1450,13 @@ def generate_duel_questions_json(grade: str, subject: str, book_topics: str, sup
 - Επίσημη ύλη: {book_topics}
 {f'- Ειδικό κεφάλαιο/θέμα: {chapter_focus}' if chapter_focus.strip() else ''}
 - Επίπεδο δυσκολίας: {lvl_instr}
+{open_q_rule}
 
 ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON (χωρίς κανένα επιπλέον κείμενο) με λίστα 6 αντικειμένων:
 {{
   "questions": [
     {{
-      "q": "Σύντομη, ξεκάθαρη ερώτηση",
+      "q": "Σύντομη, ξεκάθαρη, αυτοτελής ερώτηση (ΠΟΤΕ 'ποια από τις παρακάτω')",
       "choices": ["Επιλογή Α", "Επιλογή Β", "Επιλογή Γ"],
       "correct_choice": "Επιλογή Α",
       "expected_answer": "Σύντομη σωστή απάντηση (1 πρόταση)",
@@ -1460,33 +1493,77 @@ def generate_duel_questions_json(grade: str, subject: str, book_topics: str, sup
     return None
 
 def judge_duel_free_answer(question_text: str, expected_answer: str, student_answer: str) -> bool:
-    """Ελέγχει γρήγορα και δίκαια (δέχεται συνώνυμα/μικρά ορθογραφικά) ελεύθερη απάντηση στη Μονομαχία."""
+    """Ελέγχει δίκαια, νοηματικά και επιεικώς (όπως ένας καλός καθηγητής Γυμνασίου) ελεύθερη απάντηση μαθητή."""
     norm_st = normalize_text(student_answer or "").strip()
-    if not norm_st or norm_st in ("δεν ξερω", "δεν εχω ιδεα", "πασο", "παραδιδω"):
+    if not norm_st or norm_st in ("δεν ξερω", "δεν εχω ιδεα", "πασο", "παραδιδω", "οχι", "τιποτα", "?"):
         return False
     norm_exp = normalize_text(expected_answer or "").strip()
-    if norm_st == norm_exp or (len(norm_st) >= 4 and norm_st in norm_exp):
+    if norm_st == norm_exp or (len(norm_st) >= 4 and (norm_st in norm_exp or norm_exp in norm_st)):
         return True
+
+    models_to_try = [
+        st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+        "gemini-3.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+    ]
+    seen_m = set()
+    ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
+
+    judge_p = f"""Είσαι ένας δίκαιος, επιεικής καθηγητής Γυμνασίου στην Ελλάδα και βαθμολογείς μια απάντηση μαθητή σε εκπαιδευτικό παιχνίδι.
+
+Ερώτηση: {question_text}
+Ενδεικτική σωστή απάντηση: {expected_answer}
+Απάντηση μαθητή: {student_answer}
+
+ΚΑΝΟΝΕΣ ΑΞΙΟΛΟΓΗΣΗΣ (ΠΟΛΥ ΣΗΜΑΝΤΙΚΟ):
+- Κρίνε με βάση το ΝΟΗΜΑ και την ΚΑΤΑΝΟΗΣΗ, ΟΧΙ αν έγραψε τις ίδιες ακριβώς λέξεις!
+- Απάντησε YES αν η απάντηση του μαθητή:
+  1. Είναι νοηματικά σωστή ή στο περίπου σωστή και δείχνει ότι κατάλαβε την ουσία.
+  2. Χρησιμοποιεί δικά του λόγια, συνώνυμα, περίφραση, συντομογραφία ή διαφορετική πτώση/χρόνο.
+  3. Έχει ορθογραφικά λάθη ή λείπουν τόνοι.
+  4. Δίνει μια άλλη εξίσου σωστή απάντηση στην ερώτηση (ακόμα κι αν διαφέρει από την ενδεικτική).
+  5. Γράφει αριθμούς ολογράφως ή με ψηφία.
+- Απάντησε NO ΜΟΝΟ αν η απάντηση είναι ξεκάθαρα λανθασμένη, αντίθετη από τη σωστή, άσχετη ή τυχαία.
+
+Απάντησε ΑΠΟΚΛΕΙΣΤΙΚΑ με μία λέξη: YES ή NO."""
+
     try:
         client = get_genai_client(api_key)
-        m_name = st.session_state.get("active_model", "gemini-3.5-flash-lite")
-        judge_p = (
-            f"Ερώτηση Γυμνασίου: {question_text}\n"
-            f"Αναμενόμενη σωστή απάντηση: {expected_answer}\n"
-            f"Απάντηση μαθητή: {student_answer}\n"
-            f"Είναι ουσιαστικά σωστή η απάντηση του μαθητή (αγνοώντας μικρά ορθογραφικά ή συνώνυμα); "
-            f"Απάντησε ΜΟΝΟ με μία λέξη: YES ή NO."
-        )
-        r = client.models.generate_content(
-            model=m_name,
-            contents=judge_p,
-            config=build_fast_config(m_name, disable_thinking=True, temperature=0.0, max_output_tokens=10),
-        )
-        return "YES" in (r.text or "").upper()
+        for m_name in ordered_models:
+            for try_no_think in (True, False):
+                try:
+                    r = client.models.generate_content(
+                        model=m_name,
+                        contents=judge_p,
+                        config=build_fast_config(m_name, disable_thinking=try_no_think, temperature=0.0, max_output_tokens=20),
+                    )
+                    ans_u = (r.text or "").strip().upper()
+                    if "YES" in ans_u or "ΝΑΙ" in ans_u:
+                        return True
+                    if "NO" in ans_u or "ΟΧΙ" in ans_u:
+                        return False
+                except Exception as err:
+                    err_txt = str(err).lower()
+                    if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                        continue
+                    break
     except Exception:
-        # Εφεδρικός έλεγχος λέξεων-κλειδιών αν υπάρξει πρόβλημα δικτύου
-        exp_words = [w for w in re.sub(r'[^\w\s]', ' ', norm_exp).split() if len(w) >= 4]
-        return bool(exp_words) and any(w in norm_st for w in exp_words)
+        pass
+
+    # Έξυπνο εφεδρικό δίχτυ (αν υπάρξει πρόβλημα δικτύου): ρίζες λέξεων + ανοχή ορθογραφικών (difflib)
+    import difflib
+    stop_w = {"στην", "στον", "στη", "στο", "απο", "για", "με", "την", "τον", "των", "του", "της", "ειναι", "ηταν", "οτι", "πως"}
+    exp_words = [w for w in re.sub(r'[^\w\s]', ' ', norm_exp).split() if len(w) >= 4 and w not in stop_w]
+    st_words = [w for w in re.sub(r'[^\w\s]', ' ', norm_st).split() if len(w) >= 3 and w not in stop_w]
+    if not exp_words or not st_words:
+        return False
+    for ew in exp_words:
+        stem = ew[:5] if len(ew) >= 5 else ew
+        for sw in st_words:
+            if stem in sw or difflib.SequenceMatcher(None, ew, sw).ratio() >= 0.74:
+                return True
+    return False
 
 def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topics: str, support_level: str, chapter_focus: str = ""):
     """Παράγει σε ΜΙΑ (1) κλήση AI όλο το περιεχόμενο για: 'detective', 'myth_truth' ή 'escape'."""
@@ -1544,7 +1621,7 @@ def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topic
         lvl5_style = (
             "ΚΑΙ ΤΑ 5 ΣΚΑΛΟΠΑΤΙΑ να είναι σε ΠΟΛΥ ΑΠΛΗ γλώσσα (1-2 μικρές προτάσεις), Easy-to-Read, με φιλικά εικονίδια (emoji), χωρίς παγίδες, και 3 ξεκάθαρες επιλογές (choices)."
             if support_level == "LEVEL_1"
-            else "Κλιμάκωσε ΣΤΑΔΙΑΚΑ τη δυσκολία: το Επίπεδο 1 να είναι ΠΟΛΥ ΕΥΚΟΛΟ (για να πάρει θάρρος ο μαθητής), το 2 βασική κατανόηση, το 3 σύνδεση εννοιών, το 4 εφαρμογή/κρίση και το 5 απαιτητική ερώτηση σύνθεσης (Δάσκαλος της Ενότητας)."
+            else "Κλιμάκωσε ΣΤΑΔΙΑΚΑ τη δυσκολία: το Επίπεδο 1 να είναι ΠΟΛΥ ΕΥΚΟΛΟ (για να πάρει θάρρος ο μαθητής), το 2 βασική κατανόηση, το 3 σύνδεση εννοιών, το 4 εφαρμογή/κρίση και το 5 απαιτητική ερώτηση σύνθεσης (Δάσκαλος της Ενότητας). ΑΥΣΤΗΡΟΣ ΚΑΝΟΝΑΣ: Οι ερωτήσεις πρέπει να είναι ΑΝΟΙΧΤΕΣ και ΑΥΤΟΤΕΛΕΙΣ! ΑΠΑΓΟΡΕΥΕΤΑΙ να γράφεις «Ποια από τις παρακάτω...», «Ποιο από τα επόμενα...» ή φράσεις που προϋποθέτουν επιλογές!"
         )
         schema_instr = f"""
 Ετοίμασε ΑΚΡΙΒΩΣ 5 διαδοχικές ερωτήσεις/μίνι ασκήσεις για το παιχνίδι «🏔️ Πρόκληση 5 Επιπέδων».
@@ -1562,7 +1639,7 @@ def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topic
       "level_num": 1,
       "level_name": "🌱 Ζέσταμα",
       "icon": "🌱",
-      "question": "Σαφής ερώτηση/μίνι άσκηση για αυτό το σκαλοπάτι",
+      "question": "Σαφής, αυτοτελής ερώτηση/μίνι άσκηση για αυτό το σκαλοπάτι",
       "choices": ["Επιλογή Α", "Επιλογή Β", "Επιλογή Γ"],
       "correct_choice": "Επιλογή Α",
       "expected_answer": "Σύντομη αναμενόμενη σωστή απάντηση (1-6 λέξεις)",
@@ -3744,8 +3821,12 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 mg["awaiting_next"] = False
                 st.rerun()
         else:
-            if active_gid == "ladder5" and cur_lvl_duel != "LEVEL_1":
-                # Επίπεδα 2 & 3: Ελεύθερη απάντηση με 1 κλήση AI ανά γύρο (judge_duel_free_answer)
+            l5_needs_choices = (
+                active_gid == "ladder5"
+                and (cur_lvl_duel == "LEVEL_1" or (bool(item.get("choices")) and question_references_choices(str(item.get("question", "")))))
+            )
+            if active_gid == "ladder5" and not l5_needs_choices:
+                # Επίπεδα 2 & 3 (ανοιχτές ερωτήσεις): Ελεύθερη απάντηση με 1 κλήση AI ανά γύρο (judge_duel_free_answer)
                 exp_ans = str(item.get("expected_answer", item.get("correct_choice", ""))).strip()
                 exp_txt = str(item.get("explanation", ""))
                 l5_ans = st.text_input(
@@ -3826,7 +3907,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 choice_icons = ["1️⃣", "2️⃣", "3️⃣"] if active_gid == "ladder5" else ["🔘", "🔘", "🔘"]
                 for ci, ch_txt in enumerate(choices):
                     if st.button(f"{choice_icons[ci]} {ch_txt}", key=f"mg_ch_{active_gid}_{cur_i}_{mg['attempt']}_{ci}", use_container_width=True):
-                        is_ok = normalize_text(str(ch_txt)) == normalize_text(correct_ch)
+                        is_ok = choices_match(str(ch_txt), correct_ch)
                         if is_ok:
                             pts = 2 if mg["attempt"] == 1 else 1
                             mg["score"] += pts
@@ -4050,14 +4131,15 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
             d_state["awaiting_next"] = False
             st.rerun()
     else:
-        # Επίπεδο 1: 3 έτοιμα κουμπιά επιλογής (ΕΠΙΠΛΕΟΝ του πλαισίου γραφής), ΧΩΡΙΣ χρονόμετρο
-        if cur_lvl_duel == "LEVEL_1":
+        # Επίπεδο 1 (ή αν η ερώτηση αναφέρεται σε επιλογές): 3 έτοιμα κουμπιά επιλογής, ΧΩΡΙΣ χρονόμετρο
+        show_duel_choices = cur_lvl_duel == "LEVEL_1" or (bool(cur_q.get("choices")) and question_references_choices(str(cur_q.get("q", ""))))
+        if show_duel_choices:
             st.caption("🟢 Διάλεξε ένα από τα 3 κουμπιά ή γράψε τη δική σου απάντηση:")
             choices = cur_q.get("choices", [])[:3]
             correct_ch = str(cur_q.get("correct_choice", "")).strip()
             for ci, ch_txt in enumerate(choices):
                 if st.button(f"🔘 {ch_txt}", key=f"duel_ch_{q_idx}_{d_state['attempt']}_{ci}", use_container_width=True):
-                    is_ok = normalize_text(str(ch_txt)) == normalize_text(correct_ch)
+                    is_ok = choices_match(str(ch_txt), correct_ch)
                     _process_duel_submission(is_ok, str(ch_txt))
 
         # Πλαίσιο γραφής (διαθέσιμο σε όλα τα επίπεδα)
