@@ -1034,14 +1034,27 @@ st.markdown("""
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-primary"] p {
         color: #ffffff !important;
     }
+    [data-testid="stSidebar"] [data-testid="stLinkButton"] a,
     [data-testid="stSidebar"] a[data-testid="stLinkButton"] {
-        background-color: #a7f3d0 !important;
-        border: 1.5px solid #34d399 !important;
+        background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%) !important;
+        border: 1.5px solid #94a3b8 !important;
+        color: #1e293b !important;
+        box-shadow: 0 2px 6px rgba(71, 85, 105, 0.14) !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stLinkButton"] a:hover,
+    [data-testid="stSidebar"] a[data-testid="stLinkButton"]:hover {
+        background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%) !important;
+        border-color: #64748b !important;
+        color: #0f172a !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_subject_select div[data-baseweb="select"] > div,
+    [data-testid="stSidebar"] .st-key-side_subject_select div[data-baseweb="select"] {
+        background-color: #d1fae5 !important;
+        border-color: #6ee7b7 !important;
         color: #064e3b !important;
     }
-    [data-testid="stSidebar"] a[data-testid="stLinkButton"]:hover {
-        background-color: #6ee7b7 !important;
-        border-color: #10b981 !important;
+    [data-testid="stSidebar"] .st-key-side_subject_select div[data-baseweb="select"] * {
+        color: #064e3b !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"],
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] summary {
@@ -1509,10 +1522,10 @@ def render_effort_score_banner():
     <div title="Συνολική επίδοση προσπάθειας συνεδρίας (μηδενίζει με το κλείσιμο)" style="
         position: fixed;
         top: 14px;
-        right: 18px;
+        right: 28px;
         z-index: 99990;
-        width: 68px;
-        height: 68px;
+        width: 72px;
+        height: 58px;
         background-color: #dcfce7;
         border: 2px solid #4ade80;
         border-radius: 14px;
@@ -1520,7 +1533,7 @@ def render_effort_score_banner():
         align-items: center;
         justify-content: center;
         color: #14532d;
-        font-size: 1.05rem;
+        font-size: 1.0rem;
         font-weight: 900;
         letter-spacing: -0.3px;
         box-shadow: 0 4px 12px rgba(22, 101, 52, 0.16);
@@ -2026,10 +2039,10 @@ def render_live_visual_card_markdown(card: dict, fallback_grade: str = "", fallb
     flow_html = '<div style="display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:#64748b; font-weight:800;">➡️</div>'.join(step_blocks)
 
     st.markdown(f"""
-    <div style="background:#ffffff; border:2px solid #f59e0b; border-radius:16px; overflow:hidden; box-shadow:0 4px 14px rgba(15,52,96,0.10); margin:10px 0 8px 0;">
-        <div style="background:linear-gradient(135deg,#0c335e,#1d4ed8); color:#ffffff; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-            <div style="font-size:1.08rem; font-weight:800; color:#ffffff !important;">{c_icon} {c_title}</div>
-            <div style="font-size:0.78rem; font-weight:700; background:rgba(255,255,255,0.2); padding:3px 10px; border-radius:999px; color:#ffffff !important;">{c_grade} • {c_subj}</div>
+    <div style="background:#ffffff; border:2px solid #93c5fd; border-radius:16px; overflow:hidden; box-shadow:0 4px 14px rgba(15,52,96,0.09); margin:10px 0 8px 0;">
+        <div style="background:linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%); border-bottom:1.5px solid #93c5fd; color:#0c335e; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <div style="font-size:1.08rem; font-weight:800; color:#0c335e !important;">{c_icon} {c_title}</div>
+            <div style="font-size:0.78rem; font-weight:700; background:#ffffff; border:1px solid #93c5fd; padding:3px 10px; border-radius:999px; color:#1e3a8a !important;">{c_grade} • {c_subj}</div>
         </div>
         <div style="padding:14px 16px;">
             <div style="background:#f8fafc; border-left:4px solid #2563eb; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:0.93rem; color:#0f172a;">
@@ -2421,28 +2434,14 @@ with st.sidebar:
         key="side_grade_select",
     )
     grade_color_map = {
-        "Α' Γυμνασίου": ("#bfdbfe", "#3b82f6", "#1e3a8a"),
-        "Β' Γυμνασίου": ("#fde68a", "#f59e0b", "#78350f"),
-        "Γ' Γυμνασίου": ("#ddd6fe", "#8b5cf6", "#4c1d95"),
+        "Α' Γυμνασίου": ("#e0f2fe", "#7dd3fc", "#0c4a6e"),
+        "Β' Γυμνασίου": ("#fef3c7", "#fcd34d", "#78350f"),
+        "Γ' Γυμνασίου": ("#ede9fe", "#c4b5fd", "#4c1d95"),
     }
-    g_bg, g_bd, g_fg = grade_color_map.get(selected_grade, ("#cce5f9", "#8bbfe6", "#0f172a"))
-    st.markdown(f"""
-    <style>
-        .st-key-side_grade_select div[data-baseweb="select"] > div,
-        .st-key-side_grade_select div[data-baseweb="select"] {{
-            background-color: {g_bg} !important;
-            border-color: {g_bd} !important;
-            color: {g_fg} !important;
-        }}
-        .st-key-side_grade_select div[data-baseweb="select"] * {{
-            color: {g_fg} !important;
-            font-weight: 700 !important;
-        }}
-    </style>
-    """, unsafe_allow_html=True)
+    g_bg, g_bd, g_fg = grade_color_map.get(selected_grade, ("#e0f2fe", "#7dd3fc", "#0c4a6e"))
 
     class_subjects = list(GYMNASIO_DATA[selected_grade]["subjects"].keys())
-    selected_subject = st.selectbox("📚 Μάθημα:", class_subjects, index=0, label_visibility="collapsed")
+    selected_subject = st.selectbox("📚 Μάθημα:", class_subjects, index=0, label_visibility="collapsed", key="side_subject_select")
 
     # Συμπεριληπτική & συμπαγής επιλογή επιπέδου (1 γραμμή αντί για 3 μεγάλους κύκλους)
     support_labels = {
@@ -2462,6 +2461,37 @@ with st.sidebar:
         help="Διάλεξε πόσο απλά και αναλυτικά θέλεις να σου εξηγεί ο Σωκράτης."
     )
     st.session_state.support_level = selected_lvl
+
+    lvl_color_map = {
+        "LEVEL_1": ("#dcfce7", "#86efac", "#14532d"),
+        "LEVEL_2": ("#fef9c3", "#fde047", "#713f12"),
+        "LEVEL_3": ("#f3e8ff", "#d8b4fe", "#581c87"),
+    }
+    l_bg, l_bd, l_fg = lvl_color_map.get(selected_lvl, ("#f3e8ff", "#d8b4fe", "#581c87"))
+    st.markdown(f"""
+    <style>
+        .st-key-side_grade_select div[data-baseweb="select"] > div,
+        .st-key-side_grade_select div[data-baseweb="select"] {{
+            background-color: {g_bg} !important;
+            border-color: {g_bd} !important;
+            color: {g_fg} !important;
+        }}
+        .st-key-side_grade_select div[data-baseweb="select"] * {{
+            color: {g_fg} !important;
+            font-weight: 700 !important;
+        }}
+        .st-key-support_level_selector div[data-baseweb="select"] > div,
+        .st-key-support_level_selector div[data-baseweb="select"] {{
+            background-color: {l_bg} !important;
+            border-color: {l_bd} !important;
+            color: {l_fg} !important;
+        }}
+        .st-key-support_level_selector div[data-baseweb="select"] * {{
+            color: {l_fg} !important;
+            font-weight: 600 !important;
+        }}
+    </style>
+    """, unsafe_allow_html=True)
 
     # Ανάκτηση πληροφοριών βιβλίου & ύλης για το επιλεγμένο μάθημα (αποκλειστικά τρέχοντα βιβλία ΙΕΠ / ebooks.edu.gr)
     current_book_info = GYMNASIO_DATA[selected_grade]["subjects"][selected_subject]
