@@ -1,4 +1,7 @@
 import os
+import io
+import json
+import html as html_lib
 import time
 import datetime
 import re
@@ -1971,14 +1974,18 @@ def generate_live_visual_card_json(
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.5,
-                    max_output_tokens=900,
+                    max_output_tokens=1100,
                     response_mime_type="application/json",
                 )
                 resp = client.models.generate_content(model=m_name, contents=prompt_card, config=cfg)
                 raw = (resp.text or "").strip()
                 raw = re.sub(r'^```(?:json)?\s*', '', raw)
                 raw = re.sub(r'\s*```$', '', raw)
-                parsed = json.loads(raw)
+                try:
+                    parsed = json.loads(raw)
+                except Exception:
+                    m_obj = re.search(r'\{[\s\S]*\}', raw)
+                    parsed = json.loads(m_obj.group(0)) if m_obj else None
                 if isinstance(parsed, dict) and parsed.get("title") and parsed.get("steps"):
                     parsed["_grade"] = grade
                     parsed["_subject"] = subject
