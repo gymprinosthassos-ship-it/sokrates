@@ -2557,33 +2557,6 @@ with st.sidebar:
                 help=duel_info["help"],
             )
 
-    # Εξαγωγή Σημειώσεων Μελέτης (όταν υπάρχει διάλογος)
-    if len(st.session_state.messages) > 1 and not st.session_state.is_locked:
-        clean_sub_name = selected_subject.split()[1] if len(selected_subject.split()) > 1 else "mathima"
-        notes_md = f"# 📜 Σημειώσεις Μελέτης — Σωκράτης AI Tutor\n\n"
-        notes_md += f"- **Ημερομηνία:** {datetime.date.today().strftime('%d/%m/%Y')}\n"
-        notes_md += f"- **Τάξη:** {selected_grade}\n"
-        notes_md += f"- **Μάθημα:** {selected_subject}\n"
-        notes_md += f"- **Σχολικό Βιβλίο:** [{selected_subject}]({book_url})\n\n---\n\n"
-        for m in st.session_state.messages:
-            sender = "🎓 Μαθητής" if m["role"] == "user" else "🧔 Σωκράτης"
-            notes_md += f"### {sender}\n{m['content']}\n\n"
-        # Η κρυφή βαθμολογία & ο Χάρτης Παρανοήσεων προστίθενται ΜΟΝΟ όταν η Πύλη Καθηγητή είναι ξεκλειδωμένη!
-        if st.session_state.get("teacher_unlocked", False):
-            if st.session_state.get("socratic_audits"):
-                notes_md += format_socratic_audit_markdown(st.session_state.socratic_audits)
-            misc_recs_dl = load_misconceptions_log()
-            if misc_recs_dl:
-                notes_md += format_misconceptions_markdown(misc_recs_dl)
-        st.download_button(
-            label="📥 Λήψη Σημειώσεων",
-            data=notes_md.encode("utf-8"),
-            file_name=f"sokrates_notes_{selected_grade[:2]}_{clean_sub_name}.md",
-            mime="text/markdown",
-            key="side_btn_notes_dl",
-            use_container_width=True
-        )
-
     # Δευτερεύουσες Ρυθμίσεις & Πληροφορίες (μαζεμένες διακριτικά σε 1 πτυσσόμενο)
     user_turns = len([m for m in st.session_state.messages if m["role"] == "user"])
     active_model = st.session_state.get("active_model", "gemini-3.5-flash-lite")
@@ -3366,6 +3339,44 @@ if st.session_state.active_mode == "teacher":
         chat_msgs = st.session_state.get("messages", [])
         student_msgs_count = len([m for m in chat_msgs if m.get("role") == "user"])
         audits = st.session_state.get("socratic_audits", [])
+
+        # 📥 Λήψη Σημειώσεων Συνεδρίας σε Word (.docx) — αποκλειστικά στη Λειτουργία Καθηγητή
+        if len(chat_msgs) > 1:
+            today_gr_n = datetime.date.today().strftime("%d/%m/%Y")
+            today_str_n = datetime.date.today().strftime("%Y%m%d")
+            clean_sub_n = selected_subject.split()[1] if len(selected_subject.split()) > 1 else "Mathima"
+            eff_sc = int(st.session_state.get("effort_score", 0))
+            notes_md = f"- **Συνολική Επίδοση Προσπάθειας Συνεδρίας:** {eff_sc} / 100\n"
+            notes_md += f"- **Επίσημο Σχολικό Βιβλίο ΙΕΠ:** {book_url}\n\n"
+            notes_md += "## Διάλογος Μελέτης\n"
+            for m in chat_msgs:
+                sender = "Μαθητής" if m.get("role") == "user" else "Σωκράτης"
+                notes_md += f"### {sender}\n{m.get('content', '')}\n\n"
+            if audits:
+                notes_md += format_socratic_audit_markdown(audits)
+            misc_recs_dl = load_misconceptions_log()
+            if misc_recs_dl:
+                notes_md += format_misconceptions_markdown(misc_recs_dl)
+
+            notes_docx = build_school_docx(
+                title="Σημειώσεις Μελέτης & Αποτίμηση Συνεδρίας",
+                subtitle=f"{selected_grade}  •  {selected_subject}  •  {today_gr_n}",
+                markdown_body=notes_md,
+                include_student_header=False,
+                split_solutions_page=False,
+            )
+            if notes_docx:
+                st.download_button(
+                    label="📥 Λήψη Σημειώσεων Συνεδρίας σε Word (.docx)",
+                    data=notes_docx,
+                    file_name=f"Simeioseis_Sokratis_{today_str_n}_{clean_sub_n}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    type="primary",
+                    use_container_width=True,
+                    key="teacher_btn_notes_docx",
+                )
+        else:
+            st.caption("ℹ️ Μόλις γίνει συζήτηση στη Λειτουργία Μαθητή, εδώ θα εμφανιστεί το κουμπί **«📥 Λήψη Σημειώσεων σε Word (.docx)»**.")
 
         # 🏛️ Κρυφός Πίνακας Σωκρατικής Ποιότητας Διαλόγου (Ορατός ΜΟΝΟ στον Καθηγητή)
         if audits:
