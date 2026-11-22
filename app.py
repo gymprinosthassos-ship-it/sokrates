@@ -2658,9 +2658,9 @@ with st.sidebar:
     if ANASKALLI_LOGO_URI:
         st.markdown(
             f"""
-            <div style="display: flex; justify-content: center; margin-top: 22px; margin-bottom: 6px;">
-                <div style="background: rgba(255, 255, 255, 0.94); border: 2px solid #1d4ed8; border-radius: 12px; padding: 6px 12px; box-shadow: 0 3px 10px rgba(15, 52, 96, 0.14); display: inline-flex; align-items: center; justify-content: center;">
-                    <img src="{ANASKALLI_LOGO_URI}" alt="ANASKALLI" style="height: 60px; width: auto; display: block; border-radius: 6px;" />
+            <div style="display: flex; justify-content: center; margin-top: 2px; margin-bottom: 2px;">
+                <div style="background: rgba(255, 255, 255, 0.94); border: 2px solid #1d4ed8; border-radius: 11px; padding: 4px 10px; box-shadow: 0 3px 10px rgba(15, 52, 96, 0.14); display: inline-flex; align-items: center; justify-content: center;">
+                    <img src="{ANASKALLI_LOGO_URI}" alt="ANASKALLI" style="height: 54px; width: auto; display: block; border-radius: 6px;" />
                 </div>
             </div>
             """,
