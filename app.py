@@ -979,36 +979,36 @@ st.markdown("""
         margin-top: 0.5rem;
     }
 
-    /* 10. Απαλά παστέλ χρώματα & συμπαγής διάταξη αριστερού μενού (όλα σε 1 οθόνη μαζί με το logo!) */
+    /* 10. Απαλά παστέλ χρώματα & ισορροπημένη διάταξη αριστερού μενού (άνετο + ολόκληρο logo στο κάτω μέρος) */
     [data-testid="stSidebar"] [data-testid="stSidebarHeader"] {
-        height: 1.85rem !important;
-        min-height: 1.85rem !important;
-        padding: 0.2rem 0.5rem 0 0.5rem !important;
-        margin-bottom: 0 !important;
+        height: 2.2rem !important;
+        min-height: 2.2rem !important;
+        padding: 0.35rem 0.6rem 0 0.6rem !important;
+        margin-bottom: 0.15rem !important;
     }
     [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
-        padding-top: 0.15rem !important;
-        padding-bottom: 0.25rem !important;
+        padding-top: 0.35rem !important;
+        padding-bottom: 0.5rem !important;
     }
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0.22rem !important;
+        gap: 0.52rem !important;
     }
     [data-testid="stSidebar"] .stButton > button,
     [data-testid="stSidebar"] a[data-testid="stLinkButton"] {
-        min-height: 1.92rem !important;
-        padding: 0.18rem 0.6rem !important;
-        font-size: 0.83rem !important;
+        min-height: 2.3rem !important;
+        padding: 0.34rem 0.78rem !important;
+        font-size: 0.87rem !important;
     }
     [data-testid="stSidebar"] div[data-baseweb="select"] > div,
     [data-testid="stSidebar"] div[data-baseweb="select"] {
-        min-height: 1.92rem !important;
+        min-height: 2.3rem !important;
     }
     [data-testid="stSidebar"] [data-testid="stExpander"] {
         margin-bottom: 0 !important;
     }
     [data-testid="stSidebar"] [data-testid="stExpander"] summary {
-        padding: 0.24rem 0.6rem !important;
-        font-size: 0.83rem !important;
+        padding: 0.4rem 0.72rem !important;
+        font-size: 0.87rem !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="secondary"],
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-secondary"] {
@@ -2216,18 +2216,18 @@ total_violations = get_violation_count()
 with st.sidebar:
     # Κομψή κάρτα κορυφής με το εικονίδιο του Σωκράτη
     if AVATAR_DATA_URI:
-        avatar_img_tag = f'<img src="{AVATAR_DATA_URI}" alt="Σωκράτης" style="width: 44px; height: 44px; min-width: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; box-shadow: 0 2px 6px rgba(12, 51, 94, 0.16); display: block;" />'
+        avatar_img_tag = f'<img src="{AVATAR_DATA_URI}" alt="Σωκράτης" style="width: 50px; height: 50px; min-width: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb; box-shadow: 0 2px 6px rgba(12, 51, 94, 0.16); display: block;" />'
     else:
-        avatar_img_tag = '<div style="font-size: 2rem; line-height: 1;">🧔</div>'
+        avatar_img_tag = '<div style="font-size: 2.1rem; line-height: 1;">🧔</div>'
 
     lock_tag = '<div style="background-color: #fee2e2; border: 1.5px solid #ef4444; border-radius: 6px; padding: 1px 6px; text-align: center; margin-top: 2px;"><span style="font-size: 0.7rem; font-weight: 800; color: #dc2626;">🚨 Κλειδωμένο</span></div>' if st.session_state.is_locked else ''
 
     header_html = (
-        f'<div style="background: rgba(255,255,255,0.85); border: 1.5px solid #93c5fd; border-radius: 12px; padding: 5px 8px; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 2px; box-shadow: 0 2px 6px rgba(15, 52, 96, 0.08);">'
+        f'<div style="background: rgba(255,255,255,0.88); border: 1.5px solid #93c5fd; border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(15, 52, 96, 0.08);">'
         f'{avatar_img_tag}'
         f'<div style="display: flex; flex-direction: column; justify-content: center; overflow: visible;">'
-        f'<div style="font-size: 1.08rem; font-weight: 800; color: #072b52; line-height: 1.1; letter-spacing: -0.2px;">Σωκράτης</div>'
-        f'<div style="font-size: 0.74rem; font-weight: 700; color: #1d4ed8; line-height: 1.15; margin-top: 1px;">AI Tutor Γυμνασίου</div>'
+        f'<div style="font-size: 1.16rem; font-weight: 800; color: #072b52; line-height: 1.15; letter-spacing: -0.2px;">Σωκράτης</div>'
+        f'<div style="font-size: 0.78rem; font-weight: 700; color: #1d4ed8; line-height: 1.2; margin-top: 2px;">AI Tutor Γυμνασίου</div>'
         f'{lock_tag}'
         f'</div>'
         f'</div>'
@@ -2355,23 +2355,6 @@ with st.sidebar:
                         "visual_card": sc
                     })
                     st.rerun()
-
-    # Κύρια Δράση: Πάντα ορατή χωρίς κύλιση!
-    if st.button("🔄 Νέα Συζήτηση", key="side_btn_new_chat", use_container_width=True, type="primary"):
-        st.session_state.messages = []
-        st.session_state.current_image = None
-        st.session_state.pending_prompt = None
-        st.session_state.stuck_counter = 0
-        st.session_state.stuck_level = 0
-        st.session_state.direct_answer_strikes = 0
-        st.session_state.socratic_audits = []
-        st.session_state.consecutive_explanations = 0
-        st.session_state.duel_mode_active = False
-        st.session_state.active_game_id = None
-        st.session_state.duel_state = None
-        st.session_state.mini_game_state = None
-        st.session_state.effort_score = 0
-        st.rerun()
 
     # 🔒 Παιχνίδια & Κουίζ (με κίνητρο προόδου & έλεγχο Καθηγητή)
     if st.session_state.active_mode == "student" and not st.session_state.is_locked:
@@ -2505,13 +2488,13 @@ with st.sidebar:
     if st.button("🛡️ Δήλωση Διαφάνειας", key="side_btn_transparency", use_container_width=True, help="Πληροφορίες συμμόρφωσης GDPR, προστασίας ανηλίκων & EU AI Act"):
         show_compliance_dialog()
 
-    # Επίσημο Λογότυπο Δημιουργού ANASKALLI κάτω από τη Δήλωση Διαφάνειας
+    # Επίσημο Λογότυπο Δημιουργού ANASKALLI τέρμα κάτω στο μενού (ολόκληρο & ευδιάκριτο)
     if ANASKALLI_LOGO_URI:
         st.markdown(
             f"""
-            <div style="display: flex; justify-content: center; margin-top: 4px; margin-bottom: 2px;">
-                <div style="background: rgba(255, 255, 255, 0.92); border: 2px solid #1d4ed8; border-radius: 10px; padding: 4px 8px; box-shadow: 0 2px 8px rgba(15, 52, 96, 0.14); display: inline-flex; align-items: center; justify-content: center;">
-                    <img src="{ANASKALLI_LOGO_URI}" alt="ANASKALLI" style="height: 50px; width: auto; display: block; border-radius: 5px;" />
+            <div style="display: flex; justify-content: center; margin-top: 22px; margin-bottom: 6px;">
+                <div style="background: rgba(255, 255, 255, 0.94); border: 2px solid #1d4ed8; border-radius: 12px; padding: 6px 12px; box-shadow: 0 3px 10px rgba(15, 52, 96, 0.14); display: inline-flex; align-items: center; justify-content: center;">
+                    <img src="{ANASKALLI_LOGO_URI}" alt="ANASKALLI" style="height: 60px; width: auto; display: block; border-radius: 6px;" />
                 </div>
             </div>
             """,
