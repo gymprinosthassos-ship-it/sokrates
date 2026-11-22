@@ -1911,6 +1911,144 @@ def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topic
                 break
     return None
 
+def generate_live_visual_card_json(
+    grade: str,
+    subject: str,
+    book_topics: str,
+    support_level: str,
+    topic_focus: str = "",
+    recent_chat: str = "",
+):
+    """Παράγει επιτόπου (σε 1 γρήγορη κλήση AI) μια Ζωντανή Εποπτική Κάρτα-Σχεδιάγραμμα για ΟΠΟΙΟΔΗΠΟΤΕ μάθημα/κεφάλαιο του ΙΕΠ."""
+    client = get_genai_client(api_key)
+    models_to_try = [
+        st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+        "gemini-3.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+    ]
+    seen_m = set()
+    ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
+
+    lvl_rule = (
+        "ΕΠΙΠΕΔΟ 1 (Ειδική Αγωγή / Easy-to-Read): ΠΟΛΥ ΑΠΛΕΣ λέξεις, 4-8 λέξεις σε κάθε κουτάκι, φιλικά emoji, χωρίς δύσκολους όρους."
+        if support_level == "LEVEL_1"
+        else ("ΕΠΙΠΕΔΟ 2 (Απλοποιημένο Γυμνασίου): Καθαρή, απλή γλώσσα βήμα-βήμα." if support_level == "LEVEL_2" else "ΕΠΙΠΕΔΟ 3 (Τυπικό Γυμνασίου): Ακριβείς σχολικοί όροι από το επίσημο βιβλίο ΙΕΠ.")
+    )
+    focus_str = f"- Συγκεκριμένο θέμα/κεφάλαιο: {topic_focus.strip()}" if (topic_focus or "").strip() else ""
+    chat_str = f"- Τρέχουσα συζήτηση μαθητή (φτιάξε την κάρτα πάνω σε αυτό!): {recent_chat[:450]}" if (recent_chat or "").strip() else ""
+
+    prompt_card = f"""
+Είσαι ο Σωκράτης, εκπαιδευτικός Γυμνασίου στην Ελλάδα.
+Δημιούργησε μια καθαρή, ευχάριστη **Ζωντανή Εποπτική Κάρτα-Σχεδιάγραμμα** βασισμένη ΑΠΟΚΛΕΙΣΤΙΚΑ στα τρέχοντα επίσημα σχολικά βιβλία του ΙΕΠ (ebooks.edu.gr).
+
+ΣΤΟΙΧΕΙΑ:
+- Τάξη: {grade}
+- Μάθημα: {subject}
+- Επίσημη ύλη ΙΕΠ: {book_topics}
+{focus_str}
+{chat_str}
+- Επίπεδο: {lvl_rule}
+
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON (χωρίς κανένα επιπλέον κείμενο):
+{{
+  "title": "Σύντομος, καθαρός τίτλος κάρτας",
+  "icon": "🌟",
+  "central_idea": "Η κεντρική ιδέα σε 1 πολύ καθαρή και κατανοητή πρόταση",
+  "steps": [
+    {{"icon": "1️⃣", "heading": "Σύντομος τίτλος 1", "text": "Πολύ σύντομη εξήγηση (έως 12 λέξεις)"}},
+    {{"icon": "2️⃣", "heading": "Σύντομος τίτλος 2", "text": "Πολύ σύντομη εξήγηση (έως 12 λέξεις)"}},
+    {{"icon": "3️⃣", "heading": "Σύντομος τίτλος 3", "text": "Πολύ σύντομη εξήγηση (έως 12 λέξεις)"}}
+  ],
+  "everyday_example": "1 απτό, ζωντανό παράδειγμα από την καθημερινή ζωή (1 πρόταση)",
+  "remember_rule": "1 χρυσός κανόνας για να το θυμάται εύκολα ο μαθητής"
+}}
+"""
+    for m_name in ordered_models:
+        for try_no_think in (True, False):
+            try:
+                cfg = build_fast_config(
+                    m_name,
+                    disable_thinking=try_no_think,
+                    temperature=0.5,
+                    max_output_tokens=900,
+                    response_mime_type="application/json",
+                )
+                resp = client.models.generate_content(model=m_name, contents=prompt_card, config=cfg)
+                raw = (resp.text or "").strip()
+                raw = re.sub(r'^```(?:json)?\s*', '', raw)
+                raw = re.sub(r'\s*```$', '', raw)
+                parsed = json.loads(raw)
+                if isinstance(parsed, dict) and parsed.get("title") and parsed.get("steps"):
+                    parsed["_grade"] = grade
+                    parsed["_subject"] = subject
+                    return parsed
+            except Exception as err:
+                err_txt = str(err).lower()
+                if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                    continue
+                break
+    return None
+
+def render_live_visual_card_markdown(card: dict, fallback_grade: str = "", fallback_subject: str = ""):
+    """Αποδίδει μια Ζωντανή Εποπτική Κάρτα-Σχεδιάγραμμα με καθαρό, ευανάγνωστο HTML (χωρίς iframe/κύλιση)."""
+    if not isinstance(card, dict):
+        return
+    c_title = html_lib.escape(str(card.get("title", "Εποπτική Κάρτα")))
+    c_icon = html_lib.escape(str(card.get("icon", "🖼️")))
+    c_idea = html_lib.escape(str(card.get("central_idea", "")))
+    c_example = html_lib.escape(str(card.get("everyday_example", "")))
+    c_rule = html_lib.escape(str(card.get("remember_rule", "")))
+    c_grade = html_lib.escape(str(card.get("_grade", fallback_grade)))
+    c_subj = html_lib.escape(str(card.get("_subject", fallback_subject)))
+    steps = card.get("steps", []) if isinstance(card.get("steps"), list) else []
+
+    step_palettes = [
+        ("#eff6ff", "#60a5fa", "#1e3a8a"),
+        ("#f5f3ff", "#a78bfa", "#4c1d95"),
+        ("#ecfdf5", "#34d399", "#065f46"),
+        ("#fff7ed", "#fb923c", "#7c2d12"),
+    ]
+    step_blocks = []
+    for idx_s, stp in enumerate(steps[:4]):
+        bg, bd, fg = step_palettes[idx_s % len(step_palettes)]
+        s_ic = html_lib.escape(str(stp.get("icon", f"{idx_s+1}️⃣")))
+        s_hd = html_lib.escape(str(stp.get("heading", "")))
+        s_tx = html_lib.escape(str(stp.get("text", "")))
+        step_blocks.append(
+            f'<div style="flex:1 1 160px; background:{bg}; border:2px solid {bd}; border-radius:12px; padding:10px 12px; text-align:center;">'
+            f'<div style="font-size:1.35rem; line-height:1.1; margin-bottom:4px;">{s_ic}</div>'
+            f'<div style="font-size:0.9rem; font-weight:800; color:{fg}; margin-bottom:3px;">{s_hd}</div>'
+            f'<div style="font-size:0.84rem; color:#1e293b; line-height:1.35;">{s_tx}</div>'
+            f'</div>'
+        )
+    flow_html = '<div style="display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:#64748b; font-weight:800;">➡️</div>'.join(step_blocks)
+
+    st.markdown(f"""
+    <div style="background:#ffffff; border:2px solid #f59e0b; border-radius:16px; overflow:hidden; box-shadow:0 4px 14px rgba(15,52,96,0.10); margin:10px 0 8px 0;">
+        <div style="background:linear-gradient(135deg,#0c335e,#1d4ed8); color:#ffffff; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <div style="font-size:1.08rem; font-weight:800; color:#ffffff !important;">{c_icon} {c_title}</div>
+            <div style="font-size:0.78rem; font-weight:700; background:rgba(255,255,255,0.2); padding:3px 10px; border-radius:999px; color:#ffffff !important;">{c_grade} • {c_subj}</div>
+        </div>
+        <div style="padding:14px 16px;">
+            <div style="background:#f8fafc; border-left:4px solid #2563eb; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:0.93rem; color:#0f172a;">
+                <b>🎯 Κεντρική Ιδέα:</b> {c_idea}
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; margin-bottom:12px;">
+                {flow_html}
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+                <div style="background:#ecfdf5; border:1.5px solid #6ee7b7; border-radius:10px; padding:9px 12px; font-size:0.86rem; color:#065f46;">
+                    <b>🍎 Παράδειγμα από τη ζωή:</b><br>{c_example}
+                </div>
+                <div style="background:#fef9c3; border:1.5px solid #facc15; border-radius:10px; padding:9px 12px; font-size:0.86rem; color:#713f12;">
+                    <b>💡 Θυμήσου αυτό!</b><br>{c_rule}
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 def evaluate_socratic_turn(
     student_prompt: str,
     final_response: str,
@@ -2345,16 +2483,40 @@ with st.sidebar:
 
     with st.container(key="side_exp_cards"):
         with st.expander("🖼️ Εποπτικές Κάρτες", expanded=False):
-            st.caption(f"Υλικό για: **{selected_subject.split()[1] if len(selected_subject.split())>1 else selected_subject}**")
-            subj_cards = get_cards_for_subject(selected_subject)
-            for sc in subj_cards:
-                if st.button(f"👁️ {sc['title']}", key=f"side_card_{sc['id']}", use_container_width=True):
+            st.caption("Ζωντανό σχεδιάγραμμα για **οποιοδήποτε** μάθημα & κεφάλαιο!")
+            card_topic_in = st.text_input(
+                "📌 Θέμα / Κεφάλαιο (προαιρετικό):",
+                placeholder="π.χ. Κλάσματα, Δημιουργία, Κύτταρο...",
+                key="side_live_card_topic",
+            )
+            if st.button("✨ Φτιάξε Εποπτική Κάρτα", key="side_btn_make_live_card", use_container_width=True):
+                recent_ctx = ""
+                if len(st.session_state.messages) > 1:
+                    recent_ctx = " | ".join(
+                        str(m.get("content", ""))[:160]
+                        for m in st.session_state.messages[-3:]
+                        if m.get("content")
+                    )
+                with st.spinner("🖼️ Ο Σωκράτης σχεδιάζει την εποπτική κάρτα..."):
+                    live_card = generate_live_visual_card_json(
+                        grade=selected_grade,
+                        subject=selected_subject,
+                        book_topics=book_topics,
+                        support_level=st.session_state.get("support_level", "LEVEL_3"),
+                        topic_focus=card_topic_in,
+                        recent_chat="" if card_topic_in.strip() else recent_ctx,
+                    )
+                if live_card:
+                    st.session_state.active_mode = "student"
+                    st.session_state.duel_mode_active = False
                     st.session_state.messages.append({
                         "role": "assistant",
-                        "content": f"Ορίστε η παιδαγωγική εικόνα για το θέμα: **{sc['title']}**! Κοίταξέ την προσεκτικά:",
-                        "visual_card": sc
+                        "content": f"Ορίστε η ζωντανή εποπτική κάρτα για το θέμα: **{live_card.get('title', selected_subject)}**! Κοίταξε προσεκτικά τα βήματα:",
+                        "live_visual_card": live_card,
                     })
                     st.rerun()
+                else:
+                    st.warning("⚠️ Προσωρινή αδυναμία δημιουργίας κάρτας. Δοκίμασε ξανά σε λίγο.")
 
     # 🔒 Παιχνίδια & Κουίζ (με κίνητρο προόδου & έλεγχο Καθηγητή)
     if st.session_state.active_mode == "student" and not st.session_state.is_locked:
@@ -4575,7 +4737,9 @@ for i, msg in enumerate(st.session_state.messages):
         if "image_bytes" in msg and msg["image_bytes"]:
             st.image(msg["image_bytes"], caption="📷 Φωτογραφία άσκησης", width=280)
         st.markdown(msg["content"])
-        if msg.get("visual_card"):
+        if msg.get("live_visual_card"):
+            render_live_visual_card_markdown(msg["live_visual_card"], selected_grade, selected_subject)
+        elif msg.get("visual_card"):
             card_html = render_visual_card_html(msg["visual_card"])
             components.html(card_html, height=520, scrolling=True)
         if msg["role"] == "assistant" and i == len(st.session_state.messages) - 1:
@@ -4675,8 +4839,32 @@ with col_h3:
         st.rerun()
 with col_h4:
     if st.button("🖼️ Δείξε μου εικόνα!", use_container_width=True):
-        st.session_state.pending_prompt = "Μπορείς να μου δείξεις μια καθαρή εικόνα ή ένα απλό σχεδιάγραμμα για να καταλάβω καλύτερα αυτό το θέμα;"
-        st.rerun()
+        recent_ctx = ""
+        if len(st.session_state.messages) > 1:
+            recent_ctx = " | ".join(
+                str(m.get("content", ""))[:180]
+                for m in st.session_state.messages[-3:]
+                if m.get("content")
+            )
+        with st.spinner("🖼️ Ο Σωκράτης σχεδιάζει μια εποπτική κάρτα για το θέμα μας..."):
+            live_card = generate_live_visual_card_json(
+                grade=selected_grade,
+                subject=selected_subject,
+                book_topics=book_topics,
+                support_level=st.session_state.get("support_level", "LEVEL_3"),
+                topic_focus="",
+                recent_chat=recent_ctx,
+            )
+        if live_card:
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": f"Ορίστε η ζωντανή εποπτική κάρτα για το θέμα μας: **{live_card.get('title', selected_subject)}**! Ποιο βήμα σου φαίνεται πιο σημαντικό;",
+                "live_visual_card": live_card,
+            })
+            st.rerun()
+        else:
+            st.session_state.pending_prompt = "Μπορείς να μου δείξεις ένα απλό σχεδιάγραμμα με βήματα για να καταλάβω καλύτερα αυτό το θέμα;"
+            st.rerun()
 with col_h5:
     if st.button("👣 Βήμα-βήμα", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου το αναλύσεις κάνοντας μόνο ένα πολύ μικρό βήμα τη φορά;"
