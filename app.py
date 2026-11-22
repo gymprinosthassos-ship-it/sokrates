@@ -1073,22 +1073,28 @@ st.markdown("""
         color: #ffffff !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button {
-        background-color: #fef3c7 !important;
-        border: 1.5px solid #f59e0b !important;
-        color: #78350f !important;
+        background: linear-gradient(135deg, #fde047 0%, #f59e0b 100%) !important;
+        border: 1.5px solid #b45309 !important;
+        color: #451a03 !important;
+        box-shadow: 0 3px 10px rgba(217, 119, 6, 0.28) !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button:hover {
-        background-color: #fde68a !important;
-        border-color: #d97706 !important;
+        background: linear-gradient(135deg, #facc15 0%, #d97706 100%) !important;
+        border-color: #92400e !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button p {
-        color: #78350f !important;
-        font-weight: 700 !important;
+        color: #451a03 !important;
+        font-weight: 800 !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_locked button {
-        background-color: #e2e8f0 !important;
-        border: 1.5px solid #cbd5e1 !important;
-        color: #475569 !important;
+        background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%) !important;
+        border: 1.5px solid #d97706 !important;
+        color: #78350f !important;
+        opacity: 0.92 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_duel_locked button p {
+        color: #78350f !important;
+        font-weight: 700 !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_notes_dl button {
         background-color: #dcfce7 !important;
