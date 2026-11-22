@@ -981,6 +981,131 @@ st.markdown("""
         color: #dc2626 !important;
         margin-top: 0.5rem;
     }
+
+    /* 10. Απαλά παστέλ χρώματα για κάθε κουμπί του αριστερού μενού */
+    [data-testid="stSidebar"] a[data-testid="stLinkButton"] {
+        background-color: #d8f3ec !important;
+        border: 1.5px solid #7dd3bd !important;
+        color: #0f4c3a !important;
+    }
+    [data-testid="stSidebar"] a[data-testid="stLinkButton"]:hover {
+        background-color: #c2ebe0 !important;
+        border-color: #4ec4a7 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"],
+    [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] summary {
+        background-color: #ede9fe !important;
+        border-color: #c4b5fd !important;
+        color: #4c1d95 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] div[role="region"] {
+        background-color: #f5f3ff !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"],
+    [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"] summary {
+        background-color: #ffedd5 !important;
+        border-color: #fdba74 !important;
+        color: #7c2d12 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"] div[role="region"] {
+        background-color: #fff7ed !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_new_chat button {
+        background-color: #1d4ed8 !important;
+        border: 1.5px solid #1e40af !important;
+        color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_new_chat button:hover {
+        background-color: #1e40af !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_new_chat button p {
+        color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_duel_open button {
+        background-color: #fef3c7 !important;
+        border: 1.5px solid #f59e0b !important;
+        color: #78350f !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_duel_open button:hover {
+        background-color: #fde68a !important;
+        border-color: #d97706 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_duel_open button p {
+        color: #78350f !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_duel_locked button {
+        background-color: #e2e8f0 !important;
+        border: 1.5px solid #cbd5e1 !important;
+        color: #475569 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_notes_dl button {
+        background-color: #dcfce7 !important;
+        border: 1.5px solid #86efac !important;
+        color: #14532d !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_notes_dl button:hover {
+        background-color: #bbf7d0 !important;
+        border-color: #4ade80 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"],
+    [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] summary {
+        background-color: #e2ecf5 !important;
+        border-color: #b6cbe0 !important;
+        color: #1e3a5f !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] div[role="region"] {
+        background-color: #edf4fa !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_transparency button {
+        background-color: #fce7f3 !important;
+        border: 1.5px solid #f9a8d4 !important;
+        color: #831843 !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_transparency button:hover {
+        background-color: #fbcfe8 !important;
+        border-color: #f472b6 !important;
+    }
+
+    /* 11. Ξεχωριστό χρώμα για κάθε κουμπί παιχνιδιού στην οθόνη «Παιχνίδια & Κουίζ» */
+    .st-key-btn_open_game_duel button {
+        background-color: #2563eb !important;
+        border: 1.5px solid #1d4ed8 !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_duel button:hover { background-color: #1d4ed8 !important; }
+    .st-key-btn_open_game_detective button {
+        background-color: #7c3aed !important;
+        border: 1.5px solid #6d28d9 !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_detective button:hover { background-color: #6d28d9 !important; }
+    .st-key-btn_open_game_myth button {
+        background-color: #059669 !important;
+        border: 1.5px solid #047857 !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_myth button:hover { background-color: #047857 !important; }
+    .st-key-btn_open_game_escape button {
+        background-color: #d97706 !important;
+        border: 1.5px solid #b45309 !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_escape button:hover { background-color: #b45309 !important; }
+    .st-key-btn_open_game_ladder5 button {
+        background-color: #0d9488 !important;
+        border: 1.5px solid #0f766e !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_ladder5 button:hover { background-color: #0f766e !important; }
+    .st-key-btn_open_game_duel button p,
+    .st-key-btn_open_game_detective button p,
+    .st-key-btn_open_game_myth button p,
+    .st-key-btn_open_game_escape button p,
+    .st-key-btn_open_game_ladder5 button p {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1297,36 +1422,82 @@ def format_misconceptions_markdown(records: list) -> str:
 # -------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
 def get_shared_classroom_store() -> dict:
-    """Κοινή μνήμη μεταξύ όλων των συσκευών της τάξης στον ίδιο διακομιστή (δουλεύει 100% και στο Streamlit Cloud)."""
-    return {"duel_policy": None}
+    """Κοινή μνήμη τάξης στον διακομιστή: σε κάθε νέο άνοιγμα ξεκινά ΚΛΕΙΔΩΜΕΝΟ (study_goal 0/3)."""
+    return {"duel_policy": "study_goal", "unlocked_all_ts": 0.0}
 
 def load_duel_policy() -> str:
-    """Επιστρέφει τη ρύθμιση Καθηγητή για τα Παιχνίδια & Κουίζ: 'study_goal' | 'unlocked_all' | 'disabled'."""
+    """Επιστρέφει τη ρύθμιση Καθηγητή: 'study_goal' (προεπιλογή κλειδωμένο) | 'unlocked_all' | 'disabled'."""
     store = get_shared_classroom_store()
-    if store.get("duel_policy") in ("study_goal", "unlocked_all", "disabled"):
-        return store["duel_policy"]
-    if os.path.exists(DUEL_SETTINGS_PATH):
-        try:
-            with open(DUEL_SETTINGS_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                pol = data.get("policy", "study_goal")
-                if pol in ("study_goal", "unlocked_all", "disabled"):
-                    store["duel_policy"] = pol
-                    return pol
-        except Exception:
-            pass
-    return "study_goal"
+    pol = store.get("duel_policy", "study_goal")
+    # Αν ο καθηγητής το είχε ξεκλειδώσει για όλους και πέρασε 1 διδακτική ώρα (45'), ξανακλειδώνει αυτόματα!
+    if pol == "unlocked_all":
+        ts = float(store.get("unlocked_all_ts", 0.0) or 0.0)
+        if ts > 0 and (time.time() - ts) > 45 * 60:
+            store["duel_policy"] = "study_goal"
+            store["unlocked_all_ts"] = 0.0
+            return "study_goal"
+    return pol if pol in ("study_goal", "unlocked_all", "disabled") else "study_goal"
 
 def save_duel_policy(policy: str):
     if policy not in ("study_goal", "unlocked_all", "disabled"):
         policy = "study_goal"
     store = get_shared_classroom_store()
     store["duel_policy"] = policy
+    store["unlocked_all_ts"] = time.time() if policy == "unlocked_all" else 0.0
     try:
         with open(DUEL_SETTINGS_PATH, "w", encoding="utf-8") as f:
             json.dump({"policy": policy}, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
+
+def add_effort_points(delta: int) -> int:
+    """Ενημερώνει τον μετρητή συνολικής επίδοσης/προσπάθειας (0–100) μόνο για την τρέχουσα συνεδρία."""
+    cur = int(st.session_state.get("effort_score", 0))
+    new_val = max(0, min(100, cur + int(delta)))
+    st.session_state.effort_score = new_val
+    return new_val
+
+def render_effort_score_banner():
+    """Εμφανίζει το μεγάλο κόκκινο πλαίσιο συνολικής επίδοσης προσπάθειας/σκορ (0–100) της συνεδρίας."""
+    score = max(0, min(100, int(st.session_state.get("effort_score", 0))))
+    if score >= 95:
+        badge_txt = "🏆 Κορυφαία Επίδοση!"
+    elif score >= 75:
+        badge_txt = "🌟 Εξαιρετική Πορεία!"
+    elif score >= 45:
+        badge_txt = "🔥 Δυνατή Προσπάθεια!"
+    elif score >= 15:
+        badge_txt = "💪 Καλή Αρχή!"
+    else:
+        badge_txt = "🚀 Ξεκινάμε!"
+
+    st.markdown(f"""
+    <div style="
+        background: linear-gradient(135deg, #b91c1c 0%, #dc2626 55%, #ef4444 100%);
+        border: 3px solid #7f1d1d;
+        border-radius: 16px;
+        padding: 12px 20px;
+        margin-bottom: 12px;
+        color: #ffffff;
+        box-shadow: 0 5px 16px rgba(185, 28, 28, 0.25);
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.55rem; line-height: 1;">🎯</span>
+                <div>
+                    <div style="font-size: 0.98rem; font-weight: 800; letter-spacing: 0.2px; color: #ffffff;">Συνολική Επίδοση Προσπάθειας</div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: #fee2e2;">{badge_txt} • Μηδενίζει με το κλείσιμο της εφαρμογής</div>
+                </div>
+            </div>
+            <div style="background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.45); border-radius: 12px; padding: 4px 14px; font-size: 1.55rem; font-weight: 900; color: #ffffff; line-height: 1.15;">
+                {score} <span style="font-size: 0.95rem; font-weight: 700; color: #fecaca;">/ 100</span>
+            </div>
+        </div>
+        <div style="background: rgba(127, 29, 29, 0.45); border-radius: 999px; height: 11px; width: 100%; overflow: hidden; border: 1px solid rgba(255,255,255,0.28);">
+            <div style="background: linear-gradient(90deg, #fde047 0%, #ffffff 100%); height: 100%; width: {max(2, score)}%; border-radius: 999px; transition: width 0.35s ease;"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 def compute_duel_unlock_status(
     policy: str,
@@ -2108,24 +2279,26 @@ with st.sidebar:
         )
 
     # Πτυσσόμενα εργαλεία μαθήματος (Ύλη & Εποπτικές Κάρτες)
-    with st.expander("📑 Ύλη & Κεφάλαια", expanded=False):
-        st.write(book_topics)
-        st.caption("🌐 Πηγή: Ψηφιακά Βιβλία ΙΕΠ / Μελίσπη")
+    with st.container(key="side_exp_yli"):
+        with st.expander("📑 Ύλη & Κεφάλαια", expanded=False):
+            st.write(book_topics)
+            st.caption("🌐 Πηγή: Ψηφιακά Βιβλία ΙΕΠ / Μελίσπη")
 
-    with st.expander("🖼️ Εποπτικές Κάρτες", expanded=False):
-        st.caption(f"Υλικό για: **{selected_subject.split()[1] if len(selected_subject.split())>1 else selected_subject}**")
-        subj_cards = get_cards_for_subject(selected_subject)
-        for sc in subj_cards:
-            if st.button(f"👁️ {sc['title']}", key=f"side_card_{sc['id']}", use_container_width=True):
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": f"Ορίστε η παιδαγωγική εικόνα για το θέμα: **{sc['title']}**! Κοίταξέ την προσεκτικά:",
-                    "visual_card": sc
-                })
-                st.rerun()
+    with st.container(key="side_exp_cards"):
+        with st.expander("🖼️ Εποπτικές Κάρτες", expanded=False):
+            st.caption(f"Υλικό για: **{selected_subject.split()[1] if len(selected_subject.split())>1 else selected_subject}**")
+            subj_cards = get_cards_for_subject(selected_subject)
+            for sc in subj_cards:
+                if st.button(f"👁️ {sc['title']}", key=f"side_card_{sc['id']}", use_container_width=True):
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": f"Ορίστε η παιδαγωγική εικόνα για το θέμα: **{sc['title']}**! Κοίταξέ την προσεκτικά:",
+                        "visual_card": sc
+                    })
+                    st.rerun()
 
     # Κύρια Δράση: Πάντα ορατή χωρίς κύλιση!
-    if st.button("🔄 Νέα Συζήτηση", use_container_width=True, type="primary"):
+    if st.button("🔄 Νέα Συζήτηση", key="side_btn_new_chat", use_container_width=True, type="primary"):
         st.session_state.messages = []
         st.session_state.current_image = None
         st.session_state.pending_prompt = None
@@ -2138,6 +2311,7 @@ with st.sidebar:
         st.session_state.active_game_id = None
         st.session_state.duel_state = None
         st.session_state.mini_game_state = None
+        st.session_state.effort_score = 0
         st.rerun()
 
     # 🔒 Παιχνίδια & Κουίζ (με κίνητρο προόδου & έλεγχο Καθηγητή)
@@ -2195,6 +2369,7 @@ with st.sidebar:
             data=notes_md.encode("utf-8"),
             file_name=f"sokrates_notes_{selected_grade[:2]}_{clean_sub_name}.md",
             mime="text/markdown",
+            key="side_btn_notes_dl",
             use_container_width=True
         )
 
@@ -2202,51 +2377,52 @@ with st.sidebar:
     user_turns = len([m for m in st.session_state.messages if m["role"] == "user"])
     active_model = st.session_state.get("active_model", "gemini-3.5-flash-lite")
 
-    with st.expander("⚙️ Ρυθμίσεις & Πληροφορίες", expanded=False):
-        st.markdown(f"""
-        <div style="background: #e2f0fc; border: 1px solid #9ccaf0; border-radius: 8px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.80rem; margin-bottom: 8px;">
-            <span style="color: #082f56;">🧠 <b>Βήματα Στοχασμού:</b></span>
-            <span style="font-weight: 800; color: #1d4ed8; font-size: 0.88rem;">{user_turns}</span>
-        </div>
-        """, unsafe_allow_html=True)
+    with st.container(key="side_exp_settings"):
+        with st.expander("⚙️ Ρυθμίσεις & Πληροφορίες", expanded=False):
+            st.markdown(f"""
+            <div style="background: #e2f0fc; border: 1px solid #9ccaf0; border-radius: 8px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.80rem; margin-bottom: 8px;">
+                <span style="color: #082f56;">🧠 <b>Βήματα Στοχασμού:</b></span>
+                <span style="font-weight: 800; color: #1d4ed8; font-size: 0.88rem;">{user_turns}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
-        model_keys = list(MODEL_OPTIONS.keys())
-        model_labels = list(MODEL_OPTIONS.values())
-        curr_idx = model_keys.index(active_model) if active_model in model_keys else 0
-        selected_model_label = st.selectbox(
-            "⚡ Μοντέλο AI:",
-            options=model_labels,
-            index=curr_idx,
-            help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα."
-        )
-        st.session_state.active_model = model_keys[model_labels.index(selected_model_label)]
-        active_model = st.session_state.active_model
-
-        st.markdown("---")
-        st.markdown(f"**📋 Αρχείο Παραβιάσεων:** `{total_violations}`")
-        if os.path.exists(SECURITY_LOG_PATH):
-            with open(SECURITY_LOG_PATH, "r", encoding="utf-8") as f:
-                log_data = f.read()
-            st.download_button(
-                label="📥 Λήψη Log (.csv)",
-                data=log_data.encode("utf-8"),
-                file_name="security_violations.csv",
-                mime="text/csv",
-                use_container_width=True
+            model_keys = list(MODEL_OPTIONS.keys())
+            model_labels = list(MODEL_OPTIONS.values())
+            curr_idx = model_keys.index(active_model) if active_model in model_keys else 0
+            selected_model_label = st.selectbox(
+                "⚡ Μοντέλο AI:",
+                options=model_labels,
+                index=curr_idx,
+                help="Όλα τα μοντέλα είναι βελτιστοποιημένα για ταχύτητα."
             )
-            log_lines = log_data.strip().split("\n")
-            if len(log_lines) > 1:
-                st.code(log_lines[-1], language="text")
-        else:
-            st.caption("Δεν υπάρχουν καταγεγραμμένες παραβιάσεις.")
+            st.session_state.active_model = model_keys[model_labels.index(selected_model_label)]
+            active_model = st.session_state.active_model
 
-        st.markdown("---")
-        st.caption("""
-        **💡 Οδηγίες:**
-        • Γράψε την απορία σου — δεν δίνω έτοιμες λύσεις, σε καθοδηγώ με ερωτήσεις.
-        • Πάτα «Άνοιγμα Σχολικού Βιβλίου» για τη θεωρία.
-        • Μη φοβάσαι τα λάθη — μέσα από αυτά μαθαίνουμε!
-        """)
+            st.markdown("---")
+            st.markdown(f"**📋 Αρχείο Παραβιάσεων:** `{total_violations}`")
+            if os.path.exists(SECURITY_LOG_PATH):
+                with open(SECURITY_LOG_PATH, "r", encoding="utf-8") as f:
+                    log_data = f.read()
+                st.download_button(
+                    label="📥 Λήψη Log (.csv)",
+                    data=log_data.encode("utf-8"),
+                    file_name="security_violations.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+                log_lines = log_data.strip().split("\n")
+                if len(log_lines) > 1:
+                    st.code(log_lines[-1], language="text")
+            else:
+                st.caption("Δεν υπάρχουν καταγεγραμμένες παραβιάσεις.")
+
+            st.markdown("---")
+            st.caption("""
+            **💡 Οδηγίες:**
+            • Γράψε την απορία σου — δεν δίνω έτοιμες λύσεις, σε καθοδηγώ με ερωτήσεις.
+            • Πάτα «Άνοιγμα Σχολικού Βιβλίου» για τη θεωρία.
+            • Μη φοβάσαι τα λάθη — μέσα από αυτά μαθαίνουμε!
+            """)
 
     # Τελευταίο στοιχείο κάτω αριστερά στο μενού: Δήλωση Διαφάνειας με αναδυόμενο παράθυρο
     @st.dialog("🛡️ Δήλωση Διαφάνειας & Προστασίας Ανηλίκων")
@@ -2267,7 +2443,7 @@ with st.sidebar:
         if st.button("✖️ Κλείσιμο", use_container_width=True, type="primary"):
             st.rerun()
 
-    if st.button("🛡️ Δήλωση Διαφάνειας", use_container_width=True, help="Πληροφορίες συμμόρφωσης GDPR, προστασίας ανηλίκων & EU AI Act"):
+    if st.button("🛡️ Δήλωση Διαφάνειας", key="side_btn_transparency", use_container_width=True, help="Πληροφορίες συμμόρφωσης GDPR, προστασίας ανηλίκων & EU AI Act"):
         show_compliance_dialog()
 
     # Επίσημο Λογότυπο Δημιουργού ANASKALLI κάτω από τη Δήλωση Διαφάνειας
@@ -3502,6 +3678,12 @@ if st.session_state.active_mode == "teacher":
     st.stop()
 
 # -------------------------------------------------------------
+# 10.75. ΜΕΤΡΗΤΗΣ ΣΥΝΟΛΙΚΗΣ ΕΠΙΔΟΣΗΣ ΠΡΟΣΠΑΘΕΙΑΣ (0–100) ΣΕ ΜΕΓΑΛΟ ΚΟΚΚΙΝΟ ΠΛΑΙΣΙΟ
+# -------------------------------------------------------------
+if st.session_state.active_mode == "student" and not st.session_state.is_locked:
+    render_effort_score_banner()
+
+# -------------------------------------------------------------
 # 10.8. ΕΝΟΤΗΤΑ «🎮 ΠΑΙΧΝΙΔΙΑ & ΚΟΥΙΖ» (ΕΠΙΛΟΓΗ ΠΑΙΧΝΙΔΙΩΝ + ΜΟΝΟΜΑΧΙΑ 2 ΠΑΙΚΤΩΝ)
 # -------------------------------------------------------------
 if st.session_state.active_mode == "student" and st.session_state.get("duel_mode_active", False):
@@ -3527,8 +3709,8 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         row1_c1, row1_c2 = st.columns(2)
         with row1_c1:
             st.markdown("""
-            <div style="background:#ffffff; border:2px solid #2563eb; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(29,78,216,0.08); min-height:145px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#0c335e; margin-bottom:6px;">⚔️ Μονομαχία 2 Παικτών</div>
+            <div style="background:linear-gradient(135deg,#eff6ff,#ffffff); border:2px solid #2563eb; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(29,78,216,0.09); min-height:142px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#1e3a8a; margin-bottom:6px;">⚔️ Μονομαχία 2 Παικτών</div>
                 <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
                     3 γύροι ανά παίκτη (6 ερωτήσεις) εναλλάξ! Σωστό με την 1η = <b>+2 ⭐</b>, 2η ευκαιρία με σωκρατικό στοιχείο = <b>+1 ⭐</b>.
                 </div>
@@ -3541,7 +3723,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
 
         with row1_c2:
             st.markdown("""
-            <div style="background:#ffffff; border:2px solid #7c3aed; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(124,58,237,0.08); min-height:145px;">
+            <div style="background:linear-gradient(135deg,#f5f3ff,#ffffff); border:2px solid #7c3aed; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(124,58,237,0.09); min-height:142px;">
                 <div style="font-size:1.18rem; font-weight:800; color:#4c1d95; margin-bottom:6px;">🕵️ Βρες το Λάθος του Σωκράτη!</div>
                 <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
                     5 προτάσεις όπου ο Σωκράτης έκανε <b>επίτηδες 1 πονηρό λάθος</b>. Γίνε εσύ ο δάσκαλος και διόρθωσέ τον!
@@ -3557,7 +3739,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         row2_c1, row2_c2 = st.columns(2)
         with row2_c1:
             st.markdown("""
-            <div style="background:#ffffff; border:2px solid #059669; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(5,150,105,0.08); min-height:145px;">
+            <div style="background:linear-gradient(135deg,#ecfdf5,#ffffff); border:2px solid #059669; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(5,150,105,0.09); min-height:142px;">
                 <div style="font-size:1.18rem; font-weight:800; color:#065f46; margin-bottom:6px;">⚖️ Μύθος ή Αλήθεια;</div>
                 <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
                     5 γρήγορες δηλώσεις από την ύλη με 2 μεγάλα κουμπιά (<b>✅ Αλήθεια</b> / <b>❌ Μύθος</b>) και άμεση εξήγηση!
@@ -3571,7 +3753,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
 
         with row2_c2:
             st.markdown("""
-            <div style="background:#ffffff; border:2px solid #d97706; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(217,119,6,0.08); min-height:145px;">
+            <div style="background:linear-gradient(135deg,#fffbeb,#ffffff); border:2px solid #d97706; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(217,119,6,0.09); min-height:142px;">
                 <div style="font-size:1.18rem; font-weight:800; color:#78350f; margin-bottom:6px;">🔐 Απόδραση από τη Βιβλιοθήκη</div>
                 <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
                     Άνοιξε <b>4 διαδοχικά λουκέτα-γρίφους</b> από το μάθημα για να κερδίσεις το Χρυσό Κλειδί της Βιβλιοθήκης!
@@ -3845,6 +4027,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                             if is_ok:
                                 pts = 2 if mg["attempt"] == 1 else 1
                                 mg["score"] += pts
+                                add_effort_points(pts * 4)
                                 mg["feedback"] = f"🌟 Μπράβο! Ανέβηκες σκαλοπάτι! (+{pts} ⭐) {exp_txt}"
                                 mg["feedback_type"] = "success"
                                 mg["awaiting_next"] = True
@@ -3879,6 +4062,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                     if st.button("✅ ΑΛΗΘΕΙΑ", type="primary", use_container_width=True, key=f"mt_true_{cur_i}"):
                         if actual_true:
                             mg["score"] += 2
+                            add_effort_points(8)
                             mg["feedback"] = f"🌟 Σωστά! (+2 ⭐) {exp_txt}"
                             mg["feedback_type"] = "success"
                         else:
@@ -3891,6 +4075,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                     if st.button("❌ ΜΥΘΟΣ", use_container_width=True, key=f"mt_false_{cur_i}"):
                         if not actual_true:
                             mg["score"] += 2
+                            add_effort_points(8)
                             mg["feedback"] = f"🌟 Σωστά! (+2 ⭐) {exp_txt}"
                             mg["feedback_type"] = "success"
                         else:
@@ -3911,6 +4096,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                         if is_ok:
                             pts = 2 if mg["attempt"] == 1 else 1
                             mg["score"] += pts
+                            add_effort_points(pts * 4)
                             if active_gid == "escape":
                                 mg["unlocked_locks"] += 1
                             ok_msg = "Ξεκλείδωσε το λουκέτο!" if active_gid == "escape" else ("Μπράβο! Ανέβηκες σκαλοπάτι!" if active_gid == "ladder5" else "Το έπιασες!")
@@ -4101,6 +4287,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         if is_correct:
             pts = 2 if d_state["attempt"] == 1 else 1
             d_state["scores"][p_turn] += pts
+            add_effort_points(pts * 4)
             d_state["feedback"] = f"🌟 Μπράβο, {cur_player}! Σωστή απάντηση (+{pts} ⭐)!"
             d_state["feedback_type"] = "success"
             d_state["awaiting_next"] = True
@@ -4608,6 +4795,7 @@ if prompt:
             )
             # Απομόνωση της μπλόφας από το ιστορικό του AI ώστε να μην επηρεαστεί στον επόμενο γύρο
             st.session_state.duel_warning_penalty = st.session_state.get("duel_warning_penalty", 0) + 1
+            add_effort_points(-10)
             st.session_state.messages.append({"role": "user", "content": prompt, "exclude_from_history": True})
             st.session_state.messages.append({"role": "assistant", "content": warning_msg, "exclude_from_history": True})
             st.rerun()
@@ -4893,15 +5081,18 @@ if prompt:
                                 st.session_state.stuck_counter = 0
                                 st.session_state.stuck_level = 0
 
-                            # 🔑 Ενημέρωση προόδου ξεκλειδώματος Μονομαχίας 2 Παικτών (μόνο με ουσιαστική προσπάθεια!)
+                            # 🔑 Ενημέρωση προόδου ξεκλειδώματος Παιχνιδιών & Μετρητή Συνολικής Επίδοσης (0–100)
                             cur_lvl_prog = st.session_state.get("support_level", "LEVEL_3")
                             if is_student_real_attempt(prompt):
                                 st.session_state.duel_study_steps = st.session_state.get("duel_study_steps", 0) + 1
+                                add_effort_points(10 if cur_lvl_prog == "LEVEL_1" else 8)
                                 if got_confirmation:
                                     st.session_state.duel_confirmed_correct = st.session_state.get("duel_confirmed_correct", 0) + 1
+                                    add_effort_points(6)
                             elif cur_lvl_prog == "LEVEL_1" and got_confirmation:
                                 st.session_state.duel_study_steps = st.session_state.get("duel_study_steps", 0) + 1
                                 st.session_state.duel_confirmed_correct = st.session_state.get("duel_confirmed_correct", 0) + 1
+                                add_effort_points(10)
                             
                             render_tts_widget(full_response, msg_idx=len(st.session_state.messages) - 1)
                             break
