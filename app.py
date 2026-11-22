@@ -1015,19 +1015,19 @@ st.markdown("""
     }
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="secondary"],
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-secondary"] {
-        background-color: #dcfce7 !important;
-        border: 1.5px solid #4ade80 !important;
-        color: #14532d !important;
+        background-color: #86efac !important;
+        border: 1.5px solid #16a34a !important;
+        color: #052e16 !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="secondary"]:hover,
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-secondary"]:hover {
-        background-color: #bbf7d0 !important;
-        border-color: #22c55e !important;
+        background-color: #4ade80 !important;
+        border-color: #15803d !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="primary"],
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-primary"] {
-        background-color: #15803d !important;
-        border: 1.5px solid #166534 !important;
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+        border: 1.5px solid #14532d !important;
         color: #ffffff !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="primary"] p,
@@ -1035,93 +1035,81 @@ st.markdown("""
         color: #ffffff !important;
     }
     [data-testid="stSidebar"] a[data-testid="stLinkButton"] {
-        background-color: #d8f3ec !important;
-        border: 1.5px solid #7dd3bd !important;
-        color: #0f4c3a !important;
+        background-color: #a7f3d0 !important;
+        border: 1.5px solid #34d399 !important;
+        color: #064e3b !important;
     }
     [data-testid="stSidebar"] a[data-testid="stLinkButton"]:hover {
-        background-color: #c2ebe0 !important;
-        border-color: #4ec4a7 !important;
+        background-color: #6ee7b7 !important;
+        border-color: #10b981 !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"],
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] summary {
-        background-color: #ede9fe !important;
-        border-color: #c4b5fd !important;
-        color: #4c1d95 !important;
+        background-color: #ddd6fe !important;
+        border-color: #a78bfa !important;
+        color: #3b0764 !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] div[role="region"] {
-        background-color: #f5f3ff !important;
+        background-color: #ede9fe !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"],
     [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"] summary {
-        background-color: #ffedd5 !important;
-        border-color: #fdba74 !important;
+        background-color: #fed7aa !important;
+        border-color: #fb923c !important;
         color: #7c2d12 !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"] div[role="region"] {
-        background-color: #fff7ed !important;
-    }
-    [data-testid="stSidebar"] .st-key-side_btn_new_chat button {
-        background-color: #1d4ed8 !important;
-        border: 1.5px solid #1e40af !important;
-        color: #ffffff !important;
-    }
-    [data-testid="stSidebar"] .st-key-side_btn_new_chat button:hover {
-        background-color: #1e40af !important;
-    }
-    [data-testid="stSidebar"] .st-key-side_btn_new_chat button p {
-        color: #ffffff !important;
+        background-color: #ffedd5 !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button {
-        background: linear-gradient(135deg, #fde047 0%, #f59e0b 100%) !important;
-        border: 1.5px solid #b45309 !important;
+        background: linear-gradient(135deg, #facc15 0%, #d97706 100%) !important;
+        border: 1.5px solid #92400e !important;
         color: #451a03 !important;
-        box-shadow: 0 3px 10px rgba(217, 119, 6, 0.28) !important;
+        padding-left: 0.35rem !important;
+        padding-right: 0.35rem !important;
+        box-shadow: 0 3px 10px rgba(217, 119, 6, 0.3) !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button:hover {
-        background: linear-gradient(135deg, #facc15 0%, #d97706 100%) !important;
-        border-color: #92400e !important;
+        background: linear-gradient(135deg, #eab308 0%, #b45309 100%) !important;
+        border-color: #78350f !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button p {
         color: #451a03 !important;
         font-weight: 800 !important;
+        font-size: 0.77rem !important;
+        white-space: nowrap !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_locked button {
-        background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%) !important;
-        border: 1.5px solid #d97706 !important;
-        color: #78350f !important;
-        opacity: 0.92 !important;
+        background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%) !important;
+        border: 1.5px solid #b45309 !important;
+        color: #451a03 !important;
+        padding-left: 0.35rem !important;
+        padding-right: 0.35rem !important;
+        opacity: 0.94 !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_locked button p {
-        color: #78350f !important;
+        color: #451a03 !important;
         font-weight: 700 !important;
-    }
-    [data-testid="stSidebar"] .st-key-side_btn_notes_dl button {
-        background-color: #dcfce7 !important;
-        border: 1.5px solid #86efac !important;
-        color: #14532d !important;
-    }
-    [data-testid="stSidebar"] .st-key-side_btn_notes_dl button:hover {
-        background-color: #bbf7d0 !important;
-        border-color: #4ade80 !important;
+        font-size: 0.77rem !important;
+        white-space: nowrap !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"],
     [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] summary {
-        background-color: #e2ecf5 !important;
-        border-color: #b6cbe0 !important;
-        color: #1e3a5f !important;
+        background-color: #cbd8e8 !important;
+        border-color: #94a3b8 !important;
+        color: #0f172a !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] div[role="region"] {
-        background-color: #edf4fa !important;
+        background-color: #e2ecf5 !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_transparency button {
-        background-color: #fce7f3 !important;
-        border: 1.5px solid #f9a8d4 !important;
+        background-color: #fbcfe8 !important;
+        border: 1.5px solid #f472b6 !important;
         color: #831843 !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_transparency button:hover {
-        background-color: #fbcfe8 !important;
-        border-color: #f472b6 !important;
+        background-color: #f9a8d4 !important;
+        border-color: #ec4899 !important;
     }
 
     /* 11. Ξεχωριστό χρώμα για κάθε κουμπί παιχνιδιού στην οθόνη «Παιχνίδια & Κουίζ» */
@@ -2433,9 +2421,9 @@ with st.sidebar:
         key="side_grade_select",
     )
     grade_color_map = {
-        "Α' Γυμνασίου": ("#dbeafe", "#60a5fa", "#1e3a8a"),
-        "Β' Γυμνασίου": ("#fef3c7", "#fbbf24", "#78350f"),
-        "Γ' Γυμνασίου": ("#ede9fe", "#a78bfa", "#4c1d95"),
+        "Α' Γυμνασίου": ("#bfdbfe", "#3b82f6", "#1e3a8a"),
+        "Β' Γυμνασίου": ("#fde68a", "#f59e0b", "#78350f"),
+        "Γ' Γυμνασίου": ("#ddd6fe", "#8b5cf6", "#4c1d95"),
     }
     g_bg, g_bd, g_fg = grade_color_map.get(selected_grade, ("#cce5f9", "#8bbfe6", "#0f172a"))
     st.markdown(f"""
