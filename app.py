@@ -2989,25 +2989,25 @@ for i, msg in enumerate(st.session_state.messages):
 st.write("")
 col_h1, col_h2, col_h3, col_h4, col_h5, col_cam = st.columns([1.2, 1.2, 1.05, 1.3, 1.05, 0.55])
 with col_h1:
-    if st.button("💡 Ένα στοιχείο (hint)", use_container_width=True):
+    if st.button("💡 Ένα στοιχείο (hint)", key="qa_hint", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου δώσεις ένα μικρό στοιχείο (hint) για να με βοηθήσεις να σκεφτώ το επόμενο βήμα;"
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 1)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
 with col_h2:
-    if st.button("🔍 Κάν' το πιο απλό", use_container_width=True):
+    if st.button("🔍 Κάν' το πιο απλό", key="qa_simple", use_container_width=True):
         st.session_state.pending_prompt = "Δυσκολεύτηκα να το καταλάβω. Μπορείς να μου το εξηγήσεις με πολύ απλές λέξεις και μικρές προτάσεις (Easy-to-Read);"
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 2)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
 with col_h3:
-    if st.button("🍎 Παράδειγμα", use_container_width=True):
+    if st.button("🍎 Παράδειγμα", key="qa_example", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου δώσεις ένα παράδειγμα από την καθημερινή ζωή για να το φανταστώ καλύτερα;"
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 1)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
 with col_h4:
-    if st.button("🖼️ Δείξε μου εικόνα!", use_container_width=True):
+    if st.button("🖼️ Δείξε μου εικόνα!", key="qa_visual", use_container_width=True):
         recent_ctx = ""
         if len(st.session_state.messages) > 1:
             recent_ctx = " | ".join(
@@ -3036,14 +3036,14 @@ with col_h4:
             st.session_state.pending_prompt = "Μπορείς να μου δείξεις ένα απλό σχεδιάγραμμα με βήματα για να καταλάβω καλύτερα αυτό το θέμα;"
             st.rerun()
 with col_h5:
-    if st.button("👣 Βήμα-βήμα", use_container_width=True):
+    if st.button("👣 Βήμα-βήμα", key="qa_steps", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου το αναλύσεις κάνοντας μόνο ένα πολύ μικρό βήμα τη φορά;"
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 1)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
 with col_cam:
     cam_help = "Κάμερα & Ανέβασμα Άσκησης (Ξεκλείδωτο)" if st.session_state.camera_unlocked else "Κάμερα & Ανέβασμα Άσκησης (Κλειδωμένο με PIN)"
-    with st.popover("📷", help=cam_help, use_container_width=True):
+    with st.container(key="qa_cam"), st.popover("📷", help=cam_help, use_container_width=True):
         if not st.session_state.camera_unlocked:
             st.markdown("""
             <div style="background: #f0f7fe; border: 1.5px solid #8fc3ea; border-radius: 12px; padding: 12px 14px; text-align: center; margin-bottom: 0.7rem;">

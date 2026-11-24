@@ -584,6 +584,30 @@ CUSTOM_CSS = """
         color: #ffffff !important;
         font-weight: 700 !important;
     }
+
+    /* 12. Χρωματιστά Κουμπιά Γρήγορης Βοήθειας (Quick Action Chips) */
+    .st-key-qa_hint button { background-color: #fef3c7 !important; border: 1.5px solid #f59e0b !important; color: #78350f !important; }
+    .st-key-qa_hint button:hover { background-color: #fde68a !important; }
+    .st-key-qa_hint button p { color: #78350f !important; font-weight: 700 !important; }
+
+    .st-key-qa_simple button { background-color: #e0f2fe !important; border: 1.5px solid #0284c7 !important; color: #0c4a6e !important; }
+    .st-key-qa_simple button:hover { background-color: #bae6fd !important; }
+    .st-key-qa_simple button p { color: #0c4a6e !important; font-weight: 700 !important; }
+
+    .st-key-qa_example button { background-color: #ffe4e6 !important; border: 1.5px solid #f43f5e !important; color: #881337 !important; }
+    .st-key-qa_example button:hover { background-color: #fecdd3 !important; }
+    .st-key-qa_example button p { color: #881337 !important; font-weight: 700 !important; }
+
+    .st-key-qa_visual button { background-color: #f3e8ff !important; border: 1.5px solid #9333ea !important; color: #581c87 !important; }
+    .st-key-qa_visual button:hover { background-color: #e9d5ff !important; }
+    .st-key-qa_visual button p { color: #581c87 !important; font-weight: 700 !important; }
+
+    .st-key-qa_steps button { background-color: #dcfce7 !important; border: 1.5px solid #16a34a !important; color: #14532d !important; }
+    .st-key-qa_steps button:hover { background-color: #bbf7d0 !important; }
+    .st-key-qa_steps button p { color: #14532d !important; font-weight: 700 !important; }
+
+    .st-key-qa_cam button { background-color: #f1f5f9 !important; border: 1.5px solid #64748b !important; color: #1e293b !important; }
+    .st-key-qa_cam button:hover { background-color: #e2e8f0 !important; }
 </style>
 """
 
