@@ -694,20 +694,20 @@ def _render_browser_fallback_tts(text_content: str, auto_play: bool = False):
     auto_js = "setTimeout(toggleSpeech, 150);" if auto_play else ""
     html_code = f"""
     <div style="margin-top: 4px; margin-bottom: 2px;">
-        <button id="tts_btn" onclick="toggleSpeech()" style="
+        <button id="tts_btn" title="Άκουσε τον Σωκράτη" onclick="toggleSpeech()" style="
             background: #cde5f9;
             color: #082f56;
             border: 1.5px solid #8ec0e7;
             border-radius: 12px;
-            padding: 4px 12px;
-            font-size: 0.82rem;
+            padding: 4px 10px;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
         ">
-            🔊 Άκουσε τον Σωκράτη (Εφεδρική Φωνή)
+            🔊
         </button>
     </div>
     <script>
@@ -724,7 +724,7 @@ def _render_browser_fallback_tts(text_content: str, auto_play: bool = False):
         if (isSpeaking) {{
             window.speechSynthesis.cancel();
             isSpeaking = false;
-            btn.innerHTML = '🔊 Άκουσε τον Σωκράτη';
+            btn.innerHTML = '🔊';
             return;
         }}
         window.speechSynthesis.cancel();
@@ -734,9 +734,9 @@ def _render_browser_fallback_tts(text_content: str, auto_play: bool = False):
         utter.lang = 'el-GR';
         utter.rate = 0.76;
         utter.pitch = 0.68;
-        utter.onstart = function() {{ isSpeaking = true; btn.innerHTML = '⏹️ Διακοπή'; }};
-        utter.onend = function() {{ isSpeaking = false; btn.innerHTML = '🔊 Άκουσε τον Σωκράτη'; }};
-        utter.onerror = function() {{ isSpeaking = false; btn.innerHTML = '🔊 Άκουσε τον Σωκράτη'; }};
+        utter.onstart = function() {{ isSpeaking = true; btn.innerHTML = '⏹️'; }};
+        utter.onend = function() {{ isSpeaking = false; btn.innerHTML = '🔊'; }};
+        utter.onerror = function() {{ isSpeaking = false; btn.innerHTML = '🔊'; }};
         window.speechSynthesis.speak(utter);
     }}
     {auto_js}
@@ -749,12 +749,12 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
     play_key = f"socrates_voice_play_{msg_idx}"
 
     if not st.session_state.get(play_key, False):
-        if st.button("🔊 Άκουσε τον Σωκράτη", key=btn_key):
+        if st.button("🔊", key=btn_key, help="Άκουσε τον Σωκράτη"):
             st.session_state[play_key] = True
             st.rerun()
         return
 
-    with st.spinner("🎙️ Ο Σωκράτης ετοιμάζει τη φωνή του..."):
+    with st.spinner("🎙️..."):
         audio_bytes = generate_socrates_audio_bytes(text_content)
 
     if audio_bytes:
@@ -765,20 +765,20 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
                 <audio id="soc_audio_{msg_idx}" style="display: none;">
                     <source src="data:audio/mpeg;base64,{b64_audio}" type="audio/mpeg">
                 </audio>
-                <button id="soc_btn_{msg_idx}" onclick="toggleSocAudio_{msg_idx}()" style="
+                <button id="soc_btn_{msg_idx}" title="Άκουσε τον Σωκράτη" onclick="toggleSocAudio_{msg_idx}()" style="
                     background: #cde5f9;
                     color: #082f56;
                     border: 1.5px solid #8ec0e7;
                     border-radius: 12px;
-                    padding: 5px 14px;
-                    font-size: 0.85rem;
+                    padding: 4px 10px;
+                    font-size: 0.95rem;
                     font-weight: 700;
                     cursor: pointer;
                     display: inline-flex;
                     align-items: center;
-                    gap: 6px;
+                    justify-content: center;
                     transition: all 0.2s ease;
-                ">⏸️ Παύση</button>
+                ">⏸️</button>
             </div>
             <script>
             (function() {{
@@ -786,17 +786,17 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
                 const btn = document.getElementById("soc_btn_{msg_idx}");
                 window.toggleSocAudio_{msg_idx} = function() {{
                     if (audio.paused) {{
-                        audio.play().then(() => {{ btn.innerHTML = "⏸️ Παύση"; }}).catch(() => {{}});
+                        audio.play().then(() => {{ btn.innerHTML = "⏸️"; }}).catch(() => {{}});
                     }} else {{
                         audio.pause();
-                        btn.innerHTML = "▶️ Συνέχεια";
+                        btn.innerHTML = "🔊";
                     }}
                 }};
-                audio.onended = function() {{ btn.innerHTML = "▶️ Άκουσε ξανά"; }};
+                audio.onended = function() {{ btn.innerHTML = "🔊"; }};
                 audio.play().then(() => {{
-                    btn.innerHTML = "⏸️ Παύση";
+                    btn.innerHTML = "⏸️";
                 }}).catch(() => {{
-                    btn.innerHTML = "▶️ Άκουσε τον Σωκράτη";
+                    btn.innerHTML = "🔊";
                 }});
             }})();
             </script>
