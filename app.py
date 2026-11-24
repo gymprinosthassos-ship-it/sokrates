@@ -2794,13 +2794,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
 # 11. Μήνυμα Υποδοχής & Εμφάνιση Ιστορικού (Κανονική Λειτουργία)
 # -------------------------------------------------------------
 if len(st.session_state.messages) == 0:
-    lvl_names = {
-        "LEVEL_1": "🟢 Επίπεδο 1 (Μέγιστη Απλοποίηση & Εικόνες)",
-        "LEVEL_2": "🟡 Επίπεδο 2 (Απλοποιημένο Γυμνασίου - Easy-to-Read)",
-        "LEVEL_3": "🔵 Επίπεδο 3 (Τυπικό Γυμνασίου - Σωκρατικός Διάλογος)",
-    }
-    cur_lvl_badge = lvl_names.get(st.session_state.get("support_level", "LEVEL_3"), "Τυπικό Γυμνασίου")
-    welcome_text = f"Χαίρε! 🌟\n\nΕίμαι ο Σωκράτης. Είμαι εδώ για να μελετήσουμε μαζί με απλά λόγια, παραδείγματα και εικόνες!\n\n*Ενεργό Προφίλ: {cur_lvl_badge}*\n\nΠοιο θέμα ή ποια άσκηση θέλεις να δούμε τώρα;"
+    welcome_text = "Χαίρε! Πώς μπορώ να σε βοηθήσω;"
     st.session_state.messages.append({"role": "assistant", "content": welcome_text})
 
 def render_welcome_fireworks():
