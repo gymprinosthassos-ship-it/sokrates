@@ -306,6 +306,33 @@ class TestSokratesFunctionality(unittest.TestCase):
         self.assertIsInstance(cleaned, int)
         print("[PASS] Tablet Session Recovery Store (Save, Load, Delete, GDPR Cleanup)")
 
+    def test_socratic_fatigue_safe_exit(self):
+        """Επαλήθευση Παιδαγωγικού Safe-Exit & Model Example σε 3+ συνεχόμενα κολλήματα"""
+        prompt_normal = app.build_socratic_master_prompt(
+            selected_grade="Α' Γυμνασίου",
+            selected_subject="📐 Μαθηματικά",
+            active_support="LEVEL_3",
+            book_topics="Εξισώσεις",
+            available_cards_ids=[],
+            stuck_level=0
+        )
+        self.assertIn("ΕΠΙΠΕΔΟ ΚΟΛΛΗΜΑΤΟΣ: 0", prompt_normal)
+        self.assertIn("Σωκρατική Μαιευτική", prompt_normal)
+
+        prompt_safe_exit = app.build_socratic_master_prompt(
+            selected_grade="Α' Γυμνασίου",
+            selected_subject="📐 Μαθηματικά",
+            active_support="LEVEL_3",
+            book_topics="Εξισώσεις",
+            available_cards_ids=[],
+            stuck_level=3
+        )
+        self.assertIn("ΕΠΙΠΕΔΟ ΚΟΛΛΗΜΑΤΟΣ: 3", prompt_safe_exit)
+        self.assertIn("SOCRATIC FATIGUE SAFE-EXIT TRIGGER", prompt_safe_exit)
+        self.assertIn("Βλέπω ότι αυτό το σημείο σε δυσκολεύει", prompt_safe_exit)
+        self.assertIn("ΛΥΜΕΝΟ ΠΑΡΑΔΕΙΓΜΑ-ΠΡΟΤΥΠΟ", prompt_safe_exit)
+        print("[PASS] Pedagogical Socratic-Fatigue Safe-Exit & Model Example Scaffolding")
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -5095,10 +5095,16 @@ def build_socratic_master_prompt(
   - Μην επιμένεις στην ίδια ερώτηση! Σπάσε το πρόβλημα σε ένα πολύ μικρότερο υπο-ερώτημα (Decomposition).
   - Δώσε μια απλή αναλογία από την καθημερινή ζωή (π.χ. φαγητό, παιχνίδι, διαδρομές).
 
-• ΑΝ Ο ΜΑΘΗΤΗΣ ΕΧΕΙ ΚΟΛΛΗΣΕΙ Ή ΛΕΕΙ "ΔΕΝ ΞΕΡΩ" (Επίπεδο Κολλήματος 2+):
+• ΑΝ Ο ΜΑΘΗΤΗΣ ΕΧΕΙ ΚΟΛΛΗΣΕΙ Ή ΛΕΕΙ "ΔΕΝ ΞΕΡΩ" (Επίπεδο Κολλήματος 2):
   - [ANTI-LOOP TRIGGER]: ΜΗΝ ΑΠΑΝΤΗΣΕΙΣ ΜΕ ΝΕΑ ΑΟΡΙΣΤΗ ΕΡΩΤΗΣΗ!
   - Εξήγησε καθαρά και με ζεστασιά το πρώτο βήμα ή τον κανόνα (Mini-lesson σε 2 προτάσεις).
   - Αμέσως μετά, ζήτησε από τον μαθητή να εφαρμόσει αυτόν τον κανόνα στο αμέσως επόμενο βηματάκι ή δώσε 2 ξεκάθαρες επιλογές (Α ή Β;).
+
+• ΑΝ Ο ΜΑΘΗΤΗΣ ΕΧΕΙ 3+ ΣΥΝΕΧΟΜΕΝΕΣ ΔΥΣΚΟΛΙΕΣ / ΕΠΙΠΕΔΟ ΚΟΛΛΗΜΑΤΟΣ 3+ (ΠΑΙΔΑΓΩΓΙΚΟ SAFE-EXIT & ΛΥΜΕΝΟ ΠΑΡΑΔΕΙΓΜΑ-ΠΡΟΤΥΠΟ):
+  - [SOCRATIC FATIGUE SAFE-EXIT TRIGGER]: ΣΤΑΜΑΤΑ ΑΜΕΣΩΣ ΤΙΣ ΕΡΩΤΗΣΕΙΣ ΚΑΙ ΤΗ ΜΑΙΕΥΤΙΚΗ! Ο μαθητής έχει κουραστεί και χρειάζεται ανακούφιση και στήριξη.
+  - Ξεκίνα υποχρεωτικά λέγοντας με απόλυτη ζεστασιά: «Βλέπω ότι αυτό το σημείο σε δυσκολεύει και είναι απόλυτα φυσιολογικό! Ας δούμε μαζί ένα πολύ απλό παράδειγμα από την αρχή.»
+  - ΔΩΣΕ ΕΝΑ ΠΛΗΡΕΣ ΛΥΜΕΝΟ ΠΑΡΑΔΕΙΓΜΑ-ΠΡΟΤΥΠΟ (παρόμοιο με την άσκηση αλλά με απλούς αριθμούς ή έννοιες) δείχνοντας όλη τη διαδρομή της σκέψης βήμα-βήμα.
+  - Κλείσε με ΜΙΑ πανεύκολη ερώτηση ενθάρρυνσης για να ξαναβρεί ο μαθητής την αυτοπεποίθησή του.
 
 ═════════════════════════════════════════════════════════════════════
 3. ΠΡΟΦΙΛ ΥΠΟΣΤΗΡΙΞΗΣ ΕΙΔΙΚΗΣ ΑΓΩΓΗΣ (UDL)
@@ -5224,15 +5230,22 @@ if prompt:
         if "stuck_counter" not in st.session_state:
             st.session_state.stuck_counter = 0
 
-        # Έλεγχος αν ο μαθητής δηλώνει αδυναμία ή κόλλημα:
-        stuck_keywords = ["δεν ξερω", "δεν καταλαβα", "κολλησα", "δεν μπορω", "βοηθεια", "πες μου εσυ", "δεν το βρισκω"]
+        # Έλεγχος αν ο μαθητής δηλώνει αδυναμία, κόλλημα ή κόπωση:
+        stuck_keywords = [
+            "δεν ξερω", "δεν καταλαβα", "κολλησα", "δεν μπορω", "βοηθεια",
+            "πες μου εσυ", "δεν το βρισκω", "δεν το ξερω", "μπερδευτηκα",
+            "δεν καταλαβαινω", "δεν εχω ιδεα", "δεν μπορεσα", "κουραστηκα",
+            "αστο", "τιποτα", "δεν βγαζω ακρη", "πως γινεται", "δεν το καταλαβαινω",
+            "παραιτουμαι", "δεν μπορω αλλο", "βαρεθηκα"
+        ]
         normalized_prompt = normalize_text(prompt)
 
         if any(k in normalized_prompt for k in stuck_keywords):
             st.session_state.stuck_counter += 1
         else:
-            # Αν ο μαθητής δίνει απάντηση ή προσπαθεί, μειώνουμε σταδιακά το κόλλημα
-            st.session_state.stuck_counter = max(0, st.session_state.stuck_counter - 1)
+            # Αν ο μαθητής προσπαθεί χωρίς λέξεις κολλήματος, διατηρούμε το τρέχον επίπεδο
+            # και θα μηδενιστεί ΜΟΝΟ αν η απάντησή του επιβεβαιωθεί ως σωστή
+            pass
 
         st.session_state.stuck_level = st.session_state.stuck_counter
 
@@ -5392,11 +5405,13 @@ if prompt:
                                     matched_card = PEDAGOGICAL_CARDS[selected_card_id]
 
                             # 3. Κριτήριο 1: Ανεξάρτητος φύλακας κώδικα + αυτοέλεγχος AI — αν έδωσε έτοιμη λύση, ξαναγράφει ΠΡΙΝ τη δει ο μαθητής!
+                            # (Εξαιρείται το Παιδαγωγικό Safe-Exit όταν stuck_level >= 3, όπου το AI παρέχει σκόπιμα λυμένο παράδειγμα-πρότυπο)
                             cur_sup = st.session_state.get("support_level", "LEVEL_3")
-                            if not gave_solution and detect_leaked_solution_in_reply(full_response, support_level=cur_sup):
+                            is_safe_exit = (st.session_state.get("stuck_counter", 0) >= 3)
+                            if not is_safe_exit and not gave_solution and detect_leaked_solution_in_reply(full_response, support_level=cur_sup):
                                 gave_solution = True
                             was_rewritten = False
-                            if gave_solution:
+                            if gave_solution and not is_safe_exit:
                                 try:
                                     rewrite_prompt = (
                                         f"Η παρακάτω απάντηση έδωσε κατά λάθος έτοιμη λύση στον μαθητή ({selected_grade}, {selected_subject}). "
@@ -5469,11 +5484,20 @@ if prompt:
                                 card_html = render_visual_card_html(matched_card)
                                 components.html(card_html, height=520, scrolling=True)
 
-                            praise_words = ["εύγε", "μπράβο", "συγχαρητήρια", "πολύ σωστά", "ακριβώς", "το βρήκες", "εξαιρετική σκέψη", "σωστά", "τέλεια", "πολύ καλά"]
+                            praise_words = ["εύγε", "μπράβο", "συγχαρητήρια", "πολύ σωστά", "ακριβώς", "το βρήκες", "εξαιρετική σκέψη", "σωστά", "τέλεια", "πολύ καλά", "σωστός", "σωστή"]
                             got_confirmation = any(w in full_response.lower() for w in praise_words)
                             if got_confirmation:
                                 st.session_state.stuck_counter = 0
                                 st.session_state.stuck_level = 0
+                            elif is_safe_exit:
+                                # Μετά την παροχή του παραδείγματος-προτύπου (Safe-Exit), επαναφέρουμε το κόλλημα στο 1
+                                # ώστε ο μαθητής να δοκιμάσει το επόμενο εύκολο βήμα χωρίς να παραμένει σε Safe-Exit
+                                st.session_state.stuck_counter = 1
+                                st.session_state.stuck_level = 1
+                            else:
+                                if misconception_status in ("CAUGHT", "IGNORED"):
+                                    st.session_state.stuck_counter += 1
+                                    st.session_state.stuck_level = st.session_state.stuck_counter
 
                             # 🔑 Ενημέρωση προόδου ξεκλειδώματος Παιχνιδιών & Μετρητή Συνολικής Επίδοσης (0–100)
                             cur_lvl_prog = st.session_state.get("support_level", "LEVEL_3")
