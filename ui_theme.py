@@ -590,8 +590,8 @@ CUSTOM_CSS = """
     .st-key-qa_hint button:hover { background-color: #fde68a !important; }
     .st-key-qa_hint button p { color: #78350f !important; font-weight: 700 !important; }
 
-    .st-key-qa_simple button { background-color: #93c5fd !important; border: 1.5px solid #2563eb !important; color: #1e3a8a !important; }
-    .st-key-qa_simple button:hover { background-color: #60a5fa !important; }
+    .st-key-qa_simple button { background-color: #bfdbfe !important; border: 1.5px solid #3b82f6 !important; color: #1e3a8a !important; }
+    .st-key-qa_simple button:hover { background-color: #93c5fd !important; }
     .st-key-qa_simple button p { color: #1e3a8a !important; font-weight: 700 !important; }
 
     .st-key-qa_example button { background-color: #ffe4e6 !important; border: 1.5px solid #f43f5e !important; color: #881337 !important; }
