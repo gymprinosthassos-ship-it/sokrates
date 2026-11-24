@@ -1,12 +1,12 @@
 """
 session_store.py — Μηχανισμός Τοπικής Ανάκτησης Συνεδρίας (Session Recovery)
-για τον «Σωκράτη AI Tutor Γυμνασίου».
+& Μόνιμης Αποθήκευσης Δεδομένων (SQLite WAL) για τον «Σωκράτη AI Tutor Γυμνασίου».
 
-Διασφαλίζει ότι οι μαθητές στα tablets δεν χάνουν τη συνομιλία τους αν:
-1. Σβήσει η οθόνη του tablet (Screen Sleep / Doze mode).
-2. Αλλάξουν καρτέλα για να διαβάσουν το σχολικό βιβλίο (Tab Switching).
-3. Πέσει στιγμιαία το Wi-Fi του σχολείου (Network Reconnect).
-4. Γίνει κατά λάθος ανανέωση της σελίδας (Pull-to-refresh).
+Διασφαλίζει ότι:
+1. Οι μαθητές στα tablets δεν χάνουν τη συνομιλία τους αν σβήσει η οθόνη (Screen Sleep),
+   αλλάξουν καρτέλα (Tab Switching) ή αποσυνδεθεί στιγμιαία το Wi-Fi.
+2. Ο εκπαιδευτικός δεν χάνει ποτέ τα δεδομένα του Χάρτη Παρανοήσεων και των
+   καταγραφών ασφαλείας κατά τις επανεκκινήσεις (ephemeral restarts) του Streamlit Cloud.
 
 Χρησιμοποιεί SQLite σε λειτουργία WAL (Write-Ahead Logging) για άμεση,
 ταχύτατη (<3ms) και ασφαλή παράλληλη πρόσβαση από πολλαπλά tablets ταυτόχρονα.
@@ -16,22 +16,32 @@ import os
 import time
 import json
 import sqlite3
-from typing import Dict, List, Optional, Any
+import datetime
+from contextlib import contextmanager
+from typing import Dict, List, Optional, Any, Tuple
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "socrates_sessions.db")
 
-def _get_connection(db_path: str = DB_PATH) -> sqlite3.Connection:
-    """Δημιουργεί σύνδεση SQLite με αυξημένο timeout και λειτουργία WAL."""
+@contextmanager
+def _get_connection(db_path: str = DB_PATH):
+    """Δημιουργεί σύνδεση SQLite με αυξημένο timeout, λειτουργία WAL και εγγυημένο κλείσιμο."""
     conn = sqlite3.connect(db_path, timeout=10.0)
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    return conn
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        yield conn
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 def init_db(db_path: str = DB_PATH) -> None:
-    """Αρχικοποιεί τον πίνακα αποθήκευσης συνεδριών αν δεν υπάρχει."""
+    """Αρχικοποιεί τους πίνακες συνεδριών, παρανοήσεων και ασφάλειας αν δεν υπάρχουν."""
     try:
         with _get_connection(db_path) as conn:
+            # 1. Πίνακας ενεργών συνεδριών tablet
             conn.execute("""
             CREATE TABLE IF NOT EXISTS active_sessions (
                 sid TEXT PRIMARY KEY,
@@ -43,10 +53,38 @@ def init_db(db_path: str = DB_PATH) -> None:
                 messages_json TEXT
             );
             """)
+            # 2. Πίνακας παρανοήσεων μαθητών (Misconceptions Heatmap)
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS misconceptions (
+                uid TEXT PRIMARY KEY,
+                date TEXT,
+                timestamp TEXT,
+                grade TEXT,
+                subject TEXT,
+                topic TEXT,
+                example TEXT,
+                status TEXT
+            );
+            """)
+            # 3. Πίνακας παραβιάσεων ασφάλειας (Security Audit Log)
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS security_violations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT,
+                violation_type TEXT,
+                grade TEXT,
+                subject TEXT,
+                trigger_snippet TEXT,
+                action_taken TEXT
+            );
+            """)
             conn.commit()
     except Exception as e:
         print(f"[SessionStore] Σφάλμα αρχικοποίησης βάσης: {e}")
 
+# -------------------------------------------------------------
+# 1. Διαχείριση Συνεδριών Μαθητών (Tablet Session Recovery)
+# -------------------------------------------------------------
 def save_session(
     sid: str,
     grade: str,
@@ -138,6 +176,133 @@ def cleanup_old_sessions(max_age_hours: float = 24.0, db_path: str = DB_PATH) ->
             deleted = cur.rowcount
             conn.commit()
             return deleted
+    except Exception:
+        return 0
+
+# -------------------------------------------------------------
+# 2. Μόνιμη Αποθήκευση Παρανοήσεων (Misconceptions SQLite Persistence)
+# -------------------------------------------------------------
+def db_save_misconception(rec: Dict[str, Any], db_path: str = DB_PATH) -> bool:
+    """Αποθηκεύει μία παρανόηση μαθητή στη βάση δεδομένων SQLite."""
+    if not rec or not rec.get("topic"):
+        return False
+    try:
+        init_db(db_path)
+        with _get_connection(db_path) as conn:
+            conn.execute("""
+            INSERT OR REPLACE INTO misconceptions
+            (uid, date, timestamp, grade, subject, topic, example, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            """, (
+                rec.get("uid", ""),
+                rec.get("date", datetime.date.today().strftime("%Y-%m-%d")),
+                rec.get("timestamp", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                rec.get("grade", ""),
+                rec.get("subject", ""),
+                rec.get("topic", ""),
+                rec.get("example", ""),
+                rec.get("status", "CAUGHT")
+            ))
+            conn.commit()
+        return True
+    except Exception as e:
+        print(f"[SessionStore] Σφάλμα αποθήκευσης παρανόησης: {e}")
+        return False
+
+def db_load_misconceptions(db_path: str = DB_PATH) -> List[Dict[str, Any]]:
+    """Φορτώνει όλες τις καταγεγραμμένες παρανοήσεις από την SQLite."""
+    try:
+        init_db(db_path)
+        with _get_connection(db_path) as conn:
+            cur = conn.cursor()
+            cur.execute("""
+            SELECT uid, date, timestamp, grade, subject, topic, example, status
+            FROM misconceptions
+            ORDER BY timestamp ASC;
+            """)
+            rows = cur.fetchall()
+            return [
+                {
+                    "uid": r[0],
+                    "date": r[1],
+                    "timestamp": r[2],
+                    "grade": r[3],
+                    "subject": r[4],
+                    "topic": r[5],
+                    "example": r[6],
+                    "status": r[7]
+                }
+                for r in rows
+            ]
+    except Exception as e:
+        print(f"[SessionStore] Σφάλμα ανάγνωσης παρανοήσεων: {e}")
+        return []
+
+# -------------------------------------------------------------
+# 3. Μόνιμη Αποθήκευση Παραβιάσεων Ασφάλειας (Security Audit SQLite)
+# -------------------------------------------------------------
+def db_save_violation(
+    violation_type: str,
+    trigger_snippet: str,
+    grade: str = "N/A",
+    subject: str = "N/A",
+    action_taken: str = "APP_LOCKED_TERMINATED",
+    db_path: str = DB_PATH
+) -> bool:
+    """Καταγράφει απόπειρα παραβίασης πολιτικής στην SQLite (GDPR compliant)."""
+    try:
+        init_db(db_path)
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        safe_snippet = (trigger_snippet or "").replace('\n', ' ')[:120]
+        with _get_connection(db_path) as conn:
+            conn.execute("""
+            INSERT INTO security_violations
+            (timestamp, violation_type, grade, subject, trigger_snippet, action_taken)
+            VALUES (?, ?, ?, ?, ?, ?);
+            """, (now_str, violation_type, grade, subject, safe_snippet, action_taken))
+            conn.commit()
+        return True
+    except Exception as e:
+        print(f"[SessionStore] Σφάλμα καταγραφής παραβίασης: {e}")
+        return False
+
+def db_load_violations(db_path: str = DB_PATH) -> List[Dict[str, Any]]:
+    """Φορτώνει όλες τις καταγραφές παραβιάσεων από την SQLite."""
+    try:
+        init_db(db_path)
+        with _get_connection(db_path) as conn:
+            cur = conn.cursor()
+            cur.execute("""
+            SELECT id, timestamp, violation_type, grade, subject, trigger_snippet, action_taken
+            FROM security_violations
+            ORDER BY id DESC;
+            """)
+            rows = cur.fetchall()
+            return [
+                {
+                    "id": r[0],
+                    "timestamp": r[1],
+                    "violation_type": r[2],
+                    "grade": r[3],
+                    "subject": r[4],
+                    "trigger_snippet": r[5],
+                    "action_taken": r[6]
+                }
+                for r in rows
+            ]
+    except Exception as e:
+        print(f"[SessionStore] Σφάλμα ανάγνωσης παραβιάσεων: {e}")
+        return []
+
+def db_get_violation_count(db_path: str = DB_PATH) -> int:
+    """Επιστρέφει το πλήθος καταγεγραμμένων παραβιάσεων από την SQLite."""
+    try:
+        init_db(db_path)
+        with _get_connection(db_path) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM security_violations;")
+            row = cur.fetchone()
+            return int(row[0]) if row else 0
     except Exception:
         return 0
 

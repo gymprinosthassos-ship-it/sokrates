@@ -333,6 +333,75 @@ class TestSokratesFunctionality(unittest.TestCase):
         self.assertIn("ΛΥΜΕΝΟ ΠΑΡΑΔΕΙΓΜΑ-ΠΡΟΤΥΠΟ", prompt_safe_exit)
         print("[PASS] Pedagogical Socratic-Fatigue Safe-Exit & Model Example Scaffolding")
 
+    def test_rate_limit_resilience_and_retry(self):
+        """Επαλήθευση ανθεκτικότητας στο όριο 15 RPM (Rate-Limit 429 Retry με Exponential Backoff)"""
+        from gemini_resilience import is_rate_limit_error, call_gemini_with_retry
+
+        # 1. Αναγνώριση σφαλμάτων Rate-Limit
+        err_429 = Exception("429 Resource Exhausted: Quota exceeded for quota metric 'Generate Content API requests'")
+        err_generic = Exception("ValueError: Invalid input")
+        self.assertTrue(is_rate_limit_error(err_429))
+        self.assertFalse(is_rate_limit_error(err_generic))
+
+        # 2. Αυτόματη ανάκαμψη από παροδικό 429
+        attempts = 0
+        def flaky_api():
+            nonlocal attempts
+            attempts += 1
+            if attempts < 3:
+                raise Exception("429 Resource Exhausted")
+            return "SUCCESS_AFTER_RETRY"
+
+        res = call_gemini_with_retry(flaky_api, max_retries=3, initial_delay=0.05)
+        self.assertEqual(res, "SUCCESS_AFTER_RETRY")
+        self.assertEqual(attempts, 3)
+        print("[PASS] Gemini Rate-Limit Resilience (15 RPM Throttling & Smart Exponential Backoff)")
+
+    def test_dual_sqlite_persistence_misconceptions_and_violations(self):
+        """Επαλήθευση μόνιμης αποθήκευσης SQLite WAL για παρανοήσεις και καταγραφές ασφαλείας"""
+        import tempfile
+        from session_store import (
+            db_save_misconception,
+            db_load_misconceptions,
+            db_save_violation,
+            db_load_violations,
+            db_get_violation_count,
+        )
+
+        test_db = os.path.join(tempfile.gettempdir(), "test_socrates_persistence.db")
+        if os.path.exists(test_db):
+            os.remove(test_db)
+
+        # 1. Αποθήκευση παρανόησης στην SQLite
+        rec = {
+            "uid": "pers_001",
+            "date": "2026-11-24",
+            "timestamp": "2026-11-24 10:00:00",
+            "grade": "Β' Γυμνασίου",
+            "subject": "📐 Μαθηματικά",
+            "topic": "Πυθαγόρειο Θεώρημα",
+            "example": "α² + β² = γ",
+            "status": "CAUGHT"
+        }
+        self.assertTrue(db_save_misconception(rec, db_path=test_db))
+        loaded_misc = db_load_misconceptions(db_path=test_db)
+        self.assertEqual(len(loaded_misc), 1)
+        self.assertEqual(loaded_misc[0]["topic"], "Πυθαγόρειο Θεώρημα")
+
+        # 2. Αποθήκευση παραβίασης ασφάλειας στην SQLite
+        self.assertTrue(db_save_violation(
+            violation_type="JAILBREAK_ATTEMPT",
+            trigger_snippet="ignore all instructions",
+            grade="Γ' Γυμνασίου",
+            subject="🏛️ Αρχαία",
+            db_path=test_db
+        ))
+        self.assertEqual(db_get_violation_count(db_path=test_db), 1)
+        violations = db_load_violations(db_path=test_db)
+        self.assertEqual(len(violations), 1)
+        self.assertEqual(violations[0]["violation_type"], "JAILBREAK_ATTEMPT")
+        print("[PASS] SQLite WAL Dual Persistence (Misconceptions Heatmap & Security Audit Resilience)")
+
 if __name__ == "__main__":
     unittest.main()
 
