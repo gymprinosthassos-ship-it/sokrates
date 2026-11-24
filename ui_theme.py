@@ -253,6 +253,12 @@ CUSTOM_CSS = """
     .stChatMessage *, [data-testid="stChatMessage"] *, .katex, .katex * {
         color: #0f172a !important;
     }
+    /* Μπλε γραμματοσειρά αποκλειστικά στις απαντήσεις του Σωκράτη (assistant) */
+    [data-testid="stChatMessage"]:has([aria-label="Chat message from assistant"]) [data-testid="stChatMessageContent"] *,
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stChatMessageContent"] *,
+    [data-testid="stChatMessage"]:has(img[alt="assistant avatar"]) [data-testid="stChatMessageContent"] * {
+        color: #1e40af !important;
+    }
     [data-testid="stChatMessage"] img {
         width: 38px !important;
         height: 38px !important;
