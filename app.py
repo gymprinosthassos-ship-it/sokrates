@@ -2984,78 +2984,10 @@ for i, msg in enumerate(st.session_state.messages):
 
 
 # -------------------------------------------------------------
-# 12. Ανέβασμα Εικόνας / Κάμερα (Προστατευμένο με PIN Εκπαιδευτικού)
-# -------------------------------------------------------------
-cam_expander_title = "📷 🟢 Κάμερα & Ανέβασμα Άσκησης (Ξεκλείδωτο)" if st.session_state.camera_unlocked else "📷 🔒 Κάμερα & Ανέβασμα Άσκησης (Κλειδωμένο με PIN)"
-with st.expander(cam_expander_title, expanded=st.session_state.camera_unlocked and bool(st.session_state.current_image)):
-    if not st.session_state.camera_unlocked:
-        st.markdown("""
-        <div style="background: #f0f7fe; border: 1.5px solid #8fc3ea; border-radius: 12px; padding: 14px 18px; text-align: center; margin-bottom: 0.8rem;">
-            <div style="font-size: 1.8rem; margin-bottom: 0.2rem;">🔒 📷</div>
-            <b style="color: #0c335e; font-size: 1.02rem;">Η Κάμερα είναι Κλειδωμένη</b>
-            <p style="color: #335372; font-size: 0.88rem; margin: 4px 0 0 0;">
-                Για λόγους ασφάλειας και προστασίας των μαθητών, η χρήση της κάμερας και το ανέβασμα εικόνων ανοίγουν αποκλειστικά από τον εκπαιδευτικό με τον σχολικό κωδικό πρόσβασης.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        col_cpin1, col_cpin2 = st.columns([3, 1])
-        with col_cpin1:
-            entered_cam_pin = st.text_input(
-                "🔑 Κωδικός Ξεκλειδώματος Κάμερας:",
-                type="password",
-                placeholder="Εισάγετε τον κωδικό...",
-                key="cam_pin_gate_input"
-            )
-        with col_cpin2:
-            st.write("")
-            btn_cam_unlock = st.button("🔓 Ξεκλείδωμα", type="primary", use_container_width=True, key="btn_unlock_camera")
-        
-        if btn_cam_unlock:
-            if not (CAMERA_UNLOCK_PIN or TEACHER_PORTAL_PIN):
-                st.warning("⚠️ Δεν έχει οριστεί κωδικός κάμερας στις ρυθμίσεις ασφαλείας (Secrets).")
-            elif verify_pin(entered_cam_pin, CAMERA_UNLOCK_PIN, TEACHER_PORTAL_PIN):
-                st.session_state.camera_unlocked = True
-                st.success("✅ Η κάμερα ξεκλειδώθηκε επιτυχώς!")
-                st.rerun()
-            else:
-                st.error("❌ Λανθασμένος κωδικός. Δοκιμάστε ξανά.")
-    else:
-        # Εμφάνιση πλήρους περιβάλλοντος κάμερας όταν έχει ξεκλειδωθεί
-        col_info_c, col_lock_c = st.columns([3, 1])
-        with col_info_c:
-            st.info("🔒 **Κανόνας Απορρήτου (GDPR):** Φωτογραφίστε **αποκλειστικά** την άσκηση. Μην ανεβάζετε πρόσωπα ή ονόματα. Οι εικόνες δεν αποθηκεύονται στον δίσκο.")
-        with col_lock_c:
-            if st.button("🔒 Κλείδωμα", use_container_width=True, key="btn_lock_camera"):
-                st.session_state.camera_unlocked = False
-                st.session_state.current_image = None
-                st.rerun()
-
-        col_up1, col_up2 = st.columns([3, 2])
-        with col_up1:
-            uploaded_file = st.file_uploader(
-                "Ανέβασε αρχείο εικόνας:",
-                type=["jpg", "jpeg", "png", "webp"],
-                key="img_file_uploader"
-            )
-            camera_file = st.camera_input("Ή τράβηξε φωτογραφία με την κάμερα:", key="cam_file_uploader")
-            selected_img = uploaded_file if uploaded_file is not None else camera_file
-            if selected_img is not None:
-                st.session_state.current_image = {
-                    "bytes": selected_img.getvalue(),
-                    "type": selected_img.type or "image/jpeg"
-                }
-        with col_up2:
-            if st.session_state.current_image:
-                st.image(st.session_state.current_image["bytes"], caption="Προεπισκόπηση", use_container_width=True)
-                if st.button("❌ Αφαίρεση Εικόνας", use_container_width=True):
-                    st.session_state.current_image = None
-                    st.rerun()
-
-# -------------------------------------------------------------
-# 13. Κουμπιά Γρήγορης Βοήθειας (Quick Action Chips)
+# 12 & 13. Κουμπιά Γρήγορης Βοήθειας & Διακριτικό Εικονίδιο Κάμερας (PIN)
 # -------------------------------------------------------------
 st.write("")
-col_h1, col_h2, col_h3, col_h4, col_h5 = st.columns(5)
+col_h1, col_h2, col_h3, col_h4, col_h5, col_cam = st.columns([1.2, 1.2, 1.05, 1.3, 1.05, 0.55])
 with col_h1:
     if st.button("💡 Ένα στοιχείο (hint)", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου δώσεις ένα μικρό στοιχείο (hint) για να με βοηθήσεις να σκεφτώ το επόμενο βήμα;"
@@ -3109,6 +3041,67 @@ with col_h5:
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 1)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
+with col_cam:
+    cam_help = "Κάμερα & Ανέβασμα Άσκησης (Ξεκλείδωτο)" if st.session_state.camera_unlocked else "Κάμερα & Ανέβασμα Άσκησης (Κλειδωμένο με PIN)"
+    with st.popover("📷", help=cam_help, use_container_width=True):
+        if not st.session_state.camera_unlocked:
+            st.markdown("""
+            <div style="background: #f0f7fe; border: 1.5px solid #8fc3ea; border-radius: 12px; padding: 12px 14px; text-align: center; margin-bottom: 0.7rem;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">🔒 📷</div>
+                <b style="color: #0c335e; font-size: 0.96rem;">Η Κάμερα είναι Κλειδωμένη</b>
+                <p style="color: #335372; font-size: 0.84rem; margin: 4px 0 0 0;">
+                    Ανοίγει αποκλειστικά από τον εκπαιδευτικό με τον σχολικό κωδικό πρόσβασης.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            entered_cam_pin = st.text_input(
+                "🔑 Κωδικός Ξεκλειδώματος Κάμερας:",
+                type="password",
+                placeholder="Εισάγετε τον κωδικό...",
+                key="cam_pin_gate_input"
+            )
+            btn_cam_unlock = st.button("🔓 Ξεκλείδωμα", type="primary", use_container_width=True, key="btn_unlock_camera")
+            if btn_cam_unlock:
+                if not (CAMERA_UNLOCK_PIN or TEACHER_PORTAL_PIN):
+                    st.warning("⚠️ Δεν έχει οριστεί κωδικός κάμερας στις ρυθμίσεις ασφαλείας (Secrets).")
+                elif verify_pin(entered_cam_pin, CAMERA_UNLOCK_PIN, TEACHER_PORTAL_PIN):
+                    st.session_state.camera_unlocked = True
+                    st.success("✅ Η κάμερα ξεκλειδώθηκε επιτυχώς!")
+                    st.rerun()
+                else:
+                    st.error("❌ Λανθασμένος κωδικός. Δοκιμάστε ξανά.")
+        else:
+            st.caption("🔒 GDPR: Φωτογραφίστε **μόνο** την άσκηση (χωρίς πρόσωπα/ονόματα).")
+            if st.button("🔒 Κλείδωμα Κάμερας", use_container_width=True, key="btn_lock_camera"):
+                st.session_state.camera_unlocked = False
+                st.session_state.current_image = None
+                st.rerun()
+            uploaded_file = st.file_uploader(
+                "Ανέβασε αρχείο εικόνας:",
+                type=["jpg", "jpeg", "png", "webp"],
+                key="img_file_uploader"
+            )
+            camera_file = st.camera_input("Ή τράβηξε φωτογραφία:", key="cam_file_uploader")
+            selected_img = uploaded_file if uploaded_file is not None else camera_file
+            if selected_img is not None:
+                st.session_state.current_image = {
+                    "bytes": selected_img.getvalue(),
+                    "type": selected_img.type or "image/jpeg"
+                }
+            if st.session_state.current_image:
+                st.image(st.session_state.current_image["bytes"], caption="Προεπισκόπηση", use_container_width=True)
+                if st.button("❌ Αφαίρεση Εικόνας", use_container_width=True):
+                    st.session_state.current_image = None
+                    st.rerun()
+
+if st.session_state.camera_unlocked and st.session_state.current_image:
+    c_img_prev, c_img_rm = st.columns([4, 1])
+    with c_img_prev:
+        st.caption("📎 Έτοιμη φωτογραφία άσκησης για αποστολή στον Σωκράτη.")
+    with c_img_rm:
+        if st.button("❌ Αφαίρεση", key="btn_rm_img_inline", use_container_width=True):
+            st.session_state.current_image = None
+            st.rerun()
 
 # -------------------------------------------------------------
 # 14. Έλεγχος Πρωτοκόλλου Κρίσης
