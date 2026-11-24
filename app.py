@@ -5,6 +5,7 @@ import html as html_lib
 import time
 import datetime
 import re
+import uuid
 # pyrefly: ignore [missing-import]
 import streamlit as st
 import streamlit.components.v1 as components
@@ -16,6 +17,12 @@ from special_ed_visuals import (
     find_matching_card,
     get_cards_for_subject,
     render_visual_card_html,
+)
+from session_store import (
+    save_session,
+    load_session,
+    delete_session,
+    cleanup_old_sessions,
 )
 
 # -------------------------------------------------------------
@@ -505,10 +512,39 @@ def detect_direct_answer_demand(text: str, has_active_warning: bool = False) -> 
     return False
 
 # -------------------------------------------------------------
-# 5. Αρχικοποίηση Κατάστασης Συνεδρίας (Session State)
+# 5. Αρχικοποίηση Κατάστασης Συνεδρίας & Session Recovery
 # -------------------------------------------------------------
+# Καθαρισμός συνεδριών παλαιότερων των 24 ωρών (GDPR)
+if "cleanup_done" not in st.session_state:
+    try:
+        cleanup_old_sessions(24.0)
+    except Exception:
+        pass
+    st.session_state.cleanup_done = True
+
+# Μοναδικό Session ID ανά Tablet/Συσκευή μέσω URL (st.query_params)
+sid_param = st.query_params.get("sid", "")
+if not sid_param:
+    sid_param = f"tab_{uuid.uuid4().hex[:8]}"
+    st.query_params["sid"] = sid_param
+st.session_state.session_id = sid_param
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
+    # Αυτόματη ανάκτηση αν το tablet έσβησε την οθόνη, αποσυνδέθηκε ή έγινε reload
+    cached_session = load_session(st.session_state.session_id)
+    if cached_session and cached_session.get("messages"):
+        st.session_state.messages = cached_session["messages"]
+        if cached_session.get("grade"):
+            st.session_state.cached_grade = cached_session["grade"]
+        if cached_session.get("subject"):
+            st.session_state.cached_subject = cached_session["subject"]
+        if cached_session.get("support_level"):
+            st.session_state.support_level = cached_session["support_level"]
+        if cached_session.get("stuck_counter") is not None:
+            st.session_state.stuck_counter = cached_session["stuck_counter"]
+            st.session_state.stuck_level = cached_session["stuck_counter"]
+        st.session_state.recovered_banner = True
 if "current_image" not in st.session_state:
     st.session_state.current_image = None
 if "pending_prompt" not in st.session_state:
@@ -569,6 +605,21 @@ if "direct_answer_strikes" not in st.session_state:
     st.session_state.direct_answer_strikes = 0
 if "welcome_fireworks_shown" not in st.session_state:
     st.session_state.welcome_fireworks_shown = False
+
+def persist_current_session(grade: str = "", subject: str = ""):
+    """Αποθηκεύει άμεσα τη συνεδρία του tablet για αυτόματη επαναφορά σε αποσύνδεση."""
+    sid = st.session_state.get("session_id", "")
+    if sid:
+        g = grade or st.session_state.get("cached_grade", "Α' Γυμνασίου")
+        s = subject or st.session_state.get("cached_subject", "")
+        save_session(
+            sid=sid,
+            grade=g,
+            subject=s,
+            support_level=st.session_state.get("support_level", "LEVEL_3"),
+            stuck_counter=st.session_state.get("stuck_counter", 0),
+            messages=st.session_state.get("messages", [])
+        )
 
 # -------------------------------------------------------------
 # 6. Προσαρμοσμένο CSS — Πλήρες Γαλάζιο & Απόλυτη Καθαρότητα
@@ -1166,6 +1217,37 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# -------------------------------------------------------------
+# 6.5. Wake Lock & WebSocket Keep-Alive για Tablets
+# -------------------------------------------------------------
+keepalive_script = """
+<script>
+// 1. Screen Wake Lock: Αποτρέπει το σβήσιμο της οθόνης στα tablets κατά το μάθημα
+let wakeLock = null;
+async function acquireWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+        }
+    } catch (e) {}
+}
+acquireWakeLock();
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        acquireWakeLock();
+    }
+});
+
+// 2. WebSocket Keep-Alive: Αποτρέπει το κλείσιμο της σύνδεσης Streamlit από αδράνεια Wi-Fi
+setInterval(() => {
+    try {
+        fetch(window.location.href, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
+    } catch (e) {}
+}, 20000);
+</script>
+"""
+components.html(keepalive_script, height=0, width=0)
 
 # -------------------------------------------------------------
 # 7. Διαχείριση API Key
@@ -2425,14 +2507,17 @@ with st.sidebar:
         "Β' Γυμνασίου": "🟡 Β' Γυμνασίου",
         "Γ' Γυμνασίου": "🟣 Γ' Γυμνασίου",
     }
+    saved_grade = st.session_state.get("cached_grade")
+    grade_idx = GYMNASIO_GRADES.index(saved_grade) if saved_grade in GYMNASIO_GRADES else 0
     selected_grade = st.selectbox(
         "🏫 Τάξη:",
         GYMNASIO_GRADES,
-        index=0,
+        index=grade_idx,
         format_func=lambda g: grade_display_map.get(g, g),
         label_visibility="collapsed",
         key="side_grade_select",
     )
+    st.session_state.cached_grade = selected_grade
     grade_color_map = {
         "Α' Γυμνασίου": ("#e0f2fe", "#7dd3fc", "#0c4a6e"),
         "Β' Γυμνασίου": ("#fef3c7", "#fcd34d", "#78350f"),
@@ -2441,7 +2526,10 @@ with st.sidebar:
     g_bg, g_bd, g_fg = grade_color_map.get(selected_grade, ("#e0f2fe", "#7dd3fc", "#0c4a6e"))
 
     class_subjects = list(GYMNASIO_DATA[selected_grade]["subjects"].keys())
-    selected_subject = st.selectbox("📚 Μάθημα:", class_subjects, index=0, label_visibility="collapsed", key="side_subject_select")
+    saved_subject = st.session_state.get("cached_subject")
+    subj_idx = class_subjects.index(saved_subject) if saved_subject in class_subjects else 0
+    selected_subject = st.selectbox("📚 Μάθημα:", class_subjects, index=subj_idx, label_visibility="collapsed", key="side_subject_select")
+    st.session_state.cached_subject = selected_subject
 
     # Συμπεριληπτική & συμπαγής επιλογή επιπέδου (1 γραμμή αντί για 3 μεγάλους κύκλους)
     support_labels = {
@@ -2506,6 +2594,24 @@ with st.sidebar:
         use_container_width=True
     )
 
+    # Κουμπί Νέας Συζήτησης
+    if st.button("🔄 Νέα Συζήτηση", use_container_width=True, type="primary", key="side_btn_new_chat"):
+        if st.session_state.get("session_id"):
+            delete_session(st.session_state.session_id)
+        new_sid = f"tab_{uuid.uuid4().hex[:8]}"
+        st.query_params["sid"] = new_sid
+        st.session_state.session_id = new_sid
+        st.session_state.messages = []
+        st.session_state.current_image = None
+        st.session_state.pending_prompt = None
+        st.session_state.stuck_counter = 0
+        st.session_state.stuck_level = 0
+        if "cached_grade" in st.session_state:
+            del st.session_state["cached_grade"]
+        if "cached_subject" in st.session_state:
+            del st.session_state["cached_subject"]
+        st.rerun()
+
     # Πτυσσόμενα εργαλεία μαθήματος (Ύλη & Εποπτικές Κάρτες)
     with st.container(key="side_exp_yli"):
         with st.expander("📑 Ύλη & Κεφάλαια", expanded=False):
@@ -2545,6 +2651,7 @@ with st.sidebar:
                         "content": f"Ορίστε η ζωντανή εποπτική κάρτα για το θέμα: **{live_card.get('title', selected_subject)}**! Κοίταξε προσεκτικά τα βήματα:",
                         "live_visual_card": live_card,
                     })
+                    persist_current_session(selected_grade, selected_subject)
                     st.rerun()
                 else:
                     st.warning("⚠️ Προσωρινή αδυναμία δημιουργίας κάρτας. Δοκίμασε ξανά σε λίγο.")
@@ -4769,6 +4876,17 @@ def render_welcome_fireworks():
         height=0,
     )
 
+if st.session_state.get("recovered_banner", False):
+    st.toast("✅ Η προηγούμενη συνομιλία σου ανακτήθηκε επιτυχώς!", icon="🔄")
+    st.markdown("""
+    <div style="background: #e0f2fe; border: 1.5px solid #38bdf8; border-radius: 10px; padding: 6px 12px; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.1rem;">🔄</span>
+        <span style="color: #0369a1; font-weight: 700; font-size: 0.88rem;">Η συνομιλία σου ανακτήθηκε αυτόματα μετά την επανασύνδεση του tablet!</span>
+    </div>
+    """, unsafe_allow_html=True)
+    st.session_state.recovered_banner = False
+    st.session_state.welcome_fireworks_shown = True
+
 if not st.session_state.welcome_fireworks_shown and not st.session_state.is_locked:
     render_welcome_fireworks()
     st.session_state.welcome_fireworks_shown = True
@@ -4903,6 +5021,7 @@ with col_h4:
                 "content": f"Ορίστε η ζωντανή εποπτική κάρτα για το θέμα μας: **{live_card.get('title', selected_subject)}**! Ποιο βήμα σου φαίνεται πιο σημαντικό;",
                 "live_visual_card": live_card,
             })
+            persist_current_session(selected_grade, selected_subject)
             st.rerun()
         else:
             st.session_state.pending_prompt = "Μπορείς να μου δείξεις ένα απλό σχεδιάγραμμα με βήματα για να καταλάβω καλύτερα αυτό το θέμα;"
@@ -5070,6 +5189,7 @@ if prompt:
             add_effort_points(-10)
             st.session_state.messages.append({"role": "user", "content": prompt, "exclude_from_history": True})
             st.session_state.messages.append({"role": "assistant", "content": warning_msg, "exclude_from_history": True})
+            persist_current_session(selected_grade, selected_subject)
             st.rerun()
     else:
         # Η ενεργή προειδοποίηση μηδενίζεται ΜΟΝΟ με πραγματική προσπάθεια (>= 3 λέξεις & ουσιαστική απάντηση)
@@ -5098,6 +5218,7 @@ if prompt:
             "role": "assistant",
             "content": "❤️ **Σε ακούω.** Σε παρακαλώ δες τα παραπάνω τηλέφωνα υποστήριξης και μίλησε άμεσα στους γονείς σου ή σε έναν εκπαιδευτικό στο σχολείο σου. Η ασφάλειά σου είναι το πιο σημαντικό απ' όλα."
         })
+        persist_current_session(selected_grade, selected_subject)
     else:
         # Υπολογισμός Adaptive Scaffolding (Stuck Counter: 0, 1, 2+)
         if "stuck_counter" not in st.session_state:
@@ -5342,6 +5463,7 @@ if prompt:
 
                             st.session_state.messages.append(user_msg_record)
                             st.session_state.messages.append(asst_msg_record)
+                            persist_current_session(selected_grade, selected_subject)
                             
                             if matched_card:
                                 card_html = render_visual_card_html(matched_card)

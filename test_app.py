@@ -105,7 +105,7 @@ class TestSokratesFunctionality(unittest.TestCase):
         t_start = time.time()
         try:
             resp = client.models.generate_content(
-                model="gemini-2.5-flash-lite",
+                model="gemini-3.5-flash-lite",
                 contents="Ερώτηση μαθητή Α' Γυμνασίου στα Μαθηματικά: 'Πόσο κάνει 2x + 4 = 10;' Απάντησε σωκρατικά με 1 σύντομη ερώτηση."
             )
             t_dur = time.time() - t_start
@@ -257,6 +257,54 @@ class TestSokratesFunctionality(unittest.TestCase):
         st_off = app.compute_duel_unlock_status("disabled", "LEVEL_3", 5, 5, 0, False)
         self.assertFalse(st_off["unlocked"])
         print("[PASS] 2-Player Duel Study-Goal Unlock Rules & Teacher 3-Way Control")
+
+    def test_session_recovery_store(self):
+        """Επαλήθευση μηχανισμού ανάκτησης συνεδρίας (SQLite WAL) για tablets"""
+        import tempfile
+        from session_store import save_session, load_session, delete_session, cleanup_old_sessions
+        
+        test_db = os.path.join(tempfile.gettempdir(), "test_socrates_recovery.db")
+        if os.path.exists(test_db):
+            os.remove(test_db)
+            
+        test_sid = "test_tablet_123"
+        msgs = [
+            {"role": "assistant", "content": "Χαίρε! Τι μελετάμε;"},
+            {"role": "user", "content": "Κλάσματα"},
+            {"role": "assistant", "content": "Τι είναι ο παρονομαστής;"}
+        ]
+        
+        # 1. Αποθήκευση
+        saved = save_session(
+            sid=test_sid,
+            grade="Α' Γυμνασίου",
+            subject="📐 Μαθηματικά",
+            support_level="LEVEL_2",
+            stuck_counter=1,
+            messages=msgs,
+            db_path=test_db
+        )
+        self.assertTrue(saved)
+        
+        # 2. Ανάκτηση μετά από υποτιθέμενο sleep/disconnect
+        loaded = load_session(test_sid, db_path=test_db)
+        self.assertIsNotNone(loaded)
+        self.assertEqual(loaded["grade"], "Α' Γυμνασίου")
+        self.assertEqual(loaded["subject"], "📐 Μαθηματικά")
+        self.assertEqual(loaded["support_level"], "LEVEL_2")
+        self.assertEqual(loaded["stuck_counter"], 1)
+        self.assertEqual(len(loaded["messages"]), 3)
+        self.assertEqual(loaded["messages"][1]["content"], "Κλάσματα")
+        
+        # 3. Διαγραφή με "Νέα Συζήτηση"
+        del_ok = delete_session(test_sid, db_path=test_db)
+        self.assertTrue(del_ok)
+        self.assertIsNone(load_session(test_sid, db_path=test_db))
+        
+        # 4. GDPR Cleanup (χωρίς σφάλμα)
+        cleaned = cleanup_old_sessions(0.0001, db_path=test_db)
+        self.assertIsInstance(cleaned, int)
+        print("[PASS] Tablet Session Recovery Store (Save, Load, Delete, GDPR Cleanup)")
 
 if __name__ == "__main__":
     unittest.main()

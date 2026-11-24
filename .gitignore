@@ -3,3 +3,7 @@ __pycache__/
 .streamlit/secrets.toml
 .fernet_seed
 .key_store
+*.db
+*.db-wal
+*.db-shm
+
