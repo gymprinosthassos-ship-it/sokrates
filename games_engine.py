@@ -26,7 +26,7 @@ except ImportError:
     st = None
 
 from security_engine import normalize_text
-from gemini_resilience import call_gemini_with_retry
+from gemini_resilience import call_gemini_with_retry, load_saved_key, get_genai_client, build_fast_config
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WRITABLE_DATA_DIR = tempfile.gettempdir()
@@ -214,10 +214,9 @@ def generate_duel_questions_json(
     api_key: str = ""
 ):
     """Παράγει και τις 6 ερωτήσεις της Μονομαχίας σε ΜΙΑ (1) κλήση AI με rate-limit resilience."""
-    import app
     if client is None:
-        key = api_key or app.load_saved_key()
-        client = app.get_genai_client(key)
+        key = api_key or load_saved_key()
+        client = get_genai_client(key)
 
     active_m = "gemini-3.5-flash-lite"
     if st is not None and "active_model" in st.session_state:
@@ -267,7 +266,7 @@ def generate_duel_questions_json(
     for m_name in ordered_models:
         for try_no_think in (True, False):
             try:
-                cfg = app.build_fast_config(
+                cfg = build_fast_config(
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.6,
@@ -309,10 +308,9 @@ def judge_duel_free_answer(
     if norm_st == norm_exp or (len(norm_st) >= 4 and (norm_st in norm_exp or norm_exp in norm_st)):
         return True
 
-    import app
     if client is None:
-        key = api_key or app.load_saved_key()
-        client = app.get_genai_client(key)
+        key = api_key or load_saved_key()
+        client = get_genai_client(key)
 
     active_m = "gemini-3.5-flash-lite"
     if st is not None and "active_model" in st.session_state:
@@ -341,7 +339,7 @@ def judge_duel_free_answer(
         for m_name in ordered_models:
             for try_no_think in (True, False):
                 try:
-                    cfg = app.build_fast_config(m_name, disable_thinking=try_no_think, temperature=0.0, max_output_tokens=20)
+                    cfg = build_fast_config(m_name, disable_thinking=try_no_think, temperature=0.0, max_output_tokens=20)
                     r = call_gemini_with_retry(
                         client.models.generate_content,
                         model=m_name,
@@ -385,10 +383,9 @@ def generate_mini_game_json(
     api_key: str = ""
 ):
     """Παράγει σε ΜΙΑ (1) κλήση AI όλο το περιεχόμενο για: 'detective', 'myth_truth', 'ladder5' ή 'escape'."""
-    import app
     if client is None:
-        key = api_key or app.load_saved_key()
-        client = app.get_genai_client(key)
+        key = api_key or load_saved_key()
+        client = get_genai_client(key)
 
     active_m = "gemini-3.5-flash-lite"
     if st is not None and "active_model" in st.session_state:
@@ -502,7 +499,7 @@ def generate_mini_game_json(
     for m_name in ordered_models:
         for try_no_think in (True, False):
             try:
-                cfg = app.build_fast_config(
+                cfg = build_fast_config(
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.6,
@@ -540,10 +537,9 @@ def generate_live_visual_card_json(
     api_key: str = ""
 ):
     """Παράγει επιτόπου μια Ζωντανή Εποπτική Κάρτα-Σχεδιάγραμμα για ΟΠΟΙΟΔΗΠΟΤΕ μάθημα/κεφάλαιο του ΙΕΠ."""
-    import app
     if client is None:
-        key = api_key or app.load_saved_key()
-        client = app.get_genai_client(key)
+        key = api_key or load_saved_key()
+        client = get_genai_client(key)
 
     active_m = "gemini-3.5-flash-lite"
     if st is not None and "active_model" in st.session_state:
@@ -587,7 +583,7 @@ def generate_live_visual_card_json(
     for m_name in ordered_models:
         for try_no_think in (True, False):
             try:
-                cfg = app.build_fast_config(
+                cfg = build_fast_config(
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.5,

@@ -59,6 +59,10 @@ from gemini_resilience import (
     is_rate_limit_error,
     call_gemini_with_retry,
     send_chat_stream_with_retry,
+    load_saved_key,
+    save_key_permanently,
+    get_genai_client,
+    build_fast_config,
 )
 from games_engine import (
     get_shared_classroom_store,
@@ -561,80 +565,9 @@ apply_custom_theme()
 apply_wake_lock_and_keepalive()
 
 # -------------------------------------------------------------
-# 7. Διαχείριση API Key
+# 7. Διαχείριση API Key (Εισάγεται από το gemini_resilience)
 # -------------------------------------------------------------
-def load_saved_key():
-    try:
-        if "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"]:
-            return st.secrets["GEMINI_API_KEY"].strip()
-    except Exception:
-        pass
-
-    # Έλεγχος κρυπτογραφημένου χώρου αποθήκευσης (.key_store & .fernet_seed)
-    for folder in [BASE_DIR, os.path.abspath(os.path.join(BASE_DIR, "..", "..", "..", "antigravity", "scratch", "socratic-mentor"))]:
-        ks_file = os.path.join(folder, ".key_store")
-        fs_file = os.path.join(folder, ".fernet_seed")
-        if os.path.exists(ks_file) and os.path.exists(fs_file):
-            try:
-                from cryptography.fernet import Fernet
-                with open(fs_file, "rb") as sf, open(ks_file, "rb") as kf:
-                    decrypted = Fernet(sf.read().strip()).decrypt(kf.read().strip()).decode("utf-8").strip()
-                    if decrypted:
-                        return decrypted
-            except Exception:
-                pass
-
-    if os.path.exists(SECRETS_PATH):
-        try:
-            with open(SECRETS_PATH, "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.strip().startswith("GEMINI_API_KEY"):
-                        parts = line.split("=", 1)
-                        if len(parts) == 2:
-                            k = parts[1].strip().strip('"').strip("'")
-                            if k:
-                                return k
-        except Exception:
-            pass
-    return os.environ.get("GEMINI_API_KEY", "").strip()
-
-def save_key_permanently(key):
-    os.makedirs(os.path.dirname(SECRETS_PATH), exist_ok=True)
-    with open(SECRETS_PATH, "w", encoding="utf-8") as f:
-        f.write(f'GEMINI_API_KEY = "{key.strip()}"\n')
-    try:
-        from cryptography.fernet import Fernet
-        fs_file = os.path.join(BASE_DIR, ".fernet_seed")
-        ks_file = os.path.join(BASE_DIR, ".key_store")
-        seed = Fernet.generate_key()
-        with open(fs_file, "wb") as sf:
-            sf.write(seed)
-        enc = Fernet(seed).encrypt(key.strip().encode("utf-8"))
-        with open(ks_file, "wb") as kf:
-            kf.write(enc)
-    except Exception:
-        pass
-
 api_key = load_saved_key()
-
-@st.cache_resource(show_spinner=False)
-def get_genai_client(key: str):
-    return genai.Client(
-        api_key=key,
-        http_options=types.HttpOptions(
-            timeout=20000,
-            retry_options=types.HttpRetryOptions(attempts=1)
-        )
-    )
-
-def build_fast_config(model_name: str, disable_thinking: bool = True, **kwargs):
-    """Δημιουργεί ρυθμίσεις άμεσης απόκρισης (με ασφαλή απενεργοποίηση εσωτερικής σκέψης)."""
-    if disable_thinking:
-        try:
-            kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
-        except Exception:
-            pass
-    return types.GenerateContentConfig(**kwargs)
 
 # -------------------------------------------------------------
 # 7.5, 7.6 & 7.7. Αυτοαξιολόγηση, Χάρτης Παρανοήσεων & Μονομαχία 2 Παικτών
@@ -3189,10 +3122,10 @@ def build_socratic_master_prompt(
 Στη διάθεσή σου υπάρχουν οι εξής διαθέσιμες οπτικές κάρτες:
 [{cards_list_str}]
 
-Αν η συζήτηση αφορά κάποιο από αυτά τα θέματα ή αν οπτικοποίηση βοηθά την κατανόηση,
+Αν η συζήτηση αφορά ΑΚΡΙΒΩΣ κάποιο από αυτά τα θέματα (και ΟΧΙ σε γενικούς χαιρετισμούς, κανόνες μαθήματος ή άσχετες ερωτήσεις),
 ΠΡΕΠΕΙ στο τέλος της απόκρισής σου (σε νέα γραμμή) να προσθέσεις το tag:
 [ΚΑΡΤΑ: <id_κάρτας>]  (π.χ. [ΚΑΡΤΑ: math_fractions])
-Αν δεν ταιριάζει καμία κάρτα, γράψε: [ΚΑΡΤΑ: none]
+Σε κάθε άλλη περίπτωση, γράψε ΠΑΝΤΑ: [ΚΑΡΤΑ: none]
 
 ═════════════════════════════════════════════════════════════════════
 5. ΑΠΑΡΑΒΙΑΣΤΑ GUARDRAILS ΑΣΦΑΛΕΙΑΣ & ANTI-LEAK
@@ -3321,7 +3254,16 @@ if prompt:
 
         active_support = st.session_state.get("support_level", "LEVEL_3")
         subj_cards = get_cards_for_subject(selected_subject)
-        available_cards_ids = [c["id"] for c in subj_cards] if subj_cards else list(PEDAGOGICAL_CARDS.keys())
+        raw_card_ids = [c["id"] for c in subj_cards] if subj_cards else list(PEDAGOGICAL_CARDS.keys())
+        _prompt_norm_cards = normalize_text(prompt)
+        _allow_civics_card = (
+            "πολιτικ" in normalize_text(selected_subject)
+            or any(k in _prompt_norm_cards for k in ("δικαιωμ", "υποχρεωσ", "πολιτικη αγωγη"))
+        )
+        available_cards_ids = [
+            cid for cid in raw_card_ids
+            if cid != "civics_rights_rules" or _allow_civics_card
+        ]
 
         # 🏛️ Οριστικό & Μόνιμο Σύστημα Σωκράτη (Adaptive Scaffolding, Anti-Loop & Smart SVG Cards)
         system_instruction = build_socratic_master_prompt(
@@ -3475,7 +3417,11 @@ if prompt:
                             if card_tag_match:
                                 selected_card_id = card_tag_match.group(1).strip().lower()
                                 full_response = re.sub(r'\[ΚΑΡΤΑ:\s*[a-zA-Z0-9_]+\]', '', full_response).strip()
-                                if selected_card_id != "none" and selected_card_id in PEDAGOGICAL_CARDS:
+                                if (
+                                    selected_card_id != "none"
+                                    and selected_card_id in PEDAGOGICAL_CARDS
+                                    and (selected_card_id != "civics_rights_rules" or _allow_civics_card)
+                                ):
                                     matched_card = PEDAGOGICAL_CARDS[selected_card_id]
 
                             # 3. Κριτήριο 1: Ανεξάρτητος φύλακας κώδικα + αυτοέλεγχος AI — αν έδωσε έτοιμη λύση, ξαναγράφει ΠΡΙΝ τη δει ο μαθητής!

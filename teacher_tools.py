@@ -28,7 +28,7 @@ except ImportError:
 
 from security_engine import normalize_text, ends_with_question, is_student_real_attempt
 from session_store import db_save_misconception, db_load_misconceptions
-from gemini_resilience import call_gemini_with_retry
+from gemini_resilience import call_gemini_with_retry, load_saved_key, get_genai_client, build_fast_config
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WRITABLE_DATA_DIR = tempfile.gettempdir()
@@ -295,10 +295,9 @@ def generate_45min_lesson_json(
     api_key: str = ""
 ):
     """Παράγει δομημένη 45λεπτη παρουσίαση σε καθαρό JSON με rate-limit resilience."""
-    import app
     if client is None:
-        key = api_key or app.load_saved_key()
-        client = app.get_genai_client(key)
+        key = api_key or load_saved_key()
+        client = get_genai_client(key)
 
     active_m = "gemini-3.5-flash-lite"
     if st is not None and "active_model" in st.session_state:
@@ -357,7 +356,7 @@ def generate_45min_lesson_json(
     for m_name in ordered_models:
         for try_no_think in (True, False):
             try:
-                cfg = app.build_fast_config(
+                cfg = build_fast_config(
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.5,
@@ -571,9 +570,8 @@ def build_school_docx(
 
 def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 1600):
     """Κοινή γρήγορη ροή παραγωγής AI για όλα τα εργαλεία του Καθηγητή με rate-limit resilience."""
-    import app
-    key = app.load_saved_key()
-    client = app.get_genai_client(key)
+    key = load_saved_key()
+    client = get_genai_client(key)
 
     active_m = "gemini-3.5-flash-lite"
     if st is not None and "active_model" in st.session_state:
@@ -584,7 +582,7 @@ def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 
     for m_name in ordered_models:
         for try_no_think in (True, False):
             try:
-                cfg = app.build_fast_config(
+                cfg = build_fast_config(
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.65,
