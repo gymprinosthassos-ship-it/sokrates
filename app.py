@@ -3540,7 +3540,6 @@ if prompt:
                                         matched_card = subj_cards[0]
 
                             response_container.markdown(full_response)
-                            st.caption(f"⚡ *Χρόνος απόκρισης: {elapsed_sec:.2f}δλ. (Μοντέλο: `{model_name}`)*")
 
                             user_msg_record = {"role": "user", "content": prompt}
                             if active_img_data:
