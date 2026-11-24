@@ -3531,10 +3531,14 @@ if prompt:
                             success = True
                             elapsed_sec = time.time() - t_start
 
-                            # Fallback κάρτας αν δεν επέλεξε το μοντέλο
-                            if not matched_card:
+                            # Fallback κάρτας: μόνο αν το ζήτησε ρητά ο μαθητής ή αν είναι στο Επίπεδο 1 (Ειδική Αγωγή)
+                            user_asked_visual = any(
+                                w in normalize_text(prompt)
+                                for w in ["εικονα", "σχημα", "δειξε", "σχεδιαγραμμα", "καρτα", "φωτογραφια"]
+                            )
+                            if not matched_card and (user_asked_visual or st.session_state.get("support_level") == "LEVEL_1"):
                                 matched_card = find_matching_card(prompt + " " + full_response, selected_subject, selected_grade)
-                                if not matched_card and any(w in prompt.lower() for w in ["εικονα", "σχημα", "δειξε", "σχεδιαγραμμα", "καρτα", "φωτογραφια"]):
+                                if not matched_card and user_asked_visual:
                                     subj_cards = get_cards_for_subject(selected_subject)
                                     if subj_cards:
                                         matched_card = subj_cards[0]
