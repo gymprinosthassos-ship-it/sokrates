@@ -1126,11 +1126,21 @@ st.markdown("""
         transform: translateY(1px) !important;
         box-shadow: 0 1px 0 rgba(15, 52, 96, 0.14), inset 0 1px 2px rgba(15, 52, 96, 0.10) !important;
     }
-    [data-testid="stSidebar"] div[data-baseweb="select"] > div,
-    [data-testid="stSidebar"] div[data-baseweb="select"] {
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"],
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
         min-height: 2.3rem !important;
         border-radius: 12px !important;
-        box-shadow: 0 2px 6px rgba(15, 52, 96, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+        background: linear-gradient(180deg, #f0f9ff 0%, #bae6fd 52%, #7dd3fc 100%) !important;
+        border: 1.5px solid #0284c7 !important;
+        color: #0c4a6e !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(2, 132, 199, 0.16), 0 4px 0 #0369a1, 0 7px 14px rgba(2, 132, 199, 0.22) !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] > div > div {
+        background: transparent !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] * {
+        color: #0c4a6e !important;
+        font-weight: 700 !important;
     }
     [data-testid="stSidebar"] [data-testid="stExpander"] {
         margin-bottom: 0 !important;
@@ -1174,15 +1184,6 @@ st.markdown("""
         background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%) !important;
         border-color: #64748b !important;
         color: #0f172a !important;
-    }
-    [data-testid="stSidebar"] .st-key-side_subject_select div[data-baseweb="select"] > div,
-    [data-testid="stSidebar"] .st-key-side_subject_select div[data-baseweb="select"] {
-        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-        border-color: #6ee7b7 !important;
-        color: #064e3b !important;
-    }
-    [data-testid="stSidebar"] .st-key-side_subject_select div[data-baseweb="select"] * {
-        color: #064e3b !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"],
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] summary {
@@ -3130,13 +3131,6 @@ with st.sidebar:
         label_visibility="collapsed",
         key="side_grade_select",
     )
-    grade_color_map = {
-        "Α' Γυμνασίου": ("#e0f2fe", "#7dd3fc", "#0c4a6e"),
-        "Β' Γυμνασίου": ("#fef3c7", "#fcd34d", "#78350f"),
-        "Γ' Γυμνασίου": ("#ede9fe", "#c4b5fd", "#4c1d95"),
-    }
-    g_bg, g_bd, g_fg = grade_color_map.get(selected_grade, ("#e0f2fe", "#7dd3fc", "#0c4a6e"))
-
     class_subjects = list(GYMNASIO_DATA[selected_grade]["subjects"].keys())
     selected_subject = st.selectbox("📚 Μάθημα:", class_subjects, index=0, label_visibility="collapsed", key="side_subject_select")
 
@@ -3158,37 +3152,6 @@ with st.sidebar:
         help="Διάλεξε πόσο απλά και αναλυτικά θέλεις να σου εξηγεί ο Σωκράτης."
     )
     st.session_state.support_level = selected_lvl
-
-    lvl_color_map = {
-        "LEVEL_1": ("#dcfce7", "#86efac", "#14532d"),
-        "LEVEL_2": ("#fef9c3", "#fde047", "#713f12"),
-        "LEVEL_3": ("#f3e8ff", "#d8b4fe", "#581c87"),
-    }
-    l_bg, l_bd, l_fg = lvl_color_map.get(selected_lvl, ("#f3e8ff", "#d8b4fe", "#581c87"))
-    st.markdown(f"""
-    <style>
-        .st-key-side_grade_select div[data-baseweb="select"] > div,
-        .st-key-side_grade_select div[data-baseweb="select"] {{
-            background-color: {g_bg} !important;
-            border-color: {g_bd} !important;
-            color: {g_fg} !important;
-        }}
-        .st-key-side_grade_select div[data-baseweb="select"] * {{
-            color: {g_fg} !important;
-            font-weight: 700 !important;
-        }}
-        .st-key-support_level_selector div[data-baseweb="select"] > div,
-        .st-key-support_level_selector div[data-baseweb="select"] {{
-            background-color: {l_bg} !important;
-            border-color: {l_bd} !important;
-            color: {l_fg} !important;
-        }}
-        .st-key-support_level_selector div[data-baseweb="select"] * {{
-            color: {l_fg} !important;
-            font-weight: 600 !important;
-        }}
-    </style>
-    """, unsafe_allow_html=True)
 
     # Ανάκτηση πληροφοριών βιβλίου & ύλης για το επιλεγμένο μάθημα (αποκλειστικά τρέχοντα βιβλία ΙΕΠ / ebooks.edu.gr)
     current_book_info = GYMNASIO_DATA[selected_grade]["subjects"][selected_subject]
