@@ -909,6 +909,30 @@ st.markdown("""
         box-shadow: inset 0 2px 4px rgba(15,23,42,0.16), 0 1px 0 rgba(15,23,42,0.22) !important;
     }
 
+    /* 5d. Μικρό τετράγωνο κουμπί ηχείου & μικρό κουμπί κάμερας στην άκρη */
+    [class*="st-key-socrates_voice_btn_"] button {
+        width: 38px !important;
+        min-width: 38px !important;
+        height: 36px !important;
+        min-height: 36px !important;
+        padding: 0 !important;
+        border-radius: 10px !important;
+        background: linear-gradient(180deg, #f0f9ff 0%, #bae6fd 100%) !important;
+        border: 1.5px solid #38bdf8 !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 3px 0 #0284c7, 0 5px 10px rgba(2,132,199,0.2) !important;
+    }
+    .st-key-btn_open_cam_dialog button {
+        border-radius: 14px !important;
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+        background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%) !important;
+        border: 1.5px solid #64748b !important;
+        color: #0f172a !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), 0 4px 0 #475569, 0 8px 16px rgba(71,85,105,0.22) !important;
+    }
+    .st-key-btn_open_cam_dialog button:hover { transform: translateY(-2px) !important; }
+    .st-key-btn_open_cam_dialog button:active { transform: translateY(2px) !important; }
+
     /* 6. Κάτω μπάρα πληκτρολόγησης (stChatInput) με καθαρό αδιαφανές φόντο */
     [data-testid="stBottom"] {
         background: linear-gradient(to top, #c3def7 82%, rgba(195, 222, 247, 0) 100%) !important;
@@ -2929,12 +2953,12 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
     play_key = f"socrates_voice_play_{msg_idx}"
 
     if not st.session_state.get(play_key, False):
-        if st.button("🔊 Άκουσε τον Σωκράτη", key=btn_key):
+        if st.button("🔊", key=btn_key, help="Άκουσε τον Σωκράτη"):
             st.session_state[play_key] = True
             st.rerun()
         return
 
-    with st.spinner("🎙️ Ο Σωκράτης ετοιμάζει τη φωνή του..."):
+    with st.spinner("🎙️..."):
         audio_bytes = generate_socrates_audio_bytes(text_content)
 
     if audio_bytes:
@@ -2945,20 +2969,21 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
                 <audio id="soc_audio_{msg_idx}" style="display: none;">
                     <source src="data:audio/mpeg;base64,{b64_audio}" type="audio/mpeg">
                 </audio>
-                <button id="soc_btn_{msg_idx}" onclick="toggleSocAudio_{msg_idx}()" style="
-                    background: #cde5f9;
+                <button id="soc_btn_{msg_idx}" title="Παύση / Συνέχεια" onclick="toggleSocAudio_{msg_idx}()" style="
+                    background: linear-gradient(180deg, #f0f9ff 0%, #bae6fd 100%);
                     color: #082f56;
-                    border: 1.5px solid #8ec0e7;
-                    border-radius: 12px;
-                    padding: 5px 14px;
-                    font-size: 0.85rem;
+                    border: 1.5px solid #38bdf8;
+                    border-radius: 10px;
+                    width: 38px;
+                    height: 36px;
+                    font-size: 1rem;
                     font-weight: 700;
                     cursor: pointer;
                     display: inline-flex;
                     align-items: center;
-                    gap: 6px;
-                    transition: all 0.2s ease;
-                ">⏸️ Παύση</button>
+                    justify-content: center;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 3px 0 #0284c7;
+                ">⏸️</button>
             </div>
             <script>
             (function() {{
@@ -2966,17 +2991,17 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
                 const btn = document.getElementById("soc_btn_{msg_idx}");
                 window.toggleSocAudio_{msg_idx} = function() {{
                     if (audio.paused) {{
-                        audio.play().then(() => {{ btn.innerHTML = "⏸️ Παύση"; }}).catch(() => {{}});
+                        audio.play().then(() => {{ btn.innerHTML = "⏸️"; }}).catch(() => {{}});
                     }} else {{
                         audio.pause();
-                        btn.innerHTML = "▶️ Συνέχεια";
+                        btn.innerHTML = "▶️";
                     }}
                 }};
-                audio.onended = function() {{ btn.innerHTML = "▶️ Άκουσε ξανά"; }};
+                audio.onended = function() {{ btn.innerHTML = "🔊"; }};
                 audio.play().then(() => {{
-                    btn.innerHTML = "⏸️ Παύση";
+                    btn.innerHTML = "⏸️";
                 }}).catch(() => {{
-                    btn.innerHTML = "▶️ Άκουσε τον Σωκράτη";
+                    btn.innerHTML = "▶️";
                 }});
             }})();
             </script>
@@ -5954,13 +5979,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
 # 11. Μήνυμα Υποδοχής & Εμφάνιση Ιστορικού (Κανονική Λειτουργία)
 # -------------------------------------------------------------
 if len(st.session_state.messages) == 0:
-    lvl_names = {
-        "LEVEL_1": "🟢 Επίπεδο 1 (Μέγιστη Απλοποίηση & Εικόνες)",
-        "LEVEL_2": "🟡 Επίπεδο 2 (Απλοποιημένο Γυμνασίου - Easy-to-Read)",
-        "LEVEL_3": "🔵 Επίπεδο 3 (Τυπικό Γυμνασίου - Σωκρατικός Διάλογος)",
-    }
-    cur_lvl_badge = lvl_names.get(st.session_state.get("support_level", "LEVEL_3"), "Τυπικό Γυμνασίου")
-    welcome_text = f"Χαίρε! 🌟\n\nΕίμαι ο Σωκράτης. Είμαι εδώ για να μελετήσουμε μαζί με απλά λόγια, παραδείγματα και εικόνες!\n\n*Ενεργό Προφίλ: {cur_lvl_badge}*\n\nΠοιο θέμα ή ποια άσκηση θέλεις να δούμε τώρα;"
+    welcome_text = "Χαίρε: Τι μπορώ να κάνω για σένα;"
     st.session_state.messages.append({"role": "assistant", "content": welcome_text})
 
 def render_welcome_fireworks():
@@ -6155,10 +6174,10 @@ for i, msg in enumerate(st.session_state.messages):
 
 
 # -------------------------------------------------------------
-# 12. Ανέβασμα Εικόνας / Κάμερα (Προστατευμένο με PIN Εκπαιδευτικού)
+# 12. Κάμερα & Ανέβασμα Άσκησης σε Αναδυόμενο Παράθυρο (χωρίς μπάρα στην οθόνη!)
 # -------------------------------------------------------------
-cam_expander_title = "📷 🟢 Κάμερα & Ανέβασμα Άσκησης (Ξεκλείδωτο)" if st.session_state.camera_unlocked else "📷 🔒 Κάμερα & Ανέβασμα Άσκησης (Κλειδωμένο με PIN)"
-with st.expander(cam_expander_title, expanded=st.session_state.camera_unlocked and bool(st.session_state.current_image)):
+@st.dialog("📷 Κάμερα & Ανέβασμα Άσκησης")
+def show_camera_dialog():
     if not st.session_state.camera_unlocked:
         cam_art = get_game_art_uri("camera_lock")
         cam_visual = (
@@ -6166,27 +6185,21 @@ with st.expander(cam_expander_title, expanded=st.session_state.camera_unlocked a
             if cam_art else '<div style="font-size: 1.8rem; margin-bottom: 0.2rem;">🔒 📷</div>'
         )
         st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #ffffff 0%, #f0f7fe 100%); border: 1.5px solid #8fc3ea; border-radius: 14px; padding: 14px 18px; text-align: center; margin-bottom: 0.8rem; box-shadow:0 3px 10px rgba(15,52,96,0.06);">
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #f0f7fe 100%); border: 1.5px solid #8fc3ea; border-radius: 14px; padding: 14px 18px; text-align: center; margin-bottom: 0.8rem;">
             {cam_visual}<br>
             <b style="color: #0c335e; font-size: 1.02rem;">Η Κάμερα είναι Κλειδωμένη</b>
             <p style="color: #335372; font-size: 0.88rem; margin: 4px 0 0 0;">
-                Για λόγους ασφάλειας και προστασίας των μαθητών, η χρήση της κάμερας και το ανέβασμα εικόνων ανοίγουν αποκλειστικά από τον εκπαιδευτικό με τον σχολικό κωδικό πρόσβασης.
+                Ανοίγει αποκλειστικά από τον εκπαιδευτικό με τον σχολικό κωδικό πρόσβασης.
             </p>
         </div>
         """, unsafe_allow_html=True)
-        col_cpin1, col_cpin2 = st.columns([3, 1])
-        with col_cpin1:
-            entered_cam_pin = st.text_input(
-                "🔑 Κωδικός Ξεκλειδώματος Κάμερας:",
-                type="password",
-                placeholder="Εισάγετε τον κωδικό...",
-                key="cam_pin_gate_input"
-            )
-        with col_cpin2:
-            st.write("")
-            btn_cam_unlock = st.button("🔓 Ξεκλείδωμα", type="primary", use_container_width=True, key="btn_unlock_camera")
-        
-        if btn_cam_unlock:
+        entered_cam_pin = st.text_input(
+            "🔑 Κωδικός Ξεκλειδώματος Κάμερας:",
+            type="password",
+            placeholder="Εισάγετε τον κωδικό...",
+            key="cam_pin_gate_input"
+        )
+        if st.button("🔓 Ξεκλείδωμα", type="primary", use_container_width=True, key="btn_unlock_camera"):
             if not (CAMERA_UNLOCK_PIN or TEACHER_PORTAL_PIN):
                 st.warning("⚠️ Δεν έχει οριστεί κωδικός κάμερας στις ρυθμίσεις ασφαλείας (Secrets).")
             elif verify_pin(entered_cam_pin, CAMERA_UNLOCK_PIN, TEACHER_PORTAL_PIN):
@@ -6196,42 +6209,38 @@ with st.expander(cam_expander_title, expanded=st.session_state.camera_unlocked a
             else:
                 st.error("❌ Λανθασμένος κωδικός. Δοκιμάστε ξανά.")
     else:
-        # Εμφάνιση πλήρους περιβάλλοντος κάμερας όταν έχει ξεκλειδωθεί
-        col_info_c, col_lock_c = st.columns([3, 1])
-        with col_info_c:
-            st.info("🔒 **Κανόνας Απορρήτου (GDPR):** Φωτογραφίστε **αποκλειστικά** την άσκηση. Μην ανεβάζετε πρόσωπα ή ονόματα. Οι εικόνες δεν αποθηκεύονται στον δίσκο.")
-        with col_lock_c:
-            if st.button("🔒 Κλείδωμα", use_container_width=True, key="btn_lock_camera"):
+        st.info("🔒 **GDPR:** Φωτογραφίστε **αποκλειστικά** την άσκηση (όχι πρόσωπα/ονόματα).")
+        uploaded_file = st.file_uploader("Ανέβασε αρχείο εικόνας:", type=["jpg", "jpeg", "png", "webp"], key="img_file_uploader")
+        camera_file = st.camera_input("Ή τράβηξε φωτογραφία με την κάμερα:", key="cam_file_uploader")
+        selected_img = uploaded_file if uploaded_file is not None else camera_file
+        if selected_img is not None:
+            st.session_state.current_image = {
+                "bytes": selected_img.getvalue(),
+                "type": selected_img.type or "image/jpeg"
+            }
+        if st.session_state.current_image:
+            st.image(st.session_state.current_image["bytes"], caption="Προεπισκόπηση", use_container_width=True)
+            if st.button("❌ Αφαίρεση Εικόνας", use_container_width=True):
+                st.session_state.current_image = None
+                st.rerun()
+        col_cc1, col_cc2 = st.columns(2)
+        with col_cc1:
+            if st.button("🔒 Κλείδωμα Κάμερας", use_container_width=True, key="btn_lock_camera"):
                 st.session_state.camera_unlocked = False
                 st.session_state.current_image = None
                 st.rerun()
+        with col_cc2:
+            if st.button("✅ Έτοιμο", type="primary", use_container_width=True, key="btn_close_cam_dlg"):
+                st.rerun()
 
-        col_up1, col_up2 = st.columns([3, 2])
-        with col_up1:
-            uploaded_file = st.file_uploader(
-                "Ανέβασε αρχείο εικόνας:",
-                type=["jpg", "jpeg", "png", "webp"],
-                key="img_file_uploader"
-            )
-            camera_file = st.camera_input("Ή τράβηξε φωτογραφία με την κάμερα:", key="cam_file_uploader")
-            selected_img = uploaded_file if uploaded_file is not None else camera_file
-            if selected_img is not None:
-                st.session_state.current_image = {
-                    "bytes": selected_img.getvalue(),
-                    "type": selected_img.type or "image/jpeg"
-                }
-        with col_up2:
-            if st.session_state.current_image:
-                st.image(st.session_state.current_image["bytes"], caption="Προεπισκόπηση", use_container_width=True)
-                if st.button("❌ Αφαίρεση Εικόνας", use_container_width=True):
-                    st.session_state.current_image = None
-                    st.rerun()
+if st.session_state.get("current_image"):
+    st.caption("📷 Έχει επισυναφθεί φωτογραφία άσκησης — γράψε την ερώτησή σου παρακάτω!")
 
 # -------------------------------------------------------------
-# 13. Κουμπιά Γρήγορης Βοήθειας (Quick Action Chips)
+# 13. Κουμπιά Γρήγορης Βοήθειας + Μικρό Εικονίδιο Κάμερας στην Άκρη
 # -------------------------------------------------------------
 st.write("")
-col_h1, col_h2, col_h3, col_h4, col_h5 = st.columns(5)
+col_h1, col_h2, col_h3, col_h4, col_h5, col_h_cam = st.columns([2, 2, 1.7, 2.2, 1.6, 0.7])
 with col_h1:
     if st.button("💡 Ένα στοιχείο (hint)", key="btn_help_hint", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου δώσεις ένα μικρό στοιχείο (hint) για να με βοηθήσεις να σκεφτώ το επόμενο βήμα;"
@@ -6284,6 +6293,10 @@ with col_h5:
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 1)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
+with col_h_cam:
+    cam_icon_lbl = "📷" if not st.session_state.camera_unlocked else "📸"
+    if st.button(cam_icon_lbl, key="btn_open_cam_dialog", help="Κάμερα & Ανέβασμα Άσκησης (με PIN Καθηγητή)", use_container_width=True):
+        show_camera_dialog()
 
 # -------------------------------------------------------------
 # 14. Έλεγχος Πρωτοκόλλου Κρίσης
