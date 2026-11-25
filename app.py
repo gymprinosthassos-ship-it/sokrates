@@ -1522,6 +1522,53 @@ def add_effort_points(delta: int) -> int:
     st.session_state.effort_score = new_val
     return new_val
 
+def trigger_game_lose_sound():
+    """Σηματοδοτεί να παίξει μία φορά ο παιχνιδιάρικος ήχος ήττας στο επόμενο render."""
+    st.session_state["_play_lose_sound_nonce"] = str(time.time())
+
+def flush_pending_game_sound():
+    """Παίζει μία (1) φορά τον φιλικό ήχο ήττας (3 καθοδικές νότες τηλεπαιχνιδιού) χωρίς εξωτερικό αρχείο."""
+    nonce = st.session_state.pop("_play_lose_sound_nonce", None)
+    if not nonce:
+        return
+    components.html(
+        f"""
+        <script data-nonce="{nonce}">
+        (function() {{
+            try {{
+                const win = window.parent || window;
+                const AudioCtx = win.AudioContext || win.webkitAudioContext || window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const now = ctx.currentTime;
+                const notes = [
+                    {{ freq: 349.23, start: 0.00, dur: 0.20 }},
+                    {{ freq: 311.13, start: 0.21, dur: 0.20 }},
+                    {{ freq: 233.08, start: 0.42, dur: 0.36 }}
+                ];
+                notes.forEach(n => {{
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.freq, now + n.start);
+                    if (n.start > 0.4) {{
+                        osc.frequency.exponentialRampToValueAtTime(196.0, now + n.start + n.dur);
+                    }}
+                    gain.gain.setValueAtTime(0.001, now + n.start);
+                    gain.gain.linearRampToValueAtTime(0.18, now + n.start + 0.03);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + n.start + n.dur);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + n.start);
+                    osc.stop(now + n.start + n.dur + 0.02);
+                }});
+            }} catch(e) {{}}
+        }})();
+        </script>
+        """,
+        height=0,
+    )
+
 def render_effort_score_banner():
     """Εμφανίζει ένα μικρό απαλό πράσινο τετράγωνο πάνω δεξιά μόνο με το '0/100' της συνεδρίας."""
     score = max(0, min(100, int(st.session_state.get("effort_score", 0))))
@@ -4077,6 +4124,7 @@ if st.session_state.active_mode == "student" and not st.session_state.is_locked:
 # 10.8. ΕΝΟΤΗΤΑ «🎮 ΠΑΙΧΝΙΔΙΑ & ΚΟΥΙΖ» (ΕΠΙΛΟΓΗ ΠΑΙΧΝΙΔΙΩΝ + ΜΟΝΟΜΑΧΙΑ 2 ΠΑΙΚΤΩΝ)
 # -------------------------------------------------------------
 if st.session_state.active_mode == "student" and st.session_state.get("duel_mode_active", False):
+    flush_pending_game_sound()
     cur_duel_pol = load_duel_policy()
     if cur_duel_pol == "disabled":
         st.session_state.duel_mode_active = False
@@ -4351,6 +4399,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                                 if h_state["wrong"] >= 6:
                                     h_state["round_over"] = True
                                     h_state["round_won"] = False
+                                    trigger_game_lose_sound()
                                     record_misconception(
                                         selected_grade,
                                         selected_subject,
@@ -4620,6 +4669,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                                     mg["feedback"] = "🤔 Πολύ κοντά! Δες το σωκρατικό στοιχείο και δοκίμασε 2η φορά (+1 ⭐)!"
                                     mg["feedback_type"] = "warning"
                                 else:
+                                    trigger_game_lose_sound()
                                     mg["feedback"] = f"📘 Η απάντηση ήταν: **{exp_ans}**. {exp_txt}"
                                     mg["feedback_type"] = "info"
                                     mg["awaiting_next"] = True
@@ -4632,6 +4682,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                             mg["feedback"] = "💡 Κανένα πρόβλημα! Δες το σωκρατικό στοιχείο και προσπάθησε 2η φορά (+1 ⭐)!"
                             mg["feedback_type"] = "warning"
                         else:
+                            trigger_game_lose_sound()
                             mg["feedback"] = f"📘 Η απάντηση ήταν: **{exp_ans}**. {exp_txt}"
                             mg["feedback_type"] = "info"
                             mg["awaiting_next"] = True
@@ -4648,6 +4699,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                             mg["feedback"] = f"🌟 Σωστά! (+2 ⭐) {exp_txt}"
                             mg["feedback_type"] = "success"
                         else:
+                            trigger_game_lose_sound()
                             record_misconception(selected_grade, selected_subject, str(item.get("topic", "Μύθος/Αλήθεια")), f"{str(item.get('statement',''))[:60]} → Είπε Αλήθεια", "CAUGHT")
                             mg["feedback"] = f"📘 Ήταν Μύθος! {exp_txt}"
                             mg["feedback_type"] = "info"
@@ -4661,6 +4713,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                             mg["feedback"] = f"🌟 Σωστά! (+2 ⭐) {exp_txt}"
                             mg["feedback_type"] = "success"
                         else:
+                            trigger_game_lose_sound()
                             record_misconception(selected_grade, selected_subject, str(item.get("topic", "Μύθος/Αλήθεια")), f"{str(item.get('statement',''))[:60]} → Είπε Μύθος", "CAUGHT")
                             mg["feedback"] = f"📘 Ήταν Αλήθεια! {exp_txt}"
                             mg["feedback_type"] = "info"
@@ -4692,6 +4745,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                                 mg["feedback"] = "🤔 Όχι ακριβώς! Δες το σωκρατικό στοιχείο και δοκίμασε 2η φορά (+1 ⭐)!"
                                 mg["feedback_type"] = "warning"
                             else:
+                                trigger_game_lose_sound()
                                 mg["feedback"] = f"📘 Η σωστή απάντηση ήταν: **{correct_ch}**. {exp_txt}"
                                 mg["feedback_type"] = "info"
                                 mg["awaiting_next"] = True
@@ -4899,6 +4953,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                     st_d["feedback"] = f"⏰ Έληξε ο χρόνος, {p_now}! Διάβασε το στοιχείο του Σωκράτη και δοκίμασε 2η φορά (+1 ⭐)!"
                     st_d["feedback_type"] = "warning"
                 else:
+                    trigger_game_lose_sound()
                     st_d["feedback"] = f"⏰ Έληξε ο χρόνος, {p_now}! Η σωστή απάντηση ήταν: **{q_now.get('expected_answer', q_now.get('correct_choice', ''))}**"
                     st_d["feedback_type"] = "info"
                     st_d["awaiting_next"] = True
@@ -4968,6 +5023,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 d_state["feedback"] = f"🤔 Όχι ακριβώς, {cur_player}! Διάβασε το στοιχείο του Σωκράτη και δοκίμασε 2η φορά (+1 ⭐)!"
                 d_state["feedback_type"] = "warning"
             else:
+                trigger_game_lose_sound()
                 d_state["feedback"] = f"📘 Καλή προσπάθεια, {cur_player}! Η σωστή απάντηση είναι: **{cur_q.get('expected_answer', cur_q.get('correct_choice', ''))}**"
                 d_state["feedback_type"] = "info"
                 d_state["awaiting_next"] = True
