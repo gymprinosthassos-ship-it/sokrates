@@ -1133,17 +1133,17 @@ st.markdown("""
         box-shadow: 4px 0 22px rgba(15, 52, 96, 0.11) !important;
     }
     [data-testid="stSidebar"] [data-testid="stSidebarHeader"] {
-        height: 2.2rem !important;
-        min-height: 2.2rem !important;
-        padding: 0.35rem 0.6rem 0 0.6rem !important;
-        margin-bottom: 0.15rem !important;
+        height: 1.85rem !important;
+        min-height: 1.85rem !important;
+        padding: 0.2rem 0.6rem 0 0.6rem !important;
+        margin-bottom: 0.05rem !important;
     }
     [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
-        padding-top: 0.35rem !important;
-        padding-bottom: 0.5rem !important;
+        padding-top: 0.15rem !important;
+        padding-bottom: 0.25rem !important;
     }
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0.52rem !important;
+        gap: 0.34rem !important;
     }
     [data-testid="stSidebar"] .stButton,
     [data-testid="stSidebar"] [data-testid="stLinkButton"],
@@ -1151,14 +1151,14 @@ st.markdown("""
     [data-testid="stSidebar"] .st-key-side_exp_cards,
     [data-testid="stSidebar"] .st-key-side_exp_settings {
         overflow: visible !important;
-        padding-bottom: 4px !important;
+        padding-bottom: 2px !important;
     }
     [data-testid="stSidebar"] .stButton > button,
     [data-testid="stSidebar"] [data-testid="stLinkButton"] a,
     [data-testid="stSidebar"] a[data-testid="stLinkButton"] {
-        min-height: 2.3rem !important;
-        padding: 0.34rem 0.78rem !important;
-        font-size: 0.87rem !important;
+        min-height: 2.08rem !important;
+        padding: 0.24rem 0.72rem !important;
+        font-size: 0.85rem !important;
         font-weight: 700 !important;
         border-radius: 12px !important;
         box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.85), inset 0 -2px 4px rgba(15, 52, 96, 0.14), 0 4px 0 #64748b, 0 7px 14px rgba(15, 52, 96, 0.20) !important;
@@ -1197,12 +1197,13 @@ st.markdown("""
     [data-testid="stSidebar"] .st-key-side_subject_select,
     [data-testid="stSidebar"] .st-key-support_level_selector {
         overflow: visible !important;
-        padding-bottom: 5px !important;
+        padding-bottom: 2px !important;
     }
     [data-testid="stSidebar"] [data-testid="stSelectbox"] [role="group"],
     [data-testid="stSidebar"] [data-testid="stSelectbox"] div:has(> input),
     [data-testid="stSidebar"] div[data-baseweb="select"] > div {
-        min-height: 2.35rem !important;
+        min-height: 2.08rem !important;
+        height: 2.08rem !important;
         border-radius: 12px !important;
         background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 52%, #7dd3fc 100%) !important;
         background-color: #bae6fd !important;
@@ -1231,9 +1232,10 @@ st.markdown("""
         filter: brightness(1.03) !important;
     }
     [data-testid="stSidebar"] [data-testid="stExpander"] summary {
-        padding: 0.4rem 0.72rem !important;
-        font-size: 0.87rem !important;
+        padding: 0.28rem 0.62rem !important;
+        font-size: 0.81rem !important;
         font-weight: 700 !important;
+        white-space: nowrap !important;
     }
     /* Κουμπί Καθηγητής: γυαλιστερό 3D πράσινο */
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="secondary"],
@@ -3177,7 +3179,7 @@ with st.sidebar:
     lock_tag = '<div style="background-color: #fee2e2; border: 1.5px solid #ef4444; border-radius: 6px; padding: 1px 6px; text-align: center; margin-top: 2px;"><span style="font-size: 0.7rem; font-weight: 800; color: #dc2626;">🚨 Κλειδωμένο</span></div>' if st.session_state.is_locked else ''
 
     header_html = (
-        f'<div style="background: linear-gradient(180deg, #ffffff 0%, #eff6ff 55%, #dbeafe 100%); border: 1.5px solid #3b82f6; border-radius: 15px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 10px; box-shadow: inset 0 2px 1px rgba(255,255,255,0.96), inset 0 -2px 4px rgba(59,130,246,0.14), 0 4px 0 #2563eb, 0 8px 16px rgba(37, 99, 235, 0.22);">'
+        f'<div style="background: linear-gradient(180deg, #ffffff 0%, #eff6ff 55%, #dbeafe 100%); border: 1.5px solid #3b82f6; border-radius: 15px; padding: 6px 10px; display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 5px; box-shadow: inset 0 2px 1px rgba(255,255,255,0.96), inset 0 -2px 4px rgba(59,130,246,0.14), 0 4px 0 #2563eb, 0 8px 16px rgba(37, 99, 235, 0.22);">'
         f'{avatar_img_tag}'
         f'<div style="display: flex; flex-direction: column; justify-content: center; overflow: visible;">'
         f'<div style="font-size: 1.16rem; font-weight: 800; color: #072b52; line-height: 1.15; letter-spacing: -0.2px;">Σωκράτης</div>'
