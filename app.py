@@ -803,31 +803,85 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* 5. Μηνύματα συνομιλίας: ευρύχωρα, ευανάγνωστα και καλαίσθητα */
+    /* 5. Μηνύματα συνομιλίας: «γυάλινη» 3D ευκρίνεια & διακριτός τόνος Μαθητή vs Σωκράτη */
     .stChatMessage, [data-testid="stChatMessage"] {
-        background-color: #e4f1fb !important;
-        border: 1px solid #a3cef0 !important;
-        box-shadow: 0 2px 8px rgba(15, 60, 120, 0.06) !important;
-        border-radius: 12px !important;
-        padding: 0.75rem 1.05rem !important;
-        margin-bottom: 0.5rem !important;
+        background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(235,245,254,0.92) 100%) !important;
+        border: 1.5px solid #9cc8ef !important;
+        border-left: 4px solid #2563eb !important;
+        box-shadow: 0 5px 16px rgba(15, 52, 96, 0.09) !important;
+        border-radius: 16px !important;
+        padding: 0.85rem 1.15rem !important;
+        margin-bottom: 0.65rem !important;
     }
     .stChatMessage p, [data-testid="stChatMessage"] p {
-        font-size: 0.95rem !important;
-        line-height: 1.55 !important;
+        font-size: 0.96rem !important;
+        line-height: 1.58 !important;
         margin-bottom: 0.35rem !important;
     }
     .stChatMessage *, [data-testid="stChatMessage"] *, .katex, .katex * {
         color: #0f172a !important;
     }
-    [data-testid="stChatMessage"] img {
-        width: 38px !important;
-        height: 38px !important;
+    [data-testid="stChatMessageAvatarCustom"] img,
+    [data-testid="stChatMessage"] > div:first-child img {
+        width: 40px !important;
+        height: 40px !important;
         border-radius: 50% !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        border: 2px solid #60a5fa !important;
+        box-shadow: 0 3px 8px rgba(15, 52, 96, 0.18) !important;
     }
     [data-testid="stChatMessage"] [data-testid="stChatMessageContent"] {
         padding-top: 0 !important;
+    }
+
+    /* 5b. Κομψές 3D καρτέλες (Tabs) στην Πύλη Καθηγητή */
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {
+        gap: 6px !important;
+        background: rgba(255, 255, 255, 0.55) !important;
+        padding: 5px 6px !important;
+        border-radius: 14px !important;
+        border: 1px solid #a9cef0 !important;
+    }
+    [data-testid="stTabs"] button[role="tab"] {
+        border-radius: 10px !important;
+        padding: 6px 14px !important;
+        font-weight: 700 !important;
+        font-size: 0.88rem !important;
+        color: #1e3a5f !important;
+        background: transparent !important;
+        transition: all 0.15s ease !important;
+    }
+    [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%) !important;
+        color: #0c335e !important;
+        box-shadow: 0 3px 10px rgba(15, 52, 96, 0.12) !important;
+        border: 1px solid #93c5fd !important;
+    }
+
+    /* 5c. 5 παστέλ 3D κουμπιά βοήθειας κάτω από τη συζήτηση */
+    .st-key-btn_help_hint button {
+        background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%) !important;
+        border: 1.5px solid #f59e0b !important; color: #78350f !important;
+        box-shadow: 0 3px 0 rgba(217,119,6,0.22), 0 4px 10px rgba(15,52,96,0.06) !important;
+    }
+    .st-key-btn_help_simple button {
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
+        border: 1.5px solid #38bdf8 !important; color: #0c4a6e !important;
+        box-shadow: 0 3px 0 rgba(2,132,199,0.20), 0 4px 10px rgba(15,52,96,0.06) !important;
+    }
+    .st-key-btn_help_example button {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+        border: 1.5px solid #4ade80 !important; color: #14532d !important;
+        box-shadow: 0 3px 0 rgba(22,163,74,0.20), 0 4px 10px rgba(15,52,96,0.06) !important;
+    }
+    .st-key-btn_help_image button {
+        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%) !important;
+        border: 1.5px solid #fb923c !important; color: #7c2d12 !important;
+        box-shadow: 0 3px 0 rgba(234,88,12,0.20), 0 4px 10px rgba(15,52,96,0.06) !important;
+    }
+    .st-key-btn_help_step button {
+        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%) !important;
+        border: 1.5px solid #a78bfa !important; color: #4c1d95 !important;
+        box-shadow: 0 3px 0 rgba(124,58,237,0.20), 0 4px 10px rgba(15,52,96,0.06) !important;
     }
 
     /* 6. Κάτω μπάρα πληκτρολόγησης (stChatInput) με καθαρό αδιαφανές φόντο */
@@ -3626,11 +3680,16 @@ def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 
 if st.session_state.active_mode == "teacher":
     # Έλεγχος Κωδικού (μόνο αν ο χρήστης επιλέξει ρητά κλείδωμα)
     if not st.session_state.teacher_unlocked:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #ffffff 0%, #edf5fd 100%); border: 2px solid #84bee7; border-radius: 16px; padding: 26px 20px; text-align: center; box-shadow: 0 6px 20px rgba(15, 60, 120, 0.1); margin-top: 1rem; margin-bottom: 1.5rem;">
-            <div style="font-size: 2.8rem; margin-bottom: 0.4rem;">👩‍🏫 🔐</div>
+        tp_art = get_game_art_uri("teacher_portal")
+        tp_visual = (
+            f'<img src="{tp_art}" alt="Βοηθός Εκπαιδευτικού" style="width:92px; height:92px; border-radius:20px; border:2.5px solid #4ade80; box-shadow:0 6px 18px rgba(22,101,52,0.18); margin-bottom:10px; object-fit:cover;" />'
+            if tp_art else '<div style="font-size: 2.8rem; margin-bottom: 0.4rem;">👩‍🏫 🔐</div>'
+        )
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 55%, #edf5fd 100%); border: 2px solid #86efac; border-radius: 18px; padding: 24px 20px; text-align: center; box-shadow: 0 8px 24px rgba(15, 60, 120, 0.11); margin-top: 0.8rem; margin-bottom: 1.4rem;">
+            {tp_visual}
             <h2 style="color: #0c335e; margin: 0 0 0.5rem 0; font-size: 1.6rem;">Βοηθός Εκπαιδευτικού</h2>
-            <p style="color: #335372; font-size: 0.98rem; max-width: 600px; margin: 0 auto 1.2rem auto; line-height: 1.5;">
+            <p style="color: #335372; font-size: 0.98rem; max-width: 600px; margin: 0 auto 0.6rem auto; line-height: 1.5;">
                 Εξειδικευμένο εργαλείο υποστήριξης διδασκόντων για παραγωγή πρωτότυπων ασκήσεων, 
                 σχεδίων εργασίας (projects), διαθεματικών δραστηριοτήτων και κριτηρίων αξιολόγησης για όλα τα μαθήματα.
             </p>
@@ -6031,6 +6090,22 @@ if not st.session_state.welcome_fireworks_shown and not st.session_state.is_lock
     render_welcome_fireworks()
     st.session_state.welcome_fireworks_shown = True
 
+# 🏛️ Κομψή πανοραμική 3D κάρτα «Ακαδημία του Σωκράτη» στην αρχική οθόνη (μαζεμένη σε ύψος!)
+if len(st.session_state.messages) <= 1:
+    ac_art = get_game_art_uri("academy_banner")
+    if ac_art:
+        st.markdown(f"""
+        <div style="border-radius:16px; overflow:hidden; border:2px solid #93c5fd; box-shadow:0 6px 18px rgba(15,52,96,0.12); margin-bottom:10px; position:relative; max-height:128px;">
+            <img src="{ac_art}" alt="Ακαδημία του Σωκράτη" style="width:100%; height:124px; object-fit:cover; display:block;" />
+            <div style="position:absolute; inset:0; background:linear-gradient(90deg, rgba(12,51,94,0.72) 0%, rgba(12,51,94,0.22) 55%, rgba(12,51,94,0.05) 100%); display:flex; align-items:center; padding:0 20px;">
+                <div>
+                    <div style="font-size:1.25rem; font-weight:800; color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.35);">🏛️ Η Ακαδημία του Σωκράτη</div>
+                    <div style="font-size:0.84rem; font-weight:600; color:#e0f2fe; text-shadow:0 1px 4px rgba(0,0,0,0.35);">{selected_grade} • {selected_subject}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
 for i, msg in enumerate(st.session_state.messages):
     msg_avatar = avatar_image if msg["role"] == "assistant" else "🎓"
     with st.chat_message(msg["role"], avatar=msg_avatar):
@@ -6052,9 +6127,14 @@ for i, msg in enumerate(st.session_state.messages):
 cam_expander_title = "📷 🟢 Κάμερα & Ανέβασμα Άσκησης (Ξεκλείδωτο)" if st.session_state.camera_unlocked else "📷 🔒 Κάμερα & Ανέβασμα Άσκησης (Κλειδωμένο με PIN)"
 with st.expander(cam_expander_title, expanded=st.session_state.camera_unlocked and bool(st.session_state.current_image)):
     if not st.session_state.camera_unlocked:
-        st.markdown("""
-        <div style="background: #f0f7fe; border: 1.5px solid #8fc3ea; border-radius: 12px; padding: 14px 18px; text-align: center; margin-bottom: 0.8rem;">
-            <div style="font-size: 1.8rem; margin-bottom: 0.2rem;">🔒 📷</div>
+        cam_art = get_game_art_uri("camera_lock")
+        cam_visual = (
+            f'<img src="{cam_art}" alt="Κλειδωμένη Κάμερα" style="width:68px; height:68px; border-radius:14px; border:2px solid #93c5fd; box-shadow:0 4px 10px rgba(15,52,96,0.14); margin-bottom:6px; object-fit:cover;" />'
+            if cam_art else '<div style="font-size: 1.8rem; margin-bottom: 0.2rem;">🔒 📷</div>'
+        )
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #f0f7fe 100%); border: 1.5px solid #8fc3ea; border-radius: 14px; padding: 14px 18px; text-align: center; margin-bottom: 0.8rem; box-shadow:0 3px 10px rgba(15,52,96,0.06);">
+            {cam_visual}<br>
             <b style="color: #0c335e; font-size: 1.02rem;">Η Κάμερα είναι Κλειδωμένη</b>
             <p style="color: #335372; font-size: 0.88rem; margin: 4px 0 0 0;">
                 Για λόγους ασφάλειας και προστασίας των μαθητών, η χρήση της κάμερας και το ανέβασμα εικόνων ανοίγουν αποκλειστικά από τον εκπαιδευτικό με τον σχολικό κωδικό πρόσβασης.
@@ -6120,25 +6200,25 @@ with st.expander(cam_expander_title, expanded=st.session_state.camera_unlocked a
 st.write("")
 col_h1, col_h2, col_h3, col_h4, col_h5 = st.columns(5)
 with col_h1:
-    if st.button("💡 Ένα στοιχείο (hint)", use_container_width=True):
+    if st.button("💡 Ένα στοιχείο (hint)", key="btn_help_hint", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου δώσεις ένα μικρό στοιχείο (hint) για να με βοηθήσεις να σκεφτώ το επόμενο βήμα;"
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 1)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
 with col_h2:
-    if st.button("🔍 Κάν' το πιο απλό", use_container_width=True):
+    if st.button("🔍 Κάν' το πιο απλό", key="btn_help_simple", use_container_width=True):
         st.session_state.pending_prompt = "Δυσκολεύτηκα να το καταλάβω. Μπορείς να μου το εξηγήσεις με πολύ απλές λέξεις και μικρές προτάσεις (Easy-to-Read);"
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 2)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
 with col_h3:
-    if st.button("🍎 Παράδειγμα", use_container_width=True):
+    if st.button("🍎 Παράδειγμα", key="btn_help_example", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου δώσεις ένα παράδειγμα από την καθημερινή ζωή για να το φανταστώ καλύτερα;"
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 1)
         st.session_state.stuck_level = st.session_state.stuck_counter
         st.rerun()
 with col_h4:
-    if st.button("🖼️ Δείξε μου εικόνα!", use_container_width=True):
+    if st.button("🖼️ Δείξε μου εικόνα!", key="btn_help_image", use_container_width=True):
         recent_ctx = ""
         if len(st.session_state.messages) > 1:
             recent_ctx = " | ".join(
@@ -6166,7 +6246,7 @@ with col_h4:
             st.session_state.pending_prompt = "Μπορείς να μου δείξεις ένα απλό σχεδιάγραμμα με βήματα για να καταλάβω καλύτερα αυτό το θέμα;"
             st.rerun()
 with col_h5:
-    if st.button("👣 Βήμα-βήμα", use_container_width=True):
+    if st.button("👣 Βήμα-βήμα", key="btn_help_step", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου το αναλύσεις κάνοντας μόνο ένα πολύ μικρό βήμα τη φορά;"
         st.session_state.stuck_counter = max(st.session_state.get("stuck_counter", 0), 1)
         st.session_state.stuck_level = st.session_state.stuck_counter
