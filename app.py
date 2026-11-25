@@ -2897,22 +2897,24 @@ def _render_browser_fallback_tts(text_content: str, auto_play: bool = False):
     clean_text = _clean_text_for_speech(text_content).replace('\\', '\\\\').replace('"', '\\"').replace("'", "\\'")
     auto_js = "setTimeout(toggleSpeech, 150);" if auto_play else ""
     html_code = f"""
-    <div style="margin-top: 4px; margin-bottom: 2px;">
-        <button id="tts_btn" onclick="toggleSpeech()" style="
-            background: #cde5f9;
+    <style>html, body {{ margin: 0; padding: 3px 4px 10px 2px; overflow: visible; background: transparent; }}</style>
+    <div>
+        <button id="tts_btn" title="Άκουσε τον Σωκράτη" onclick="toggleSpeech()" style="
+            background: linear-gradient(180deg, #f0f9ff 0%, #bae6fd 100%);
             color: #082f56;
-            border: 1.5px solid #8ec0e7;
-            border-radius: 12px;
-            padding: 4px 12px;
-            font-size: 0.82rem;
-            font-weight: 600;
+            border: 1.5px solid #38bdf8;
+            border-radius: 10px;
+            width: 38px;
+            height: 36px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            font-weight: 700;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-        ">
-            🔊 Άκουσε τον Σωκράτη (Εφεδρική Φωνή)
-        </button>
+            justify-content: center;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 3px 0 #0284c7;
+        ">🔊</button>
     </div>
     <script>
     let isSpeaking = false;
@@ -2928,7 +2930,7 @@ def _render_browser_fallback_tts(text_content: str, auto_play: bool = False):
         if (isSpeaking) {{
             window.speechSynthesis.cancel();
             isSpeaking = false;
-            btn.innerHTML = '🔊 Άκουσε τον Σωκράτη';
+            btn.innerHTML = '🔊';
             return;
         }}
         window.speechSynthesis.cancel();
@@ -2938,15 +2940,15 @@ def _render_browser_fallback_tts(text_content: str, auto_play: bool = False):
         utter.lang = 'el-GR';
         utter.rate = 0.76;
         utter.pitch = 0.68;
-        utter.onstart = function() {{ isSpeaking = true; btn.innerHTML = '⏹️ Διακοπή'; }};
-        utter.onend = function() {{ isSpeaking = false; btn.innerHTML = '🔊 Άκουσε τον Σωκράτη'; }};
-        utter.onerror = function() {{ isSpeaking = false; btn.innerHTML = '🔊 Άκουσε τον Σωκράτη'; }};
+        utter.onstart = function() {{ isSpeaking = true; btn.innerHTML = '⏹️'; }};
+        utter.onend = function() {{ isSpeaking = false; btn.innerHTML = '🔊'; }};
+        utter.onerror = function() {{ isSpeaking = false; btn.innerHTML = '🔊'; }};
         window.speechSynthesis.speak(utter);
     }}
     {auto_js}
     </script>
     """
-    components.html(html_code, height=38)
+    components.html(html_code, height=56)
 
 def render_tts_widget(text_content: str, msg_idx: int = 0):
     btn_key = f"socrates_voice_btn_{msg_idx}"
@@ -2965,7 +2967,7 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
         components.html(
             f"""
-            <style>html, body {{ margin: 0; padding: 2px 0 0 2px; overflow: hidden; background: transparent; }}</style>
+            <style>html, body {{ margin: 0; padding: 3px 4px 10px 2px; overflow: visible; background: transparent; }}</style>
             <div>
                 <audio id="soc_audio_{msg_idx}" style="display: none;">
                     <source src="data:audio/mpeg;base64,{b64_audio}" type="audio/mpeg">
@@ -2977,6 +2979,7 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
                     border-radius: 10px;
                     width: 38px;
                     height: 36px;
+                    box-sizing: border-box;
                     font-size: 1rem;
                     font-weight: 700;
                     cursor: pointer;
@@ -3007,7 +3010,7 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
             }})();
             </script>
             """,
-            height=48,
+            height=56,
         )
     else:
         _render_browser_fallback_tts(text_content, auto_play=True)
