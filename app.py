@@ -857,31 +857,56 @@ st.markdown("""
         border: 1px solid #93c5fd !important;
     }
 
-    /* 5c. 5 παστέλ 3D κουμπιά βοήθειας κάτω από τη συζήτηση */
+    /* 5c. 5 γυαλιστερά 3D κουμπιά βοήθειας με έντονη σκίαση & υαλοειδή λάμψη */
+    .st-key-btn_help_hint button,
+    .st-key-btn_help_simple button,
+    .st-key-btn_help_example button,
+    .st-key-btn_help_image button,
+    .st-key-btn_help_step button {
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        transition: transform 0.14s ease, box-shadow 0.14s ease !important;
+    }
     .st-key-btn_help_hint button {
-        background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%) !important;
-        border: 1.5px solid #f59e0b !important; color: #78350f !important;
-        box-shadow: 0 3px 0 rgba(217,119,6,0.22), 0 4px 10px rgba(15,52,96,0.06) !important;
+        background: linear-gradient(180deg, #fffbeb 0%, #fef08a 48%, #facc15 100%) !important;
+        border: 1.5px solid #d97706 !important; color: #713f12 !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), inset 0 -2px 4px rgba(180,83,9,0.18), 0 4px 0 #b45309, 0 8px 16px rgba(180,83,9,0.24) !important;
     }
     .st-key-btn_help_simple button {
-        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
-        border: 1.5px solid #38bdf8 !important; color: #0c4a6e !important;
-        box-shadow: 0 3px 0 rgba(2,132,199,0.20), 0 4px 10px rgba(15,52,96,0.06) !important;
+        background: linear-gradient(180deg, #f0f9ff 0%, #bae6fd 48%, #7dd3fc 100%) !important;
+        border: 1.5px solid #0284c7 !important; color: #0c4a6e !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), inset 0 -2px 4px rgba(2,132,199,0.18), 0 4px 0 #0369a1, 0 8px 16px rgba(2,132,199,0.24) !important;
     }
     .st-key-btn_help_example button {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
-        border: 1.5px solid #4ade80 !important; color: #14532d !important;
-        box-shadow: 0 3px 0 rgba(22,163,74,0.20), 0 4px 10px rgba(15,52,96,0.06) !important;
+        background: linear-gradient(180deg, #f0fdf4 0%, #bbf7d0 48%, #86efac 100%) !important;
+        border: 1.5px solid #16a34a !important; color: #14532d !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), inset 0 -2px 4px rgba(22,163,74,0.18), 0 4px 0 #15803d, 0 8px 16px rgba(22,163,74,0.24) !important;
     }
     .st-key-btn_help_image button {
-        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%) !important;
-        border: 1.5px solid #fb923c !important; color: #7c2d12 !important;
-        box-shadow: 0 3px 0 rgba(234,88,12,0.20), 0 4px 10px rgba(15,52,96,0.06) !important;
+        background: linear-gradient(180deg, #fff7ed 0%, #fed7aa 48%, #fdba74 100%) !important;
+        border: 1.5px solid #ea580c !important; color: #7c2d12 !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), inset 0 -2px 4px rgba(234,88,12,0.18), 0 4px 0 #c2410c, 0 8px 16px rgba(234,88,12,0.24) !important;
     }
     .st-key-btn_help_step button {
-        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%) !important;
-        border: 1.5px solid #a78bfa !important; color: #4c1d95 !important;
-        box-shadow: 0 3px 0 rgba(124,58,237,0.20), 0 4px 10px rgba(15,52,96,0.06) !important;
+        background: linear-gradient(180deg, #f5f3ff 0%, #ddd6fe 48%, #c4b5fd 100%) !important;
+        border: 1.5px solid #7c3aed !important; color: #4c1d95 !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), inset 0 -2px 4px rgba(124,58,237,0.18), 0 4px 0 #6d28d9, 0 8px 16px rgba(124,58,237,0.24) !important;
+    }
+    .st-key-btn_help_hint button:hover,
+    .st-key-btn_help_simple button:hover,
+    .st-key-btn_help_example button:hover,
+    .st-key-btn_help_image button:hover,
+    .st-key-btn_help_step button:hover {
+        transform: translateY(-2px) !important;
+        filter: brightness(1.03);
+    }
+    .st-key-btn_help_hint button:active,
+    .st-key-btn_help_simple button:active,
+    .st-key-btn_help_example button:active,
+    .st-key-btn_help_image button:active,
+    .st-key-btn_help_step button:active {
+        transform: translateY(2px) !important;
+        box-shadow: inset 0 2px 4px rgba(15,23,42,0.16), 0 1px 0 rgba(15,23,42,0.22) !important;
     }
 
     /* 6. Κάτω μπάρα πληκτρολόγησης (stChatInput) με καθαρό αδιαφανές φόντο */
@@ -1204,67 +1229,57 @@ st.markdown("""
         border-color: #ec4899 !important;
     }
 
-    /* 11. Ξεχωριστό χρώμα για κάθε κουμπί παιχνιδιού στην οθόνη «Παιχνίδια & Κουίζ» */
+    /* 11. Γυαλιστερά 3D κουμπιά παιχνιδιών με σκίαση στην οθόνη «Παιχνίδια & Κουίζ» */
     .st-key-btn_open_game_duel button {
-        background-color: #2563eb !important;
-        border: 1.5px solid #1d4ed8 !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%) !important;
+        border: 1.5px solid #1e40af !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.38), 0 4px 0 #1e3a8a, 0 7px 14px rgba(29,78,216,0.28) !important;
     }
-    .st-key-btn_open_game_duel button:hover { background-color: #1d4ed8 !important; }
     .st-key-btn_open_game_detective button {
-        background-color: #7c3aed !important;
-        border: 1.5px solid #6d28d9 !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 55%, #6d28d9 100%) !important;
+        border: 1.5px solid #5b21b6 !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.38), 0 4px 0 #4c1d95, 0 7px 14px rgba(124,58,237,0.28) !important;
     }
-    .st-key-btn_open_game_detective button:hover { background-color: #6d28d9 !important; }
     .st-key-btn_open_game_myth button {
-        background-color: #059669 !important;
-        border: 1.5px solid #047857 !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #10b981 0%, #059669 55%, #047857 100%) !important;
+        border: 1.5px solid #065f46 !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.38), 0 4px 0 #064e3b, 0 7px 14px rgba(5,150,105,0.28) !important;
     }
-    .st-key-btn_open_game_myth button:hover { background-color: #047857 !important; }
     .st-key-btn_open_game_escape button {
-        background-color: #d97706 !important;
-        border: 1.5px solid #b45309 !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #f59e0b 0%, #d97706 55%, #b45309 100%) !important;
+        border: 1.5px solid #92400e !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.42), 0 4px 0 #78350f, 0 7px 14px rgba(217,119,6,0.28) !important;
     }
-    .st-key-btn_open_game_escape button:hover { background-color: #b45309 !important; }
     .st-key-btn_open_game_ladder5 button {
-        background-color: #0d9488 !important;
-        border: 1.5px solid #0f766e !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #14b8a6 0%, #0d9488 55%, #0f766e 100%) !important;
+        border: 1.5px solid #115e59 !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.38), 0 4px 0 #134e4a, 0 7px 14px rgba(13,148,136,0.28) !important;
     }
-    .st-key-btn_open_game_ladder5 button:hover { background-color: #0f766e !important; }
     .st-key-btn_open_game_hangman button {
-        background-color: #e11d48 !important;
-        border: 1.5px solid #be123c !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #f43f5e 0%, #e11d48 55%, #be123c 100%) !important;
+        border: 1.5px solid #9f1239 !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.38), 0 4px 0 #881337, 0 7px 14px rgba(225,29,72,0.28) !important;
     }
-    .st-key-btn_open_game_hangman button:hover { background-color: #be123c !important; }
     .st-key-btn_open_game_wheel button {
-        background-color: #4f46e5 !important;
-        border: 1.5px solid #4338ca !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #6366f1 0%, #4f46e5 55%, #4338ca 100%) !important;
+        border: 1.5px solid #3730a3 !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.38), 0 4px 0 #312e81, 0 7px 14px rgba(79,70,229,0.28) !important;
     }
-    .st-key-btn_open_game_wheel button:hover { background-color: #4338ca !important; }
     .st-key-btn_open_game_open_box button {
-        background-color: #ea580c !important;
-        border: 1.5px solid #c2410c !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #fb923c 0%, #ea580c 55%, #c2410c 100%) !important;
+        border: 1.5px solid #9a3412 !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.40), 0 4px 0 #7c2d12, 0 7px 14px rgba(234,88,12,0.28) !important;
     }
-    .st-key-btn_open_game_open_box button:hover { background-color: #c2410c !important; }
     .st-key-btn_open_game_group_sort button {
-        background-color: #0284c7 !important;
-        border: 1.5px solid #0369a1 !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 55%, #0369a1 100%) !important;
+        border: 1.5px solid #075985 !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.38), 0 4px 0 #0c4a6e, 0 7px 14px rgba(2,132,199,0.28) !important;
     }
-    .st-key-btn_open_game_group_sort button:hover { background-color: #0369a1 !important; }
     .st-key-btn_open_game_match_up button {
-        background-color: #c026d3 !important;
-        border: 1.5px solid #a21caf !important;
-        color: #ffffff !important;
+        background: linear-gradient(180deg, #d946ef 0%, #c026d3 55%, #a21caf 100%) !important;
+        border: 1.5px solid #86198f !important; color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.38), 0 4px 0 #701a75, 0 7px 14px rgba(192,38,211,0.28) !important;
     }
-    .st-key-btn_open_game_match_up button:hover { background-color: #a21caf !important; }
     .st-key-btn_open_game_duel button p,
     .st-key-btn_open_game_detective button p,
     .st-key-btn_open_game_myth button p,
