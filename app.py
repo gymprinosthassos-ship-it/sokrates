@@ -5979,7 +5979,7 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
 # 11. Μήνυμα Υποδοχής & Εμφάνιση Ιστορικού (Κανονική Λειτουργία)
 # -------------------------------------------------------------
 if len(st.session_state.messages) == 0:
-    welcome_text = "Χαίρε: Τι μπορώ να κάνω για σένα;"
+    welcome_text = "Χαίρε! Τι μπορώ να κάνω για σένα;"
     st.session_state.messages.append({"role": "assistant", "content": welcome_text})
 
 def render_welcome_fireworks():
