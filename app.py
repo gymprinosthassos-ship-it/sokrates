@@ -1143,7 +1143,7 @@ st.markdown("""
         padding-bottom: 0.35rem !important;
     }
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0.44rem !important;
+        gap: 0.58rem !important;
     }
     [data-testid="stSidebar"] .stButton,
     [data-testid="stSidebar"] [data-testid="stLinkButton"],
@@ -3423,7 +3423,7 @@ with st.sidebar:
     if ANASKALLI_LOGO_URI:
         st.markdown(
             f"""
-            <div style="display: flex; justify-content: center; margin-top: 2px; margin-bottom: 2px;">
+            <div style="display: flex; justify-content: center; margin-top: 8px; margin-bottom: 2px;">
                 <div style="background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 62%, #dbeafe 100%); border: 2px solid #1d4ed8; border-radius: 12px; padding: 4px 10px; box-shadow: inset 0 2px 1px rgba(255,255,255,0.96), 0 4px 0 #1e3a8a, 0 7px 14px rgba(29, 78, 216, 0.24); display: inline-flex; align-items: center; justify-content: center;">
                     <img src="{ANASKALLI_LOGO_URI}" alt="ANASKALLI" style="height: 54px; width: auto; display: block; border-radius: 6px;" />
                 </div>
