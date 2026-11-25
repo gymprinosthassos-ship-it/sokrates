@@ -867,28 +867,65 @@ st.markdown("""
         padding-top: 0 !important;
     }
 
-    /* 5b. Κομψές 3D καρτέλες (Tabs) στην Πύλη Καθηγητή */
+    /* 5b. Καθαρές, ευανάγνωστες 3D καρτέλες (Tabs) & κουμπιά στην Πύλη Καθηγητή */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
-        gap: 6px !important;
-        background: rgba(255, 255, 255, 0.55) !important;
-        padding: 5px 6px !important;
-        border-radius: 14px !important;
-        border: 1px solid #a9cef0 !important;
+        gap: 8px !important;
+        flex-wrap: wrap !important;
+        background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(219,234,254,0.75) 100%) !important;
+        padding: 7px 8px 10px 8px !important;
+        border-radius: 16px !important;
+        border: 1.5px solid #93c5fd !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 4px 12px rgba(15, 52, 96, 0.08) !important;
+    }
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"],
+    [data-testid="stTabs"] [data-baseweb="tab-border"] {
+        display: none !important;
     }
     [data-testid="stTabs"] button[role="tab"] {
-        border-radius: 10px !important;
-        padding: 6px 14px !important;
-        font-weight: 700 !important;
-        font-size: 0.88rem !important;
-        color: #1e3a5f !important;
-        background: transparent !important;
-        transition: all 0.15s ease !important;
+        border-radius: 12px !important;
+        padding: 7px 14px !important;
+        font-weight: 800 !important;
+        font-size: 0.87rem !important;
+        color: #0c4a6e !important;
+        background: linear-gradient(180deg, #ffffff 0%, #e0f2fe 58%, #bae6fd 100%) !important;
+        border: 1.5px solid #38bdf8 !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), 0 3px 0 #0284c7, 0 5px 10px rgba(2, 132, 199, 0.16) !important;
+        transition: transform 0.13s ease, box-shadow 0.13s ease, filter 0.13s ease !important;
+    }
+    [data-testid="stTabs"] button[role="tab"]:hover {
+        transform: translateY(-1px) !important;
+        filter: brightness(1.04) !important;
     }
     [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%) !important;
-        color: #0c335e !important;
-        box-shadow: 0 3px 10px rgba(15, 52, 96, 0.12) !important;
-        border: 1px solid #93c5fd !important;
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 52%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        border: 1.5px solid #1e40af !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.42), 0 4px 0 #1e3a8a, 0 7px 14px rgba(29, 78, 216, 0.28) !important;
+    }
+    [data-testid="stTabs"] button[role="tab"][aria-selected="true"] p {
+        color: #ffffff !important;
+    }
+    [data-testid="stTabs"] .stButton > button[kind="primary"],
+    [data-testid="stTabs"] .stButton > button[data-testid="stBaseButton-primary"],
+    [data-testid="stTabs"] [data-testid="stDownloadButton"] > button[kind="primary"],
+    [data-testid="stTabs"] [data-testid="stDownloadButton"] > button[data-testid="stBaseButton-primary"] {
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 52%, #1d4ed8 100%) !important;
+        border: 1.5px solid #1e40af !important;
+        color: #ffffff !important;
+        border-radius: 12px !important;
+        font-weight: 800 !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.40), 0 4px 0 #1e3a8a, 0 7px 14px rgba(29, 78, 216, 0.26) !important;
+    }
+    [data-testid="stTabs"] .stButton > button[kind="secondary"],
+    [data-testid="stTabs"] .stButton > button[data-testid="stBaseButton-secondary"],
+    [data-testid="stTabs"] [data-testid="stDownloadButton"] > button[kind="secondary"],
+    [data-testid="stTabs"] [data-testid="stDownloadButton"] > button[data-testid="stBaseButton-secondary"] {
+        background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 55%, #cbd5e1 100%) !important;
+        border: 1.5px solid #64748b !important;
+        color: #0f172a !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), 0 3px 0 #475569, 0 6px 12px rgba(51, 65, 85, 0.16) !important;
     }
 
     /* 5c. 5 γυαλιστερά 3D κουμπιά βοήθειας με έντονη σκίαση & υαλοειδή λάμψη */
@@ -2616,7 +2653,7 @@ def generate_wordwall_game_json(game_type: str, grade: str, subject: str, book_t
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.6,
-                    max_output_tokens=1800,
+                    max_output_tokens=3200,
                     response_mime_type="application/json",
                 )
                 resp = client.models.generate_content(model=m_name, contents=full_p, config=cfg)
@@ -3557,7 +3594,7 @@ def generate_45min_lesson_json(grade: str, subject: str, topic: str, book_topics
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.5,
-                    max_output_tokens=1800,
+                    max_output_tokens=3200,
                     response_mime_type="application/json",
                 )
                 resp = client.models.generate_content(
@@ -3765,8 +3802,8 @@ def build_school_docx(
     buf.seek(0)
     return buf.getvalue()
 
-def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 1600):
-    """Κοινή γρήγορη ροή παραγωγής AI για όλα τα εργαλεία του Καθηγητή."""
+def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 4200):
+    """Κοινή, σταθερή και ομαλή ροή παραγωγής AI για όλα τα εργαλεία του Καθηγητή (χωρίς πάγωμα ή κόψιμο)."""
     client = get_genai_client(api_key)
     models_to_try = [
         st.session_state.get("active_model", "gemini-3.5-flash-lite"),
@@ -3778,7 +3815,10 @@ def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 
     ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
 
     t_start = time.time()
+    stream_container.info("⏳ Ο Σωκράτης συντάσσει το εκπαιδευτικό υλικό... (συνήθως 4–10 δλ.)")
     for m_name in ordered_models:
+        if time.time() - t_start > 45:
+            break
         for try_no_think in (True, False):
             try:
                 resp_stream = client.models.generate_content_stream(
@@ -3787,27 +3827,41 @@ def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 
                     config=build_fast_config(
                         m_name,
                         disable_thinking=try_no_think,
-                        temperature=0.65,
+                        temperature=0.55,
                         max_output_tokens=max_tokens,
                     )
                 )
                 full_text = ""
                 last_flush = time.time()
+                hit_max_tokens = False
                 for chunk in resp_stream:
-                    if chunk.text:
-                        full_text += chunk.text
+                    c_text = getattr(chunk, "text", None)
+                    if c_text:
+                        full_text += c_text
                         now_t = time.time()
-                        if now_t - last_flush >= 0.03:
-                            stream_container.markdown(full_text + "▌")
+                        if now_t - last_flush >= 0.22:
+                            stream_container.markdown(full_text + " ▌")
                             last_flush = now_t
+                    try:
+                        cands = getattr(chunk, "candidates", None) or []
+                        if cands:
+                            fr = str(getattr(cands[0], "finish_reason", "") or "").upper()
+                            if "MAX_TOKENS" in fr or "LENGTH" in fr:
+                                hit_max_tokens = True
+                    except Exception:
+                        pass
                 if full_text.strip():
-                    stream_container.markdown(full_text)
-                    return full_text.strip(), m_name, (time.time() - t_start)
+                    final_txt = full_text.strip()
+                    if hit_max_tokens:
+                        final_txt += "\n\n> ⚠️ *Σημείωση: Το κείμενο έφτασε το μέγιστο όριο μήκους. Αν λείπει κάτι στο τέλος, δοκιμάστε με λιγότερες ασκήσεις.*"
+                    stream_container.markdown(final_txt)
+                    return final_txt, m_name, (time.time() - t_start)
             except Exception as err:
                 err_txt = str(err).lower()
                 if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
                     continue
                 break
+    stream_container.empty()
     return "", "", (time.time() - t_start)
 
 # -------------------------------------------------------------
@@ -3887,10 +3941,10 @@ if st.session_state.active_mode == "teacher":
 
     tab_worksheets, tab_simplifier, tab_eval, tab_lesson, tab_misconceptions = st.tabs([
         "📝 Φύλλα Εργασίας",
-        "✂️ Απλοποιητής (ΕΑΕ)",
-        "📊 Αποτίμηση Διαλόγου",
-        "🎬 45λεπτη Παρουσίαση",
-        "🗺️ Χάρτης Παρανοήσεων",
+        "✂️ Απλοποιητής",
+        "📊 Αποτίμηση",
+        "🎬 Παρουσίαση 45'",
+        "🗺️ Παρανοήσεις",
     ])
 
     # ==========================================================
@@ -3913,89 +3967,106 @@ if st.session_state.active_mode == "teacher":
         t_book_info = GYMNASIO_DATA[t_grade]["subjects"][t_subject]
         t_book_topics = t_book_info.get("topics", "")
 
-        col_act, col_diff, col_num = st.columns([2, 1, 1])
+        ACTIVITY_OPTIONS = [
+            "📝 Διαβαθμισμένο Φύλλο Ασκήσεων (3 Βήματα)",
+            "🎯 Σύντομο Κριτήριο 15' (Τεστ)",
+            "🌟 Φύλλο Ειδικής Αγωγής (Πολύ Απλό)",
+            "👥 Ομαδική Δραστηριότητα / Mini-Project",
+            "💬 Ερωτήσεις Συζήτησης (Πίνακας)",
+        ]
+        DIFFICULTY_OPTIONS = [
+            "🟢 Απλό / Στήριξη (ΕΑΕ & Δυσκολίες)",
+            "🟡 Κανονικό Γυμνασίου (Βήμα 1 → 2 → 3)",
+            "🔵 Εμβάθυνση / Πρόκληση",
+        ]
+
+        col_act, col_diff, col_num = st.columns([2.2, 1.4, 0.7])
         with col_act:
             activity_type = st.selectbox(
-                "🎯 Είδος Διδακτικής Πρότασης:",
-                [
-                    "🌟 Φύλλο Εργασίας Ειδικής Αγωγής (Easy-to-Read με Εικόνες & Απλές Ερωτήσεις)",
-                    "📖 Κοινωνική Ιστορία / Σενάριο Εμπέδωσης (ΕΕΑ & Νοητική Υστέρηση)",
-                    "🧩 Διαβαθμισμένες Ασκήσεις Ειδικής Αγωγής (3 Επίπεδα με Οπτικά Cues)",
-                    "📝 Διαβαθμισμένες Ασκήσεις Εμπέδωσης & Κριτικής Σκέψης",
-                    "👥 Ομαδική Εργασία / Project (Σχέδιο Δράσης & Ρόλοι)",
-                    "🔬 Διαθεματική & STEAM Δραστηριότητα",
-                    "🎯 15λεπτο Κριτήριο Αξιολόγησης (με Ρουμπρίκα & Λύσεις)",
-                    "💡 Σωκρατικά Εναύσματα Συζήτησης στην Τάξη",
-                    "🛠️ Ολοκληρωμένο Φύλλο Εργασίας (Worksheet) για την Τάξη"
-                ],
+                "🎯 Τι θέλετε να φτιάξετε;",
+                ACTIVITY_OPTIONS,
                 key="t_act_type"
             )
         with col_diff:
             difficulty_level = st.selectbox(
-                "📊 Επίπεδο Δυσκολίας:",
-                [
-                    "🟢 Ειδική Αγωγή: Επίπεδο 1 (Μέγιστη Απλοποίηση)",
-                    "🟡 Ειδική Αγωγή: Επίπεδο 2 (Διαφοροποιημένη Μάθηση)",
-                    "Βασικό / Εμπέδωσης",
-                    "Κλιμακούμενο (Α->Γ)",
-                    "Αυξημένων Απαιτήσεων"
-                ],
+                "📊 Επίπεδο Τάξης:",
+                DIFFICULTY_OPTIONS,
+                index=1,
                 key="t_diff_level"
             )
         with col_num:
-            item_count = st.selectbox("🔢 Πλήθος:", [3, 5, 8], index=1, key="t_count_sel")
+            item_count = st.selectbox("🔢 Ασκήσεις:", [3, 4, 5], index=1, key="t_count_sel")
 
         col_sub_topic, col_opts = st.columns([3, 2])
         with col_sub_topic:
             specific_topic = st.text_input(
-                "📌 Ειδική Ενότητα ή Θέμα (Προαιρετικό):",
+                "📌 Θέμα / Ενότητα (Προαιρετικό):",
                 placeholder="π.χ. Εξισώσεις 1ου βαθμού, Περσικοί Πόλεμοι, Κύτταρο...",
                 key="t_spec_topic"
             )
         with col_opts:
             st.write("")
-            inc_solutions = st.checkbox("✅ Ενδεικτικές Απαντήσεις / Λύσεις", value=True, key="t_inc_sol")
-            inc_rubric = st.checkbox("📊 Ρουμπρίκα / Κριτήρια Αξιολόγησης", value=True, key="t_inc_rub")
+            inc_solutions = st.checkbox("✅ Λύσεις Καθηγητή (ξεχωριστή σελίδα Word)", value=True, key="t_inc_sol")
+            inc_rubric = st.checkbox("📊 Σύντομη Κλίμακα Βαθμολόγησης (3 γραμμές)", value=False, key="t_inc_rub")
 
         generate_teacher_btn = st.button("✨ Δημιουργία Φύλλου Εργασίας", type="primary", use_container_width=True)
 
         if generate_teacher_btn:
             teacher_prompt = f"""
-Είσαι ένας έμπειρος Σύμβουλος Εκπαίδευσης και Καθηγητής Δευτεροβάθμιας Εκπαίδευσης στην Ελλάδα.
-Απευθύνεσαι ΑΠΟΚΛΕΙΣΤΙΚΑ σε ΕΚΠΑΙΔΕΥΤΙΚΟ (όχι σε μαθητή).
+Είσαι έμπειρος εκπαιδευτικός Δευτεροβάθμιας Εκπαίδευσης στην Ελλάδα.
+Απευθύνεσαι ΑΠΟΚΛΕΙΣΤΙΚΑ σε ΕΚΠΑΙΔΕΥΤΙΚΟ για άμεση χρήση στην τάξη (φωτοτυπία 1-2 σελίδων Α4).
 
-ΣΤΟΙΧΕΙΑ ΤΑΞΗΣ & ΜΑΘΗΜΑΤΟΣ:
-- Τάξη: {t_grade} (Μαθητές 12-15 ετών)
+ΣΤΟΙΧΕΙΑ ΜΑΘΗΜΑΤΟΣ:
+- Τάξη: {t_grade} (12-15 ετών)
 - Μάθημα: "{t_subject}"
-- Επίσημη Ύλη & Κεφάλαια Σχολικού Βιβλίου (ΥΠΑΙΘΑ / ΙΕΠ): {t_book_topics}
-{f'- Ειδική Ενότητα/Εστίαση: {specific_topic}' if specific_topic.strip() else ''}
+- Επίσημη Ύλη ΙΕΠ: {t_book_topics}
+{f'- Συγκεκριμένο Θέμα: {specific_topic}' if specific_topic.strip() else ''}
 
-ΑΙΤΟΥΜΕΝΟ:
+ΕΠΙΛΟΓΕΣ ΚΑΘΗΓΗΤΗ:
 - Είδος: {activity_type}
-- Επίπεδο Δυσκολίας: {difficulty_level}
-- Πλήθος: {item_count}
-- Συμπερίληψη Λύσεων: {'ΝΑΙ' if inc_solutions else 'ΟΧΙ'}
-- Συμπερίληψη Ρουμπρίκας/Κριτηρίων: {'ΝΑΙ' if inc_rubric else 'ΟΧΙ'}
+- Επίπεδο: {difficulty_level}
+- Ακριβές Πλήθος Ασκήσεων/Ερωτήσεων: {item_count}
 
-ΟΔΗΓΙΕΣ ΔΟΜΗΣ:
-1. ## ΔΙΔΑΚΤΙΚΟΙ ΣΤΟΧΟΙ (σύντομοι και σαφείς)
-2. ## ΕΚΦΩΝΗΣΕΙΣ & ΔΡΑΣΤΗΡΙΟΤΗΤΕΣ (έτοιμες για φωτοτυπία μαθητή)
-3. ## ΔΙΔΑΚΤΙΚΕΣ ΥΠΟΔΕΙΞΕΙΣ (συνήθη λάθη μαθητών & συμβουλές)
-{'''4. ## ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ & ΛΥΣΕΙΣ (σε ξεχωριστή ενότητα για τον εκπαιδευτικό)''' if inc_solutions else ''}
-{'''5. ## ΚΡΙΤΗΡΙΑ ΑΞΙΟΛΟΓΗΣΗΣ (ΡΟΥΜΠΡΙΚΑ)''' if inc_rubric else ''}
+ΑΥΣΤΗΡΟΙ ΚΑΝΟΝΕΣ ΣΥΝΤΟΜΙΑΣ & ΔΙΑΒΑΘΜΙΣΗΣ (ΜΗΔΕΝ ΦΛΥΑΡΙΑ):
+- Κάθε εκφώνηση άσκησης να είναι ΣΥΝΤΟΜΗ και ΚΟΦΤΗ (μέγιστο 2-3 γραμμές). ΟΧΙ μακρόσυρτες εισαγωγές ή θεωρία.
+- Μοίρασε τις {item_count} ασκήσεις υποχρεωτικά σε 3 καθαρά διαβαθμισμένα βήματα:
+  * **Βήμα 1 — Ζέσταμα (Εύκολο):** αναγνώριση / Σωστό-Λάθος / συμπλήρωση κενού.
+  * **Βήμα 2 — Εφαρμογή (Μεσαίο):** σύντομη πράξη, αντιστοίχιση ή εφαρμογή κανόνα.
+  * **Βήμα 3 — Σκέψη (Πιο απαιτητικό):** 1 στοχευμένη ερώτηση κριτικής σκέψης ή σύντομης αιτιολόγησης.
+- Αν το επίπεδο είναι Ειδική Αγωγή / Απλό, χρησιμοποίησε πολύ μικρές προτάσεις (5-8 λέξεις) και καθαρά παραδείγματα.
+- ΟΛΟΚΛΗΡΩΣΕ ΠΛΗΡΩΣ όλες τις ενότητες μέχρι το τέλος — μην αφήσεις καμία άσκηση μισή.
 
-Γράψε σε άπταιστα, κομψά και παιδαγωγικά Ελληνικά με καθαρή διάρθρωση σε Markdown.
+ΑΚΡΙΒΗΣ ΔΟΜΗ ΣΕ MARKDOWN:
+## 🎯 ΣΤΟΧΟΣ ΜΑΘΗΜΑΤΟΣ
+- 2 σύντομες τελείες (1 γραμμή η καθεμία).
+
+## 📝 ΦΥΛΛΟ ΕΡΓΑΣΙΑΣ ΜΑΘΗΤΗ
+### 🟢 Βήμα 1 — Ζέσταμα
+(1-2 σύντομες ασκήσεις)
+
+### 🟡 Βήμα 2 — Εφαρμογή
+(1-2 σύντομες ασκήσεις)
+
+### 🔵 Βήμα 3 — Σκέψη
+(1 στοχευμένη άσκηση)
+{'''
+## ✅ ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ & ΛΥΣΕΙΣ (ΓΙΑ ΤΟΝ ΕΚΠΑΙΔΕΥΤΙΚΟ)
+- Σύντομες, ξεκάθαρες απαντήσεις αριθμημένες 1 έως ''' + str(item_count) + ''' (1-2 γραμμές η καθεμία).''' if inc_solutions else ''}
+{'''
+## 📊 ΚΛΙΜΑΚΑ ΑΞΙΟΛΟΓΗΣΗΣ
+- Ένα σύντομο πινακάκι 3 γραμμών (Βασικό / Καλό / Άριστο).''' if inc_rubric else ''}
 """
-            st.markdown("### 📋 Παραγωγή Διδακτικού Υλικού...")
             stream_container = st.empty()
             try:
-                out_text, used_m, gen_sec = run_teacher_ai_stream(teacher_prompt, stream_container, max_tokens=1700)
+                out_text, used_m, gen_sec = run_teacher_ai_stream(teacher_prompt, stream_container, max_tokens=4200)
+                stream_container.empty()
                 if out_text:
                     st.session_state.teacher_output = out_text
-                    st.success(f"⚡ Ολοκληρώθηκε σε {gen_sec:.1f}δλ.! (Μοντέλο: `{used_m}`)")
+                    st.success(f"✅ Ολοκληρώθηκε σε {gen_sec:.1f}δλ.!")
                 else:
-                    st.error("⚠️ Τα μοντέλα AI δεν μπόρεσαν να αποκριθούν άμεσα. Δοκιμάστε ξανά.")
+                    st.error("⚠️ Δεν υπήρξε άμεση απόκριση από το AI (ίσως προσωρινή συμφόρηση δικτύου). Δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
             except Exception as e:
+                stream_container.empty()
                 st.error(f"⚠️ Σφάλμα κατά την παραγωγή: {e}")
 
         if st.session_state.get("teacher_output", ""):
@@ -4012,11 +4083,11 @@ if st.session_state.active_mode == "teacher":
                 split_solutions_page=True,
             )
 
-            col_d1, col_d2, col_d3 = st.columns([2, 2, 1])
+            col_d1, col_d2 = st.columns([3, 1])
             with col_d1:
                 if docx_bytes:
                     st.download_button(
-                        label="🖨️ Λήψη σε Word (.docx)",
+                        label="🖨️ Λήψη Έτοιμου Φύλλου σε Word (.docx)",
                         data=docx_bytes,
                         file_name=f"Fyllo_Ergasias_{t_grade[:2]}_{clean_title}_{today_str}.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -4024,23 +4095,12 @@ if st.session_state.active_mode == "teacher":
                         use_container_width=True
                     )
             with col_d2:
-                st.download_button(
-                    label="📥 Λήψη Κειμένου (.md)",
-                    data=st.session_state.teacher_output.encode("utf-8"),
-                    file_name=f"didaktiko_yliko_{t_grade[:2]}_{clean_title}_{today_str}.md",
-                    mime="text/markdown",
-                    use_container_width=True
-                )
-            with col_d3:
                 if st.button("🗑️ Καθαρισμός", key="clear_ws_btn", use_container_width=True):
                     st.session_state.teacher_output = ""
                     st.rerun()
 
-            st.markdown("""
-            <div style="background:#ffffff; border:1px solid #bfdbfe; border-radius:12px; padding:20px; box-shadow: 0 4px 12px rgba(15, 60, 120, 0.05); color:#0f172a;">
-            """, unsafe_allow_html=True)
-            st.markdown(st.session_state.teacher_output)
-            st.markdown("</div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(st.session_state.teacher_output)
 
     # ==========================================================
     # ΚΑΡΤΕΛΑ 2: ΑΠΛΟΠΟΙΗΤΗΣ ΚΕΙΜΕΝΟΥ (ΕΙΔΙΚΗ ΑΓΩΓΗ / ΠΑΡΑΛΛΗΛΗ)
@@ -4094,13 +4154,15 @@ if st.session_state.active_mode == "teacher":
 """
                 simp_container = st.empty()
                 try:
-                    s_out, s_m, s_sec = run_teacher_ai_stream(simp_prompt, simp_container, max_tokens=1200)
+                    s_out, s_m, s_sec = run_teacher_ai_stream(simp_prompt, simp_container, max_tokens=2400)
+                    simp_container.empty()
                     if s_out:
                         st.session_state.teacher_simplified_output = s_out
-                        st.success(f"⚡ Έτοιμο σε {s_sec:.1f}δλ.! (Μοντέλο: `{s_m}`)")
+                        st.success(f"✅ Έτοιμο σε {s_sec:.1f}δλ.!")
                     else:
-                        st.error("⚠️ Δεν υπήρξε άμεση απόκριση. Δοκιμάστε ξανά.")
+                        st.error("⚠️ Δεν υπήρξε άμεση απόκριση. Δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
                 except Exception as e:
+                    simp_container.empty()
                     st.error(f"⚠️ Σφάλμα: {e}")
 
         if st.session_state.get("teacher_simplified_output", ""):
@@ -4224,27 +4286,6 @@ if st.session_state.active_mode == "teacher":
                         f"**Απάντηση #{idx_a} — `{a['score']}%`** | Λύση: {sol_s} | Ερώτηση: {q_s} | Εξηγήσεις: {c_s} | Παρανόηση: {m_map.get(a['misconception_status'], '—')}"
                     )
 
-            # Άμεση λήψη πλήρων σημειώσεων Καθηγητή (Διάλογος + Κρυφή Βαθμολογία)
-            if len(chat_msgs) > 1:
-                t_notes_md = f"# 📜 Σημειώσεις & Σωκρατική Αξιολόγηση — Σωκράτης AI Tutor\n\n"
-                t_notes_md += f"- **Ημερομηνία:** {datetime.date.today().strftime('%d/%m/%Y')}\n"
-                t_notes_md += f"- **Τάξη:** {selected_grade}\n"
-                t_notes_md += f"- **Μάθημα:** {selected_subject}\n\n---\n\n"
-                for m in chat_msgs:
-                    sender = "🎓 Μαθητής" if m["role"] == "user" else "🧔 Σωκράτης"
-                    t_notes_md += f"### {sender}\n{m['content']}\n\n"
-                t_notes_md += format_socratic_audit_markdown(audits)
-                misc_recs_t = load_misconceptions_log()
-                if misc_recs_t:
-                    t_notes_md += format_misconceptions_markdown(misc_recs_t)
-                st.download_button(
-                    label="📥 Λήψη Πλήρων Σημειώσεων Καθηγητή με Βαθμολογία (.md)",
-                    data=t_notes_md.encode("utf-8"),
-                    file_name=f"sokrates_teacher_notes_{datetime.date.today().strftime('%Y%m%d')}.md",
-                    mime="text/markdown",
-                    use_container_width=True,
-                    key="teacher_full_notes_dl",
-                )
         else:
             st.caption("ℹ️ Η αυτόματη Σωκρατική Ποιότητα Διαλόγου (%) θα εμφανιστεί εδώ μόλις ο Σωκράτης απαντήσει στον μαθητή.")
 
@@ -4294,13 +4335,15 @@ if st.session_state.active_mode == "teacher":
 """
                 eval_container = st.empty()
                 try:
-                    e_out, e_m, e_sec = run_teacher_ai_stream(eval_prompt, eval_container, max_tokens=1200)
+                    e_out, e_m, e_sec = run_teacher_ai_stream(eval_prompt, eval_container, max_tokens=2400)
+                    eval_container.empty()
                     if e_out:
                         st.session_state.teacher_eval_output = e_out
-                        st.success(f"⚡ Η αποτίμηση ολοκληρώθηκε σε {e_sec:.1f}δλ.! (Μοντέλο: `{e_m}`)")
+                        st.success(f"✅ Η αποτίμηση ολοκληρώθηκε σε {e_sec:.1f}δλ.!")
                     else:
-                        st.error("⚠️ Δεν υπήρξε άμεση απόκριση. Δοκιμάστε ξανά.")
+                        st.error("⚠️ Δεν υπήρξε άμεση απόκριση. Δοκιμάστε ξανά σε λίγα δευτερόλεπτα.")
                 except Exception as e:
+                    eval_container.empty()
                     st.error(f"⚠️ Σφάλμα: {e}")
 
         if st.session_state.get("teacher_eval_output", ""):
@@ -4640,10 +4683,11 @@ if st.session_state.active_mode == "teacher":
 3. **1 Γρήγορη Ερώτηση Ελέγχου** (30 δευτερολέπτων για όλη την τάξη)
 """
                     rev_box = st.empty()
-                    rev_out, _, rev_sec = run_teacher_ai_stream(rev_prompt, rev_box, max_tokens=700)
+                    rev_out, _, rev_sec = run_teacher_ai_stream(rev_prompt, rev_box, max_tokens=1400)
+                    rev_box.empty()
                     if rev_out:
                         st.session_state[rev_key] = rev_out
-                        st.success(f"⚡ Έτοιμη η 5λεπτη επανάληψη σε {rev_sec:.1f}δλ.!")
+                        st.success(f"✅ Έτοιμη η 5λεπτη επανάληψη σε {rev_sec:.1f}δλ.!")
 
                 if st.session_state.get(rev_key):
                     with st.expander(f"📋 5λεπτη Επανάληψη: {cat['label']}", expanded=True):
