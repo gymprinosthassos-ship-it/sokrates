@@ -2140,19 +2140,33 @@ def generate_hangman_words_json(grade: str, subject: str, book_topics: str, supp
                 break
     return None
 
-def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = None) -> str:
-    """Επιστρέφει καθαρό πολύχρωμο SVG Τροχό της Τύχης (6 φέτες) με δείκτη κορυφής."""
+def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = None, animate_spin: bool = False, spin_id: int = 0) -> str:
+    """Επιστρέφει καθαρό πολύχρωμο SVG Τροχό της Τύχης (6 φέτες) με πραγματική περιστροφή & επιβράδυνση."""
     import math
     done_set = done_indices or set()
     colors = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"]
     n = max(1, len(wedges))
     cx, cy, r = 120, 120, 102
-    # Περιστροφή ώστε η επιλεγμένη φέτα να κάθεται ακριβώς κάτω από τον δείκτη (κορυφή = -90°)
+    # Περιστροφή ώστε η επιλεγμένη φέτα να κάθεται ακριβώς κάτω από τον κόκκινο δείκτη (κορυφή = -90°)
     rot_deg = 0.0
     if 0 <= active_idx < n:
         slice_deg = 360.0 / n
         mid_deg = active_idx * slice_deg + slice_deg / 2.0
         rot_deg = -90.0 - mid_deg
+    final_deg = (1440.0 + rot_deg) if animate_spin else rot_deg
+    anim_css = ""
+    g_style = f"transform-origin: {cx}px {cy}px; transform: rotate({rot_deg:.1f}deg);"
+    if animate_spin and 0 <= active_idx < n:
+        anim_name = f"wheelSpinAnim_{int(spin_id)}"
+        anim_css = f"""
+        <style>
+        @keyframes {anim_name} {{
+            0% {{ transform: rotate(0deg); }}
+            100% {{ transform: rotate({final_deg:.1f}deg); }}
+        }}
+        </style>
+        """
+        g_style = f"transform-origin: {cx}px {cy}px; animation: {anim_name} 2.3s cubic-bezier(0.12, 0.88, 0.22, 1) forwards;"
     slices_svg = []
     for i, wd in enumerate(wedges):
         a0 = math.radians(i * (360.0 / n))
@@ -2173,10 +2187,11 @@ def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = Non
             f'text-anchor="middle" dominant-baseline="central">{lbl}</text>'
         )
     return f"""
+    {anim_css}
     <div style="display:flex; justify-content:center; align-items:center; margin-bottom:10px;">
         <svg width="240" height="245" viewBox="0 0 240 245" xmlns="http://www.w3.org/2000/svg">
             <polygon points="120,24 109,4 131,4" fill="#dc2626" stroke="#ffffff" stroke-width="2" />
-            <g transform="rotate({rot_deg:.1f} {cx} {cy})">
+            <g style="{g_style}">
                 {''.join(slices_svg)}
             </g>
             <circle cx="{cx}" cy="{cy}" r="18" fill="#ffffff" stroke="#1e293b" stroke-width="3" />
@@ -2184,6 +2199,39 @@ def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = Non
         </svg>
     </div>
     """
+
+def play_wheel_tick_sound(spin_id: int):
+    """Παίζει απαλά «τικ-τικ-τικ...» που επιβραδύνουν όσο γυρίζει ο Τροχός της Τύχης."""
+    components.html(
+        f"""
+        <script data-spin="{spin_id}">
+        (function() {{
+            try {{
+                const win = window.parent || window;
+                const AudioCtx = win.AudioContext || win.webkitAudioContext || window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const now = ctx.currentTime;
+                const ticks = [0.05, 0.12, 0.20, 0.29, 0.39, 0.51, 0.65, 0.81, 0.99, 1.20, 1.44, 1.72, 2.02];
+                ticks.forEach((t, idx) => {{
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(idx === ticks.length - 1 ? 880 : 620, now + t);
+                    gain.gain.setValueAtTime(0.001, now + t);
+                    gain.gain.linearRampToValueAtTime(0.11, now + t + 0.008);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.045);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + t);
+                    osc.stop(now + t + 0.05);
+                }});
+            }} catch(e) {{}}
+        }})();
+        </script>
+        """,
+        height=0,
+    )
 
 def generate_wordwall_game_json(game_type: str, grade: str, subject: str, book_topics: str, support_level: str, chapter_focus: str = ""):
     """Παράγει σε 1 γρήγορη κλήση AI περιεχόμενο για: 'wheel', 'open_box', 'group_sort' ή 'match_up'."""
@@ -4625,7 +4673,11 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
             </div>
             """, unsafe_allow_html=True)
 
-            st.markdown(render_wheel_svg(items_w, ww["active_idx"], done_w), unsafe_allow_html=True)
+            just_spun = bool(ww.pop("just_spun", False))
+            spin_id = int(ww.get("spin_id", 0))
+            st.markdown(render_wheel_svg(items_w, ww["active_idx"], done_w, animate_spin=just_spun, spin_id=spin_id), unsafe_allow_html=True)
+            if just_spun:
+                play_wheel_tick_sound(spin_id)
 
             if ww["feedback"]:
                 (st.success if ww["feedback_type"] == "success" else (st.warning if ww["feedback_type"] == "warning" else st.info))(ww["feedback"])
@@ -4639,6 +4691,8 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 else:
                     if st.button("🎡 Γύρισε τον Τροχό!", type="primary", use_container_width=True, key=f"btn_wheel_spin_{len(done_w)}"):
                         ww["active_idx"] = random.choice(remaining)
+                        ww["spin_id"] = int(ww.get("spin_id", 0)) + 1
+                        ww["just_spun"] = True
                         ww["attempt"] = 1
                         ww["feedback"] = ""
                         ww["awaiting_spin"] = False
