@@ -1145,20 +1145,51 @@ st.markdown("""
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         gap: 0.52rem !important;
     }
+    [data-testid="stSidebar"] .stButton,
+    [data-testid="stSidebar"] [data-testid="stLinkButton"],
+    [data-testid="stSidebar"] .st-key-side_exp_yli,
+    [data-testid="stSidebar"] .st-key-side_exp_cards,
+    [data-testid="stSidebar"] .st-key-side_exp_settings {
+        overflow: visible !important;
+        padding-bottom: 4px !important;
+    }
     [data-testid="stSidebar"] .stButton > button,
     [data-testid="stSidebar"] [data-testid="stLinkButton"] a,
     [data-testid="stSidebar"] a[data-testid="stLinkButton"] {
         min-height: 2.3rem !important;
         padding: 0.34rem 0.78rem !important;
         font-size: 0.87rem !important;
+        font-weight: 700 !important;
         border-radius: 12px !important;
-        box-shadow: 0 3px 0 rgba(15, 52, 96, 0.13), 0 4px 10px rgba(15, 52, 96, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
-        transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.85), inset 0 -2px 4px rgba(15, 52, 96, 0.14), 0 4px 0 #64748b, 0 7px 14px rgba(15, 52, 96, 0.20) !important;
+        transition: transform 0.13s ease, box-shadow 0.13s ease, filter 0.13s ease !important;
+    }
+    [data-testid="stSidebar"] .stButton > button:hover,
+    [data-testid="stSidebar"] [data-testid="stLinkButton"] a:hover,
+    [data-testid="stSidebar"] a[data-testid="stLinkButton"]:hover {
+        transform: translateY(-1px) !important;
+        filter: brightness(1.04) !important;
     }
     [data-testid="stSidebar"] .stButton > button:active,
-    [data-testid="stSidebar"] [data-testid="stLinkButton"] a:active {
-        transform: translateY(1px) !important;
-        box-shadow: 0 1px 0 rgba(15, 52, 96, 0.14), inset 0 1px 2px rgba(15, 52, 96, 0.10) !important;
+    [data-testid="stSidebar"] [data-testid="stLinkButton"] a:active,
+    [data-testid="stSidebar"] a[data-testid="stLinkButton"]:active {
+        transform: translateY(2px) !important;
+        box-shadow: 0 1px 0 rgba(15, 52, 96, 0.25), inset 0 2px 3px rgba(15, 52, 96, 0.14) !important;
+    }
+    /* Κουμπί Μαθητής: γυαλιστερό 3D μπλε */
+    [data-testid="stSidebar"] .st-key-side_btn_student button[kind="primary"],
+    [data-testid="stSidebar"] .st-key-side_btn_student button[data-testid="stBaseButton-primary"] {
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 52%, #1d4ed8 100%) !important;
+        border: 1.5px solid #1e40af !important;
+        color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.42), inset 0 -2px 4px rgba(15, 23, 42, 0.20), 0 4px 0 #1e3a8a, 0 7px 14px rgba(29, 78, 216, 0.30) !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_btn_student button[kind="secondary"],
+    [data-testid="stSidebar"] .st-key-side_btn_student button[data-testid="stBaseButton-secondary"] {
+        background: linear-gradient(180deg, #eff6ff 0%, #bfdbfe 55%, #93c5fd 100%) !important;
+        border: 1.5px solid #2563eb !important;
+        color: #1e3a8a !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(37, 99, 235, 0.16), 0 4px 0 #1d4ed8, 0 7px 14px rgba(37, 99, 235, 0.22) !important;
     }
     [data-testid="stSidebar"] .stSelectbox,
     [data-testid="stSidebar"] [data-testid="stSelectbox"],
@@ -1193,74 +1224,93 @@ st.markdown("""
         margin-bottom: 0 !important;
         border-radius: 12px !important;
         overflow: hidden !important;
-        box-shadow: 0 3px 0 rgba(15, 52, 96, 0.10), 0 4px 10px rgba(15, 52, 96, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+        transition: transform 0.13s ease, box-shadow 0.13s ease, filter 0.13s ease !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stExpander"]:hover {
+        transform: translateY(-1px) !important;
+        filter: brightness(1.03) !important;
     }
     [data-testid="stSidebar"] [data-testid="stExpander"] summary {
         padding: 0.4rem 0.72rem !important;
         font-size: 0.87rem !important;
+        font-weight: 700 !important;
     }
+    /* Κουμπί Καθηγητής: γυαλιστερό 3D πράσινο */
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="secondary"],
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-secondary"] {
-        background: linear-gradient(135deg, #bbf7d0 0%, #6ee7b7 100%) !important;
+        background: linear-gradient(180deg, #dcfce7 0%, #86efac 52%, #4ade80 100%) !important;
         border: 1.5px solid #16a34a !important;
         color: #052e16 !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.90), inset 0 -2px 4px rgba(22, 163, 74, 0.18), 0 4px 0 #15803d, 0 7px 14px rgba(22, 163, 74, 0.24) !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="secondary"]:hover,
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-secondary"]:hover {
-        background: linear-gradient(135deg, #86efac 0%, #34d399 100%) !important;
+        background: linear-gradient(180deg, #bbf7d0 0%, #4ade80 55%, #22c55e 100%) !important;
         border-color: #15803d !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="primary"],
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-primary"] {
-        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+        background: linear-gradient(180deg, #22c55e 0%, #16a34a 52%, #15803d 100%) !important;
         border: 1.5px solid #14532d !important;
         color: #ffffff !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.40), inset 0 -2px 4px rgba(5, 46, 22, 0.22), 0 4px 0 #14532d, 0 7px 14px rgba(21, 128, 61, 0.30) !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[kind="primary"] p,
     [data-testid="stSidebar"] .st-key-side_btn_teacher button[data-testid="stBaseButton-primary"] p {
         color: #ffffff !important;
     }
+    /* Σχολικό Βιβλίο: γυαλιστερό 3D ασημί */
     [data-testid="stSidebar"] [data-testid="stLinkButton"] a,
     [data-testid="stSidebar"] a[data-testid="stLinkButton"] {
-        background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 55%, #cbd5e1 100%) !important;
-        border: 1.5px solid #94a3b8 !important;
-        color: #1e293b !important;
+        background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 52%, #cbd5e1 100%) !important;
+        border: 1.5px solid #64748b !important;
+        color: #0f172a !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.96), inset 0 -2px 4px rgba(71, 85, 105, 0.16), 0 4px 0 #475569, 0 7px 14px rgba(51, 65, 85, 0.22) !important;
     }
     [data-testid="stSidebar"] [data-testid="stLinkButton"] a:hover,
     [data-testid="stSidebar"] a[data-testid="stLinkButton"]:hover {
-        background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%) !important;
-        border-color: #64748b !important;
+        background: linear-gradient(180deg, #ffffff 0%, #dbeafe 52%, #cbd5e1 100%) !important;
+        border-color: #475569 !important;
         color: #0f172a !important;
     }
-    [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"],
+    /* Ύλη & Κεφάλαια: γυαλιστερό 3D λεβάντα/μωβ */
+    [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] {
+        background: linear-gradient(180deg, #f5f3ff 0%, #e9d5ff 52%, #d8b4fe 100%) !important;
+        border: 1.5px solid #7c3aed !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(124, 58, 237, 0.15), 0 4px 0 #6d28d9, 0 7px 14px rgba(124, 58, 237, 0.22) !important;
+    }
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] summary {
-        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%) !important;
-        border-color: #a78bfa !important;
+        background: transparent !important;
         color: #3b0764 !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_yli [data-testid="stExpander"] div[role="region"] {
         background-color: #f5f3ff !important;
     }
-    [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"],
+    /* Εποπτικές Κάρτες: γυαλιστερό 3D πορτοκαλί/ροδακινί */
+    [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"] {
+        background: linear-gradient(180deg, #fff7ed 0%, #fed7aa 52%, #fdba74 100%) !important;
+        border: 1.5px solid #ea580c !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(234, 88, 12, 0.15), 0 4px 0 #c2410c, 0 7px 14px rgba(234, 88, 12, 0.22) !important;
+    }
     [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"] summary {
-        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%) !important;
-        border-color: #fb923c !important;
+        background: transparent !important;
         color: #7c2d12 !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_cards [data-testid="stExpander"] div[role="region"] {
         background-color: #fff7ed !important;
     }
+    /* Παιχνίδια & Κουίζ (Ανοιχτό & Κλειδωμένο): γυαλιστερό 3D χρυσό */
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button {
-        background: linear-gradient(135deg, #fef08a 0%, #f59e0b 65%, #d97706 100%) !important;
-        border: 1.5px solid #92400e !important;
+        background: linear-gradient(180deg, #fef08a 0%, #f59e0b 55%, #d97706 100%) !important;
+        border: 1.5px solid #b45309 !important;
         color: #451a03 !important;
         padding-left: 0.35rem !important;
         padding-right: 0.35rem !important;
-        box-shadow: 0 3px 0 rgba(146, 64, 14, 0.35), 0 5px 14px rgba(217, 119, 6, 0.32), inset 0 1px 0 rgba(255,255,255,0.75) !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.88), inset 0 -2px 4px rgba(146, 64, 14, 0.20), 0 4px 0 #92400e, 0 7px 15px rgba(217, 119, 6, 0.32) !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button:hover {
-        background: linear-gradient(135deg, #fde047 0%, #d97706 100%) !important;
-        border-color: #78350f !important;
+        background: linear-gradient(180deg, #fef9c3 0%, #fbbf24 55%, #d97706 100%) !important;
+        border-color: #92400e !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_open button p {
         color: #451a03 !important;
@@ -1269,12 +1319,13 @@ st.markdown("""
         white-space: nowrap !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_locked button {
-        background: linear-gradient(135deg, #fef9c3 0%, #fde68a 60%, #fcd34d 100%) !important;
-        border: 1.5px solid #b45309 !important;
+        background: linear-gradient(180deg, #fefce8 0%, #fde68a 52%, #fbbf24 100%) !important;
+        border: 1.5px solid #d97706 !important;
         color: #451a03 !important;
         padding-left: 0.35rem !important;
         padding-right: 0.35rem !important;
-        opacity: 0.95 !important;
+        opacity: 0.96 !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(180, 83, 9, 0.16), 0 4px 0 #b45309, 0 7px 14px rgba(217, 119, 6, 0.24) !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_duel_locked button p {
         color: #451a03 !important;
@@ -1282,23 +1333,29 @@ st.markdown("""
         font-size: 0.77rem !important;
         white-space: nowrap !important;
     }
-    [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"],
+    /* Ρυθμίσεις & Πληροφορίες: γυαλιστερό 3D γκρι-μπλε */
+    [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] {
+        background: linear-gradient(180deg, #f1f5f9 0%, #dbeafe 52%, #cbd5e1 100%) !important;
+        border: 1.5px solid #64748b !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(71, 85, 105, 0.16), 0 4px 0 #475569, 0 7px 14px rgba(51, 65, 85, 0.22) !important;
+    }
     [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] summary {
-        background: linear-gradient(135deg, #e2ecf5 0%, #cbd8e8 100%) !important;
-        border-color: #94a3b8 !important;
+        background: transparent !important;
         color: #0f172a !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] div[role="region"] {
         background-color: #edf4fa !important;
     }
+    /* Δήλωση Διαφάνειας: γυαλιστερό 3D ροζ */
     [data-testid="stSidebar"] .st-key-side_btn_transparency button {
-        background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%) !important;
-        border: 1.5px solid #f472b6 !important;
+        background: linear-gradient(180deg, #fdf2f8 0%, #fbcfe8 52%, #f9a8d4 100%) !important;
+        border: 1.5px solid #db2777 !important;
         color: #831843 !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(219, 39, 119, 0.16), 0 4px 0 #be185d, 0 7px 14px rgba(219, 39, 119, 0.22) !important;
     }
     [data-testid="stSidebar"] .st-key-side_btn_transparency button:hover {
-        background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%) !important;
-        border-color: #ec4899 !important;
+        background: linear-gradient(180deg, #fce7f3 0%, #f9a8d4 52%, #f472b6 100%) !important;
+        border-color: #be185d !important;
     }
 
     /* 11. Γυαλιστερά 3D κουμπιά παιχνιδιών με σκίαση στην οθόνη «Παιχνίδια & Κουίζ» */
@@ -3120,7 +3177,7 @@ with st.sidebar:
     lock_tag = '<div style="background-color: #fee2e2; border: 1.5px solid #ef4444; border-radius: 6px; padding: 1px 6px; text-align: center; margin-top: 2px;"><span style="font-size: 0.7rem; font-weight: 800; color: #dc2626;">🚨 Κλειδωμένο</span></div>' if st.session_state.is_locked else ''
 
     header_html = (
-        f'<div style="background: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(239,246,255,0.92) 100%); border: 1.5px solid #60a5fa; border-radius: 15px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 10px; box-shadow: 0 5px 14px rgba(15, 52, 96, 0.13), inset 0 1px 0 rgba(255,255,255,0.9);">'
+        f'<div style="background: linear-gradient(180deg, #ffffff 0%, #eff6ff 55%, #dbeafe 100%); border: 1.5px solid #3b82f6; border-radius: 15px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; margin-top: 0; margin-bottom: 10px; box-shadow: inset 0 2px 1px rgba(255,255,255,0.96), inset 0 -2px 4px rgba(59,130,246,0.14), 0 4px 0 #2563eb, 0 8px 16px rgba(37, 99, 235, 0.22);">'
         f'{avatar_img_tag}'
         f'<div style="display: flex; flex-direction: column; justify-content: center; overflow: visible;">'
         f'<div style="font-size: 1.16rem; font-weight: 800; color: #072b52; line-height: 1.15; letter-spacing: -0.2px;">Σωκράτης</div>'
@@ -3366,7 +3423,7 @@ with st.sidebar:
         st.markdown(
             f"""
             <div style="display: flex; justify-content: center; margin-top: 2px; margin-bottom: 2px;">
-                <div style="background: rgba(255, 255, 255, 0.94); border: 2px solid #1d4ed8; border-radius: 11px; padding: 4px 10px; box-shadow: 0 3px 10px rgba(15, 52, 96, 0.14); display: inline-flex; align-items: center; justify-content: center;">
+                <div style="background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 62%, #dbeafe 100%); border: 2px solid #1d4ed8; border-radius: 12px; padding: 4px 10px; box-shadow: inset 0 2px 1px rgba(255,255,255,0.96), 0 4px 0 #1e3a8a, 0 7px 14px rgba(29, 78, 216, 0.24); display: inline-flex; align-items: center; justify-content: center;">
                     <img src="{ANASKALLI_LOGO_URI}" alt="ANASKALLI" style="height: 54px; width: auto; display: block; border-radius: 6px;" />
                 </div>
             </div>
