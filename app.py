@@ -2153,7 +2153,7 @@ def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = Non
         slice_deg = 360.0 / n
         mid_deg = active_idx * slice_deg + slice_deg / 2.0
         rot_deg = -90.0 - mid_deg
-    final_deg = (1440.0 + rot_deg) if animate_spin else rot_deg
+    final_deg = (1080.0 + (int(spin_id) % 3) * 360.0 + rot_deg) if animate_spin else rot_deg
     anim_css = ""
     g_style = f"transform-origin: {cx}px {cy}px; transform: rotate({rot_deg:.1f}deg);"
     if animate_spin and 0 <= active_idx < n:
@@ -4590,8 +4590,15 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                         payload = generate_wordwall_game_json(ww_gid, selected_grade, selected_subject, book_topics, cur_lvl_duel, ww_chap)
                     if payload:
                         if ww_gid == "wheel":
+                            sys_rng = random.SystemRandom()
+                            spin_order = list(range(len(payload)))
+                            for _ in range(5):
+                                sys_rng.shuffle(spin_order)
+                                if spin_order not in (list(range(len(payload))), list(reversed(range(len(payload))))):
+                                    break
                             st.session_state.ww_state = {
                                 "type": "wheel", "items": payload, "done": [], "active_idx": -1,
+                                "spin_order": spin_order,
                                 "score": 0, "attempt": 1, "feedback": "", "feedback_type": "info", "awaiting_spin": True,
                             }
                         elif ww_gid == "open_box":
@@ -4690,7 +4697,8 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                         st.rerun()
                 else:
                     if st.button("🎡 Γύρισε τον Τροχό!", type="primary", use_container_width=True, key=f"btn_wheel_spin_{len(done_w)}"):
-                        ww["active_idx"] = random.choice(remaining)
+                        order_q = [i for i in ww.get("spin_order", []) if i in remaining]
+                        ww["active_idx"] = order_q[0] if order_q else random.SystemRandom().choice(remaining)
                         ww["spin_id"] = int(ww.get("spin_id", 0)) + 1
                         ww["just_spun"] = True
                         ww["attempt"] = 1
