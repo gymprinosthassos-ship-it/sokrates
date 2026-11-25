@@ -1162,12 +1162,40 @@ st.markdown("""
         color: #ffffff !important;
     }
     .st-key-btn_open_game_hangman button:hover { background-color: #be123c !important; }
+    .st-key-btn_open_game_wheel button {
+        background-color: #4f46e5 !important;
+        border: 1.5px solid #4338ca !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_wheel button:hover { background-color: #4338ca !important; }
+    .st-key-btn_open_game_open_box button {
+        background-color: #ea580c !important;
+        border: 1.5px solid #c2410c !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_open_box button:hover { background-color: #c2410c !important; }
+    .st-key-btn_open_game_group_sort button {
+        background-color: #0284c7 !important;
+        border: 1.5px solid #0369a1 !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_group_sort button:hover { background-color: #0369a1 !important; }
+    .st-key-btn_open_game_match_up button {
+        background-color: #c026d3 !important;
+        border: 1.5px solid #a21caf !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_match_up button:hover { background-color: #a21caf !important; }
     .st-key-btn_open_game_duel button p,
     .st-key-btn_open_game_detective button p,
     .st-key-btn_open_game_myth button p,
     .st-key-btn_open_game_escape button p,
     .st-key-btn_open_game_ladder5 button p,
-    .st-key-btn_open_game_hangman button p {
+    .st-key-btn_open_game_hangman button p,
+    .st-key-btn_open_game_wheel button p,
+    .st-key-btn_open_game_open_box button p,
+    .st-key-btn_open_game_group_sort button p,
+    .st-key-btn_open_game_match_up button p {
         color: #ffffff !important;
         font-weight: 700 !important;
     }
@@ -2105,6 +2133,179 @@ def generate_hangman_words_json(grade: str, subject: str, book_topics: str, supp
                         })
                 if len(clean_items) >= 3:
                     return clean_items[:3]
+            except Exception as err:
+                err_txt = str(err).lower()
+                if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                    continue
+                break
+    return None
+
+def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = None) -> str:
+    """Επιστρέφει καθαρό πολύχρωμο SVG Τροχό της Τύχης (6 φέτες) με δείκτη κορυφής."""
+    import math
+    done_set = done_indices or set()
+    colors = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"]
+    n = max(1, len(wedges))
+    cx, cy, r = 120, 120, 102
+    # Περιστροφή ώστε η επιλεγμένη φέτα να κάθεται ακριβώς κάτω από τον δείκτη (κορυφή = -90°)
+    rot_deg = 0.0
+    if 0 <= active_idx < n:
+        slice_deg = 360.0 / n
+        mid_deg = active_idx * slice_deg + slice_deg / 2.0
+        rot_deg = -90.0 - mid_deg
+    slices_svg = []
+    for i, wd in enumerate(wedges):
+        a0 = math.radians(i * (360.0 / n))
+        a1 = math.radians((i + 1) * (360.0 / n))
+        x0, y0 = cx + r * math.cos(a0), cy + r * math.sin(a0)
+        x1, y1 = cx + r * math.cos(a1), cy + r * math.sin(a1)
+        fill_c = "#cbd5e1" if i in done_set else colors[i % len(colors)]
+        stroke_w = "4" if i == active_idx else "2"
+        slices_svg.append(
+            f'<path d="M {cx} {cy} L {x0:.1f} {y0:.1f} A {r} {r} 0 0 1 {x1:.1f} {y1:.1f} Z" '
+            f'fill="{fill_c}" stroke="#ffffff" stroke-width="{stroke_w}" />'
+        )
+        amid = (a0 + a1) / 2.0
+        tx, ty = cx + (r * 0.62) * math.cos(amid), cy + (r * 0.62) * math.sin(amid)
+        lbl = "✅" if i in done_set else str(i + 1)
+        slices_svg.append(
+            f'<text x="{tx:.1f}" y="{ty:.1f}" fill="#ffffff" font-size="17" font-weight="900" '
+            f'text-anchor="middle" dominant-baseline="central">{lbl}</text>'
+        )
+    return f"""
+    <div style="display:flex; justify-content:center; align-items:center; margin-bottom:10px;">
+        <svg width="240" height="245" viewBox="0 0 240 245" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="120,24 109,4 131,4" fill="#dc2626" stroke="#ffffff" stroke-width="2" />
+            <g transform="rotate({rot_deg:.1f} {cx} {cy})">
+                {''.join(slices_svg)}
+            </g>
+            <circle cx="{cx}" cy="{cy}" r="18" fill="#ffffff" stroke="#1e293b" stroke-width="3" />
+            <text x="{cx}" y="{cy}" fill="#1e293b" font-size="13" font-weight="900" text-anchor="middle" dominant-baseline="central">🎡</text>
+        </svg>
+    </div>
+    """
+
+def generate_wordwall_game_json(game_type: str, grade: str, subject: str, book_topics: str, support_level: str, chapter_focus: str = ""):
+    """Παράγει σε 1 γρήγορη κλήση AI περιεχόμενο για: 'wheel', 'open_box', 'group_sort' ή 'match_up'."""
+    client = get_genai_client(api_key)
+    models_to_try = [
+        st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+        "gemini-3.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+    ]
+    seen_m = set()
+    ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
+
+    lvl_instr = (
+        "ΠΟΛΥ ΑΠΛΕΣ προτάσεις (4-8 λέξεις), Easy-to-Read για Επίπεδο 1 / Ειδική Αγωγή, χωρίς παγίδες."
+        if support_level == "LEVEL_1"
+        else ("Απλή, καθαρή διατύπωση (Επίπεδο 2 Γυμνασίου)." if support_level == "LEVEL_2" else "Επίπεδο Γυμνασίου, ζωντανές & κατανοητές ερωτήσεις.")
+    )
+    focus_line = f"- Ειδικό κεφάλαιο/θέμα: {chapter_focus}" if (chapter_focus or "").strip() else ""
+
+    if game_type == "wheel":
+        schema_instr = """
+Ετοίμασε ΑΚΡΙΒΩΣ 6 φέτες για τον «🎡 Τροχό της Τύχης» από την ύλη του μαθήματος.
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{
+  "items": [
+    {
+      "label": "Σύντομος τίτλος φέτας (2-3 λέξεις)",
+      "question": "Σύντομη, διασκεδαστική ερώτηση από το μάθημα",
+      "choices": ["Επιλογή Α", "Επιλογή Β", "Επιλογή Γ"],
+      "correct_choice": "Επιλογή Α",
+      "hint": "Μικρό σωκρατικό στοιχείο για 2η ευκαιρία (χωρίς έτοιμη λύση)",
+      "explanation": "Σύντομη επιβεβαίωση 1 πρότασης",
+      "topic": "Κατηγορία 2-3 λέξεων"
+    }
+  ]
+}"""
+    elif game_type == "open_box":
+        schema_instr = """
+Ετοίμασε ΑΚΡΙΒΩΣ 5 ερωτήσεις για το παιχνίδι «📦 Άνοιξε το Κουτί» από την ύλη του μαθήματος (το 6ο κουτί θα προστεθεί αυτόματα ως Κουτί-Έκπληξη!).
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{
+  "items": [
+    {
+      "question": "Σύντομη, ζωντανή ερώτηση από το μάθημα",
+      "choices": ["Επιλογή Α", "Επιλογή Β", "Επιλογή Γ"],
+      "correct_choice": "Επιλογή Α",
+      "hint": "Μικρό σωκρατικό στοιχείο για 2η ευκαιρία (χωρίς έτοιμη λύση)",
+      "explanation": "Σύντομη εξήγηση 1 πρότασης",
+      "topic": "Κατηγορία 2-3 λέξεων"
+    }
+  ]
+}"""
+    elif game_type == "group_sort":
+        schema_instr = """
+Ετοίμασε ένα παιχνίδι «🗂️ Ταξινόμηση σε 2 Καλάθια» με 2 ξεκάθαρες κατηγορίες (group_a και group_b) από το μάθημα (π.χ. Αθήνα vs Σπάρτη, Παλαιά vs Καινή Διαθήκη, Φυσική vs Χημική αλλαγή, Ομογενή vs Ετερογενή) και ΑΚΡΙΒΩΣ 6 κάρτες (3 για το Α και 3 για το Β, ανακατεμένες).
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{
+  "group_a": "Όνομα Καλαθιού Α (με 1 emoji)",
+  "group_b": "Όνομα Καλαθιού Β (με 1 emoji)",
+  "items": [
+    {
+      "text": "Σύντομη φράση/έννοια προς ταξινόμηση (2-8 λέξεις)",
+      "group": "A",
+      "explanation": "Γιατί ανήκει σε αυτό το καλάθι (1 σύντομη πρόταση)",
+      "topic": "Κατηγορία 2-3 λέξεων"
+    }
+  ]
+}"""
+    else:  # match_up
+        schema_instr = """
+Ετοίμασε ΑΚΡΙΒΩΣ 5 ζευγάρια (όρος ↔ σύντομη εξήγηση) για το παιχνίδι «🧩 Αντιστοίχιση Ζευγαριών» από την ύλη του μαθήματος.
+ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{
+  "pairs": [
+    {
+      "term": "Σύντομος όρος/πρόσωπο/έννοια (1-4 λέξεις)",
+      "definition": "Σαφής, σύντομη αντιστοιχία/ορισμός (3-10 λέξεις)",
+      "topic": "Κατηγορία 2-3 λέξεων"
+    }
+  ]
+}"""
+
+    full_p = f"""
+Είσαι ο Σωκράτης, εκπαιδευτικός Γυμνασίου στην Ελλάδα.
+- Τάξη: {grade}
+- Μάθημα: {subject}
+- Επίσημη ύλη: {book_topics}
+{focus_line}
+- Επίπεδο: {lvl_instr}
+
+{schema_instr}
+"""
+    for m_name in ordered_models:
+        for try_no_think in (True, False):
+            try:
+                cfg = build_fast_config(
+                    m_name,
+                    disable_thinking=try_no_think,
+                    temperature=0.6,
+                    max_output_tokens=1800,
+                    response_mime_type="application/json",
+                )
+                resp = client.models.generate_content(model=m_name, contents=full_p, config=cfg)
+                raw = (resp.text or "").strip()
+                raw = re.sub(r'^```(?:json)?\s*', '', raw)
+                raw = re.sub(r'\s*```$', '', raw)
+                try:
+                    parsed = json.loads(raw)
+                except Exception:
+                    m_obj = re.search(r'\{[\s\S]*\}', raw)
+                    parsed = json.loads(m_obj.group(0)) if m_obj else None
+                if not isinstance(parsed, dict):
+                    continue
+                if game_type == "wheel" and len(parsed.get("items", [])) >= 6:
+                    return parsed["items"][:6]
+                if game_type == "open_box" and len(parsed.get("items", [])) >= 5:
+                    return parsed["items"][:5]
+                if game_type == "group_sort" and parsed.get("group_a") and parsed.get("group_b") and len(parsed.get("items", [])) >= 6:
+                    return {"group_a": str(parsed["group_a"]), "group_b": str(parsed["group_b"]), "items": parsed["items"][:6]}
+                if game_type == "match_up" and len(parsed.get("pairs", [])) >= 5:
+                    return parsed["pairs"][:5]
             except Exception as err:
                 err_txt = str(err).lower()
                 if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
@@ -4234,11 +4435,442 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 st.rerun()
 
         st.write("")
+        row4_c1, row4_c2 = st.columns(2)
+        with row4_c1:
+            st.markdown("""
+            <div style="background:linear-gradient(135deg,#eef2ff,#ffffff); border:2px solid #4f46e5; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(79,70,229,0.10); min-height:142px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#3730a3; margin-bottom:6px;">🎡 Τροχός της Τύχης</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    Γύρισε τον <b>πολύχρωμο τροχό</b>! Κάθε φέτα κρύβει μια ζωντανή ερώτηση του μαθήματος για +2 ⭐!
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: 🎡 Τροχός της Τύχης", type="primary", use_container_width=True, key="btn_open_game_wheel"):
+                st.session_state.active_game_id = "wheel"
+                st.session_state.ww_state = None
+                st.rerun()
+
+        with row4_c2:
+            st.markdown("""
+            <div style="background:linear-gradient(135deg,#fff7ed,#ffffff); border:2px solid #ea580c; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(234,88,12,0.10); min-height:142px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#9a3412; margin-bottom:6px;">📦 Άνοιξε το Κουτί</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    Διάλεξε από <b>6 κλειστά κουτιά</b> — τα 5 κρύβουν ερωτήσεις από την ύλη και το 1 είναι <b>🎁 Κουτί-Έκπληξη</b>!
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: 📦 Άνοιξε το Κουτί", type="primary", use_container_width=True, key="btn_open_game_open_box"):
+                st.session_state.active_game_id = "open_box"
+                st.session_state.ww_state = None
+                st.rerun()
+
+        st.write("")
+        row5_c1, row5_c2 = st.columns(2)
+        with row5_c1:
+            st.markdown("""
+            <div style="background:linear-gradient(135deg,#f0f9ff,#ffffff); border:2px solid #0284c7; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(2,132,199,0.10); min-height:142px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#075985; margin-bottom:6px;">🗂️ Ταξινόμηση σε 2 Καλάθια</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    Ρίξε <b>6 κάρτες</b> στο σωστό καλάθι-κατηγορία με 1 κλικ! Ιδανικό για γρήγορη κατανόηση & ΕΑΕ.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: 🗂️ Ταξινόμηση σε 2 Καλάθια", type="primary", use_container_width=True, key="btn_open_game_group_sort"):
+                st.session_state.active_game_id = "group_sort"
+                st.session_state.ww_state = None
+                st.rerun()
+
+        with row5_c2:
+            st.markdown("""
+            <div style="background:linear-gradient(135deg,#fdf4ff,#ffffff); border:2px solid #c026d3; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(192,38,211,0.10); min-height:142px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#86198f; margin-bottom:6px;">🧩 Αντιστοίχιση Ζευγαριών</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    Ένωσε <b>5 όρους</b> με τις σωστές τους εξηγήσεις με 2 απλά κλικ (αριστερά ↔ δεξιά)!
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: 🧩 Αντιστοίχιση Ζευγαριών", type="primary", use_container_width=True, key="btn_open_game_match_up"):
+                st.session_state.active_game_id = "match_up"
+                st.session_state.ww_state = None
+                st.rerun()
+
+        st.write("")
         if st.button("↩️ Επιστροφή στο Μάθημα", use_container_width=True, key="btn_hub_return"):
             st.session_state.duel_mode_active = False
             st.session_state.active_game_id = None
             st.rerun()
         st.stop()
+
+    # ==============================================================
+    # ΠΑΙΧΝΙΔΙΑ 7, 8, 9 & 10 (WORDWALL-STYLE): ΤΡΟΧΟΣ, ΚΟΥΤΙ, ΤΑΞΙΝΟΜΗΣΗ & ΑΝΤΙΣΤΟΙΧΙΣΗ
+    # ==============================================================
+    if st.session_state.get("active_game_id") in ("wheel", "open_box", "group_sort", "match_up"):
+        import random
+        ww_gid = st.session_state.get("active_game_id")
+        ww_meta = {
+            "wheel": ("🎡 Τροχός της Τύχης", "#3730a3", "#4f46e5", "Γύρισε τον τροχό και απάντησε και στις 6 φέτες του μαθήματος!"),
+            "open_box": ("📦 Άνοιξε το Κουτί", "#9a3412", "#ea580c", "Άνοιξε ένα-ένα τα 6 κουτιά — βρες τις σωστές απαντήσεις και το Κουτί-Έκπληξη!"),
+            "group_sort": ("🗂️ Ταξινόμηση σε 2 Καλάθια", "#075985", "#0284c7", "Βάλε καθεμία από τις 6 κάρτες στο σωστό καλάθι!"),
+            "match_up": ("🧩 Αντιστοίχιση Ζευγαριών", "#86198f", "#c026d3", "Πάτησε έναν όρο αριστερά και μετά τη σωστή εξήγησή του δεξιά!"),
+        }
+        w_title, w_dark, w_accent, w_desc = ww_meta[ww_gid]
+        ww = st.session_state.get("ww_state", None)
+
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,{w_dark},{w_accent}); color:#fff; border-radius:16px; padding:14px 20px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:1.25rem; font-weight:800;">{w_title} — Σωκράτης</div>
+            <div style="font-size:0.86rem; font-weight:700; background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:999px;">{selected_grade} • {selected_subject}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if ww is None:
+            st.markdown(f"""
+            <div style="background:#ffffff; border:1.5px solid #cbd5e1; border-radius:14px; padding:16px 20px; margin-bottom:12px; color:#1e293b;">
+                <b>🎯 Πώς παίζεται:</b> {w_desc}<br>
+                • Χωρίς χρονόμετρο — μαζεύουμε αστέρια (<b>⭐</b>) και πόντους προσπάθειας!
+            </div>
+            """, unsafe_allow_html=True)
+            ww_chap = st.text_input(
+                "📌 Κεφάλαιο ή Θέμα (Προαιρετικό):",
+                placeholder="π.χ. Κλάσματα, Βυζάντιο, Κύτταρο, Παραβολές...",
+                key=f"ww_chap_{ww_gid}",
+            )
+            cw1, cw2 = st.columns([2, 1])
+            with cw1:
+                if st.button(f"🚀 Έναρξη: {w_title}", type="primary", use_container_width=True, key=f"btn_start_ww_{ww_gid}"):
+                    with st.spinner("🎮 Ο Σωκράτης ετοιμάζει το παιχνίδι..."):
+                        payload = generate_wordwall_game_json(ww_gid, selected_grade, selected_subject, book_topics, cur_lvl_duel, ww_chap)
+                    if payload:
+                        if ww_gid == "wheel":
+                            st.session_state.ww_state = {
+                                "type": "wheel", "items": payload, "done": [], "active_idx": -1,
+                                "score": 0, "attempt": 1, "feedback": "", "feedback_type": "info", "awaiting_spin": True,
+                            }
+                        elif ww_gid == "open_box":
+                            boxes = list(payload) + [{"is_bonus": True, "explanation": "🎁 Τυχερό Κουτί-Έκπληξη! Κερδίζεις +2 ⭐ δώρο από τον Σωκράτη!"}]
+                            random.shuffle(boxes)
+                            st.session_state.ww_state = {
+                                "type": "open_box", "boxes": boxes, "opened": [], "active_box": -1,
+                                "score": 0, "attempt": 1, "feedback": "", "feedback_type": "info",
+                            }
+                        elif ww_gid == "group_sort":
+                            items_s = list(payload["items"])
+                            random.shuffle(items_s)
+                            st.session_state.ww_state = {
+                                "type": "group_sort", "group_a": payload["group_a"], "group_b": payload["group_b"],
+                                "items": items_s, "idx": 0, "score": 0, "cnt_a": 0, "cnt_b": 0,
+                                "feedback": "", "feedback_type": "info", "awaiting_next": False,
+                            }
+                        else:  # match_up
+                            def_order = list(range(len(payload)))
+                            random.shuffle(def_order)
+                            st.session_state.ww_state = {
+                                "type": "match_up", "pairs": payload, "def_order": def_order,
+                                "matched": [], "sel_term": None, "score": 0, "mistakes": 0,
+                                "feedback": "", "feedback_type": "info",
+                            }
+                        st.rerun()
+                    else:
+                        st.error("⚠️ Δεν ήταν δυνατή η δημιουργία του παιχνιδιού αυτή τη στιγμή. Δοκιμάστε ξανά.")
+            with cw2:
+                if st.button("↩️ Πίσω στα Παιχνίδια", use_container_width=True, key=f"btn_back_ww_{ww_gid}"):
+                    st.session_state.active_game_id = None
+                    st.session_state.ww_state = None
+                    st.rerun()
+            st.stop()
+
+        def _render_ww_end_screen(stars: int, max_stars: int, badge_txt: str):
+            st.markdown(f"""
+            <div style="background:#ffffff; border:2px solid {w_accent}; border-radius:18px; padding:26px; text-align:center; box-shadow:0 6px 20px rgba(15,52,96,0.1); margin-bottom:16px;">
+                <div style="font-size:2.2rem; margin-bottom:6px;">🎉 ⭐ 🎉</div>
+                <h2 style="color:#0c335e; margin:0 0 8px 0;">Μπράβο! Ολοκλήρωσες το παιχνίδι!</h2>
+                <div style="font-size:2rem; font-weight:800; color:#d97706; margin:10px 0;">{stars} / {max_stars} ⭐</div>
+                <div style="font-size:1.1rem; font-weight:800; color:{w_dark};">{badge_txt}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if cur_duel_pol == "unlocked_all":
+                cwe1, cwe2 = st.columns(2)
+                with cwe1:
+                    if st.button("🔄 Παίξε Ξανά", type="primary", use_container_width=True, key=f"btn_ww_replay_{ww_gid}"):
+                        st.session_state.ww_state = None
+                        st.rerun()
+                with cwe2:
+                    if st.button("↩️ Επιστροφή στο Μάθημα", use_container_width=True, key=f"btn_ww_exit_all_{ww_gid}"):
+                        st.session_state.duel_mode_active = False
+                        st.session_state.active_game_id = None
+                        st.session_state.ww_state = None
+                        st.rerun()
+            else:
+                if st.button("↩️ Επιστροφή στο Μάθημα", type="primary", use_container_width=True, key=f"btn_ww_exit_{ww_gid}"):
+                    st.session_state.duel_mode_active = False
+                    st.session_state.active_game_id = None
+                    st.session_state.ww_state = None
+                    st.session_state.duel_study_steps = 0
+                    st.session_state.duel_confirmed_correct = 0
+                    st.session_state.duel_warning_penalty = 0
+                    st.rerun()
+            st.stop()
+
+        # --- 7. 🎡 ΤΡΟΧΟΣ ΤΗΣ ΤΥΧΗΣ ---
+        if ww_gid == "wheel":
+            items_w = ww["items"]
+            done_w = set(ww["done"])
+            if len(done_w) >= len(items_w) and ww["active_idx"] == -1:
+                _render_ww_end_screen(ww["score"], len(items_w) * 2, "🎡 Άρχοντας του Τροχού της Γνώσης!")
+
+            st.markdown(f"""
+            <div style="background:#eef2ff; border:2px solid #818cf8; border-radius:12px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-weight:800; color:#3730a3;">Φέτες που άνοιξαν: {len(done_w)} / {len(items_w)}</span>
+                <span style="font-weight:800; color:#d97706; font-size:1.1rem;">Σκορ: {ww['score']} ⭐</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown(render_wheel_svg(items_w, ww["active_idx"], done_w), unsafe_allow_html=True)
+
+            if ww["feedback"]:
+                (st.success if ww["feedback_type"] == "success" else (st.warning if ww["feedback_type"] == "warning" else st.info))(ww["feedback"])
+
+            if ww["awaiting_spin"]:
+                remaining = [i for i in range(len(items_w)) if i not in done_w]
+                if not remaining:
+                    if st.button("🏁 Δες το Αποτέλεσμα!", type="primary", use_container_width=True, key="btn_wheel_finish"):
+                        ww["active_idx"] = -1
+                        st.rerun()
+                else:
+                    if st.button("🎡 Γύρισε τον Τροχό!", type="primary", use_container_width=True, key=f"btn_wheel_spin_{len(done_w)}"):
+                        ww["active_idx"] = random.choice(remaining)
+                        ww["attempt"] = 1
+                        ww["feedback"] = ""
+                        ww["awaiting_spin"] = False
+                        st.rerun()
+            else:
+                w_item = items_w[ww["active_idx"]]
+                st.markdown(f"""
+                <div style="background:#ffffff; border:2px solid #4f46e5; border-radius:16px; padding:18px; margin-bottom:10px;">
+                    <div style="font-size:0.88rem; font-weight:800; color:#4f46e5; margin-bottom:5px;">🎡 Φέτα #{ww['active_idx'] + 1}: {html_lib.escape(str(w_item.get('label', '')))}</div>
+                    <div style="font-size:1.18rem; font-weight:800; color:#0c335e;">{html_lib.escape(str(w_item.get('question', '')))}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if ww["attempt"] == 2 and w_item.get("hint"):
+                    st.markdown(f"<div style='background:#fef9c3; border:1.5px solid #eab308; border-radius:10px; padding:10px 14px; margin-bottom:10px; color:#713f12;'>💡 <b>Σωκρατικό Στοιχείο (+1 ⭐):</b> {html_lib.escape(str(w_item.get('hint','')))}</div>", unsafe_allow_html=True)
+                correct_c = str(w_item.get("correct_choice", "")).strip()
+                for ci, ch in enumerate(w_item.get("choices", [])[:3]):
+                    if st.button(f"🔘 {ch}", key=f"whl_ch_{ww['active_idx']}_{ww['attempt']}_{ci}", use_container_width=True):
+                        if choices_match(str(ch), correct_c):
+                            pts = 2 if ww["attempt"] == 1 else 1
+                            ww["score"] += pts
+                            add_effort_points(pts * 4)
+                            ww["done"].append(ww["active_idx"])
+                            ww["feedback"] = f"🌟 Σωστά! (+{pts} ⭐) {w_item.get('explanation', '')}"
+                            ww["feedback_type"] = "success"
+                            ww["awaiting_spin"] = True
+                        else:
+                            record_misconception(selected_grade, selected_subject, str(w_item.get("topic", "Τροχός")), f"{str(w_item.get('question',''))[:50]} → {str(ch)[:45]}", "CAUGHT")
+                            if ww["attempt"] == 1:
+                                ww["attempt"] = 2
+                                ww["feedback"] = "🤔 Δοκίμασε 2η φορά με το σωκρατικό στοιχείο (+1 ⭐)!"
+                                ww["feedback_type"] = "warning"
+                            else:
+                                trigger_game_lose_sound()
+                                ww["done"].append(ww["active_idx"])
+                                ww["feedback"] = f"📘 Η σωστή απάντηση ήταν: **{correct_c}**. {w_item.get('explanation', '')}"
+                                ww["feedback_type"] = "info"
+                                ww["awaiting_spin"] = True
+                        st.rerun()
+            st.stop()
+
+        # --- 8. 📦 ΑΝΟΙΞΕ ΤΟ ΚΟΥΤΙ ---
+        if ww_gid == "open_box":
+            boxes = ww["boxes"]
+            opened = set(ww["opened"])
+            if len(opened) >= len(boxes) and ww["active_box"] == -1:
+                _render_ww_end_screen(ww["score"], len(boxes) * 2, "📦 Κυνηγός των Μυστικών Κουτιών!")
+
+            st.markdown(f"""
+            <div style="background:#fff7ed; border:2px solid #fb923c; border-radius:12px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-weight:800; color:#9a3412;">Κουτιά που άνοιξαν: {len(opened)} / {len(boxes)}</span>
+                <span style="font-weight:800; color:#d97706; font-size:1.1rem;">Σκορ: {ww['score']} ⭐</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if ww["feedback"]:
+                (st.success if ww["feedback_type"] == "success" else (st.warning if ww["feedback_type"] == "warning" else st.info))(ww["feedback"])
+
+            if ww["active_box"] == -1:
+                st.caption("📦 Διάλεξε ένα κλειστό κουτί για να το ανοίξεις:")
+                for br in range(2):
+                    b_cols = st.columns(3)
+                    for bc in range(3):
+                        b_i = br * 3 + bc
+                        is_op = b_i in opened
+                        b_lbl = ("🎁 Άνοιξε!" if boxes[b_i].get("is_bonus") else f"✅ Κουτί {b_i+1}") if is_op else f"📦 Κουτί {b_i+1}"
+                        with b_cols[bc]:
+                            if st.button(b_lbl, key=f"obox_{b_i}", disabled=is_op, type="secondary" if is_op else "primary", use_container_width=True):
+                                if boxes[b_i].get("is_bonus"):
+                                    ww["opened"].append(b_i)
+                                    ww["score"] += 2
+                                    add_effort_points(8)
+                                    ww["feedback"] = boxes[b_i].get("explanation", "🎁 Κουτί-Έκπληξη! +2 ⭐ δώρο!")
+                                    ww["feedback_type"] = "success"
+                                else:
+                                    ww["active_box"] = b_i
+                                    ww["attempt"] = 1
+                                    ww["feedback"] = ""
+                                st.rerun()
+            else:
+                b_idx = ww["active_box"]
+                b_item = boxes[b_idx]
+                st.markdown(f"""
+                <div style="background:#ffffff; border:2px solid #ea580c; border-radius:16px; padding:18px; margin-bottom:10px;">
+                    <div style="font-size:0.88rem; font-weight:800; color:#c2410c; margin-bottom:5px;">📦 Άνοιξες το Κουτί #{b_idx + 1}!</div>
+                    <div style="font-size:1.18rem; font-weight:800; color:#0c335e;">{html_lib.escape(str(b_item.get('question', '')))}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if ww["attempt"] == 2 and b_item.get("hint"):
+                    st.markdown(f"<div style='background:#fef9c3; border:1.5px solid #eab308; border-radius:10px; padding:10px 14px; margin-bottom:10px; color:#713f12;'>💡 <b>Σωκρατικό Στοιχείο (+1 ⭐):</b> {html_lib.escape(str(b_item.get('hint','')))}</div>", unsafe_allow_html=True)
+                correct_c = str(b_item.get("correct_choice", "")).strip()
+                for ci, ch in enumerate(b_item.get("choices", [])[:3]):
+                    if st.button(f"🔘 {ch}", key=f"obox_ch_{b_idx}_{ww['attempt']}_{ci}", use_container_width=True):
+                        if choices_match(str(ch), correct_c):
+                            pts = 2 if ww["attempt"] == 1 else 1
+                            ww["score"] += pts
+                            add_effort_points(pts * 4)
+                            ww["opened"].append(b_idx)
+                            ww["active_box"] = -1
+                            ww["feedback"] = f"🌟 Μπράβο! (+{pts} ⭐) {b_item.get('explanation', '')}"
+                            ww["feedback_type"] = "success"
+                        else:
+                            record_misconception(selected_grade, selected_subject, str(b_item.get("topic", "Άνοιξε το Κουτί")), f"{str(b_item.get('question',''))[:50]} → {str(ch)[:45]}", "CAUGHT")
+                            if ww["attempt"] == 1:
+                                ww["attempt"] = 2
+                                ww["feedback"] = "🤔 Όχι ακριβώς! Δες το σωκρατικό στοιχείο και δοκίμασε 2η φορά (+1 ⭐)!"
+                                ww["feedback_type"] = "warning"
+                            else:
+                                trigger_game_lose_sound()
+                                ww["opened"].append(b_idx)
+                                ww["active_box"] = -1
+                                ww["feedback"] = f"📘 Η σωστή απάντηση ήταν: **{correct_c}**. {b_item.get('explanation', '')}"
+                                ww["feedback_type"] = "info"
+                        st.rerun()
+            st.stop()
+
+        # --- 9. 🗂️ ΤΑΞΙΝΟΜΗΣΗ ΣΕ 2 ΚΑΛΑΘΙΑ ---
+        if ww_gid == "group_sort":
+            items_g = ww["items"]
+            if ww["idx"] >= len(items_g):
+                _render_ww_end_screen(ww["score"], len(items_g) * 2, "🗂️ Μετρ της Ταξινόμησης!")
+
+            cur_g = items_g[ww["idx"]]
+            st.markdown(f"""
+            <div style="background:#f0f9ff; border:2px solid #38bdf8; border-radius:12px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-weight:800; color:#075985;">Κάρτα {ww['idx'] + 1} από {len(items_g)} • ({html_lib.escape(ww['group_a'])}: {ww['cnt_a']} | {html_lib.escape(ww['group_b'])}: {ww['cnt_b']})</span>
+                <span style="font-weight:800; color:#d97706; font-size:1.1rem;">Σκορ: {ww['score']} ⭐</span>
+            </div>
+            <div style="background:#ffffff; border:2px solid #0284c7; border-radius:16px; padding:22px; text-align:center; margin-bottom:12px;">
+                <div style="font-size:0.86rem; font-weight:800; color:#0369a1; margin-bottom:6px;">🗂️ Σε ποιο καλάθι ανήκει αυτή η κάρτα;</div>
+                <div style="font-size:1.28rem; font-weight:900; color:#0c335e;">«{html_lib.escape(str(cur_g.get('text', '')))}»</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if ww["feedback"]:
+                (st.success if ww["feedback_type"] == "success" else st.info)(ww["feedback"])
+
+            if ww["awaiting_next"]:
+                nxt_lbl = "🏁 Δες το Αποτέλεσμα!" if ww["idx"] == len(items_g) - 1 else "➡️ Επόμενη Κάρτα"
+                if st.button(nxt_lbl, type="primary", use_container_width=True, key=f"btn_gs_next_{ww['idx']}"):
+                    ww["idx"] += 1
+                    ww["feedback"] = ""
+                    ww["awaiting_next"] = False
+                    st.rerun()
+            else:
+                cg1, cg2 = st.columns(2)
+                actual_grp = str(cur_g.get("group", "A")).strip().upper()
+                with cg1:
+                    if st.button(f"🗂️ {ww['group_a']}", type="primary", use_container_width=True, key=f"gs_a_{ww['idx']}"):
+                        if actual_grp == "A":
+                            ww["score"] += 2
+                            ww["cnt_a"] += 1
+                            add_effort_points(8)
+                            ww["feedback"] = f"🌟 Σωστό καλάθι! (+2 ⭐) {cur_g.get('explanation', '')}"
+                            ww["feedback_type"] = "success"
+                        else:
+                            trigger_game_lose_sound()
+                            record_misconception(selected_grade, selected_subject, str(cur_g.get("topic", "Ταξινόμηση")), f"{str(cur_g.get('text',''))[:45]} → Έβαλε {ww['group_a']}", "CAUGHT")
+                            ww["feedback"] = f"📘 Ανήκει στο καλάθι «**{ww['group_b']}**»! {cur_g.get('explanation', '')}"
+                            ww["feedback_type"] = "info"
+                        ww["awaiting_next"] = True
+                        st.rerun()
+                with cg2:
+                    if st.button(f"🗂️ {ww['group_b']}", use_container_width=True, key=f"gs_b_{ww['idx']}"):
+                        if actual_grp == "B":
+                            ww["score"] += 2
+                            ww["cnt_b"] += 1
+                            add_effort_points(8)
+                            ww["feedback"] = f"🌟 Σωστό καλάθι! (+2 ⭐) {cur_g.get('explanation', '')}"
+                            ww["feedback_type"] = "success"
+                        else:
+                            trigger_game_lose_sound()
+                            record_misconception(selected_grade, selected_subject, str(cur_g.get("topic", "Ταξινόμηση")), f"{str(cur_g.get('text',''))[:45]} → Έβαλε {ww['group_b']}", "CAUGHT")
+                            ww["feedback"] = f"📘 Ανήκει στο καλάθι «**{ww['group_a']}**»! {cur_g.get('explanation', '')}"
+                            ww["feedback_type"] = "info"
+                        ww["awaiting_next"] = True
+                        st.rerun()
+            st.stop()
+
+        # --- 10. 🧩 ΑΝΤΙΣΤΟΙΧΙΣΗ ΖΕΥΓΑΡΙΩΝ ---
+        if ww_gid == "match_up":
+            pairs = ww["pairs"]
+            matched = set(ww["matched"])
+            if len(matched) >= len(pairs):
+                _render_ww_end_screen(ww["score"], len(pairs) * 2, "🧩 Μαέστρος των Ζευγαριών!")
+
+            st.markdown(f"""
+            <div style="background:#fdf4ff; border:2px solid #e879f9; border-radius:12px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-weight:800; color:#86198f;">Ζευγάρια που ενώθηκαν: {len(matched)} / {len(pairs)}</span>
+                <span style="font-weight:800; color:#d97706; font-size:1.1rem;">Σκορ: {ww['score']} ⭐</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if ww["feedback"]:
+                (st.success if ww["feedback_type"] == "success" else st.warning)(ww["feedback"])
+
+            cm_l, cm_r = st.columns(2)
+            with cm_l:
+                st.markdown("**1️⃣ Διάλεξε Όρο:**")
+                for ti, pr in enumerate(pairs):
+                    is_m = ti in matched
+                    is_sel = (ww["sel_term"] == ti)
+                    t_lbl = f"✅ {pr['term']}" if is_m else (f"👉 {pr['term']}" if is_sel else f"🔹 {pr['term']}")
+                    if st.button(t_lbl, key=f"mu_t_{ti}", disabled=is_m, type="primary" if is_sel else "secondary", use_container_width=True):
+                        ww["sel_term"] = ti
+                        ww["feedback"] = ""
+                        st.rerun()
+            with cm_r:
+                st.markdown("**2️⃣ Πάτησε τη Σωστή Εξήγηση:**")
+                for pos_i, orig_i in enumerate(ww["def_order"]):
+                    pr = pairs[orig_i]
+                    is_m = orig_i in matched
+                    d_lbl = f"✅ {pr['definition']}" if is_m else f"🔸 {pr['definition']}"
+                    if st.button(d_lbl, key=f"mu_d_{pos_i}_{orig_i}", disabled=is_m, use_container_width=True):
+                        if ww["sel_term"] is None:
+                            ww["feedback"] = "👈 Πάτησε πρώτα έναν όρο στην αριστερή στήλη!"
+                            ww["feedback_type"] = "warning"
+                        elif ww["sel_term"] == orig_i:
+                            ww["matched"].append(orig_i)
+                            ww["sel_term"] = None
+                            ww["score"] += 2
+                            add_effort_points(8)
+                            ww["feedback"] = f"🌟 Τέλειο ζευγάρι: **{pr['term']} ↔ {pr['definition']}** (+2 ⭐)!"
+                            ww["feedback_type"] = "success"
+                        else:
+                            trigger_game_lose_sound()
+                            ww["mistakes"] += 1
+                            sel_pr = pairs[ww["sel_term"]]
+                            record_misconception(selected_grade, selected_subject, str(sel_pr.get("topic", "Αντιστοίχιση")), f"{sel_pr['term']} → {pr['definition'][:40]}", "CAUGHT")
+                            ww["feedback"] = f"🤔 Όχι ακριβώς! Το «{sel_pr['term']}» ταιριάζει με άλλη εξήγηση — ξαναδοκίμασε!"
+                            ww["feedback_type"] = "warning"
+                        st.rerun()
+            st.stop()
 
     # ==============================================================
     # ΠΑΙΧΝΙΔΙ 6: 🔤 ΚΡΕΜΑΛΑ ΓΝΩΣΕΩΝ (3 ΛΕΞΕΙΣ-ΚΛΕΙΔΙΑ ΜΕ ΚΛΑΣΙΚΟ ΑΝΘΡΩΠΑΚΙ)
