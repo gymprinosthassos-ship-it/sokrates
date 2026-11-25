@@ -6010,57 +6010,59 @@ def render_welcome_fireworks():
             }
             resize();
 
-            // Ήχος βεγγαλικών (Web Audio API - ήπιος & εορταστικός, χωρίς εξωτερικά αρχεία)
+            // Ήχος βεγγαλικών (Web Audio API - απόλυτος συγχρονισμός με την έκρηξη, χωρίς καθυστερημένο ήχο)
             const AudioCtx = win.AudioContext || win.webkitAudioContext;
             let audioCtx = null;
-            function playFireworkPop(delaySec) {
-                if (!AudioCtx) return;
+            if (AudioCtx) {
                 try {
-                    if (!audioCtx) audioCtx = new AudioCtx();
-                    if (audioCtx.state === "suspended") {
-                        audioCtx.resume().catch(() => {});
-                    }
-                    const now = audioCtx.currentTime + delaySec;
+                    audioCtx = new AudioCtx();
+                    if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+                } catch (e) {}
+            }
+            function playFireworkPop() {
+                if (!audioCtx || audioCtx.state !== "running") return;
+                try {
+                    const now = audioCtx.currentTime;
 
-                    // Απαλό "μπουμ" έκρηξης
+                    // Απαλό "μπουμ" έκρηξης ακριβώς τη στιγμή της λάμψης
                     const osc = audioCtx.createOscillator();
                     const oscGain = audioCtx.createGain();
                     osc.type = "triangle";
-                    osc.frequency.setValueAtTime(170, now);
-                    osc.frequency.exponentialRampToValueAtTime(42, now + 0.18);
+                    osc.frequency.setValueAtTime(185, now);
+                    osc.frequency.exponentialRampToValueAtTime(44, now + 0.14);
                     oscGain.gain.setValueAtTime(0.18, now);
-                    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
                     osc.connect(oscGain);
                     oscGain.connect(audioCtx.destination);
                     osc.start(now);
-                    osc.stop(now + 0.24);
+                    osc.stop(now + 0.19);
 
-                    // Απαλό "σπινθήρισμα" (crackle)
-                    const bufferSize = Math.floor(audioCtx.sampleRate * 0.35);
+                    // Απαλό "σπινθήρισμα" (crackle) αμέσως μετά τη λάμψη
+                    const bufferSize = Math.floor(audioCtx.sampleRate * 0.28);
                     const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                     const output = noiseBuffer.getChannelData(0);
                     for (let i = 0; i < bufferSize; i++) {
-                        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+                        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.32));
                     }
                     const whiteNoise = audioCtx.createBufferSource();
                     whiteNoise.buffer = noiseBuffer;
                     const filter = audioCtx.createBiquadFilter();
                     filter.type = "bandpass";
-                    filter.frequency.setValueAtTime(1600, now);
+                    filter.frequency.setValueAtTime(1750, now);
                     const noiseGain = audioCtx.createGain();
-                    noiseGain.gain.setValueAtTime(0.11, now);
-                    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+                    noiseGain.gain.setValueAtTime(0.10, now + 0.01);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.27);
                     whiteNoise.connect(filter);
                     filter.connect(noiseGain);
                     noiseGain.connect(audioCtx.destination);
-                    whiteNoise.start(now);
+                    whiteNoise.start(now + 0.01);
                 } catch (e) {}
             }
 
-            // Αν ο browser μπλοκάρει τον αυτόματο ήχο, ξεκλειδώνει στο 1ο κλικ/άγγιγμα
+            // Αν ο browser κρατάει τον ήχο σε παύση μέχρι το 1ο κλικ, απλώς ξεκλειδώνει αθόρυβα για όσα βεγγαλικά τρέχουν ακόμη (ΠΟΤΕ καθυστερημένος ήχος!)
             const unlockOnce = function() {
                 if (audioCtx && audioCtx.state === "suspended") {
-                    audioCtx.resume().then(() => playFireworkPop(0)).catch(() => {});
+                    audioCtx.resume().catch(() => {});
                 }
                 doc.removeEventListener("click", unlockOnce);
                 doc.removeEventListener("touchstart", unlockOnce);
@@ -6068,38 +6070,43 @@ def render_welcome_fireworks():
             doc.addEventListener("click", unlockOnce, { once: true });
             doc.addEventListener("touchstart", unlockOnce, { once: true });
 
-            const colors = ["#fbbf24", "#38bdf8", "#f472b6", "#34d399", "#a78bfa", "#fb923c"];
+            const colors = ["#fbbf24", "#38bdf8", "#f472b6", "#34d399", "#a78bfa", "#fb923c", "#f43f5e", "#2dd4bf"];
             const particles = [];
 
             function createBurst(cx, cy) {
-                const count = 42;
+                const count = 52;
                 const baseColor = colors[Math.floor(Math.random() * colors.length)];
                 for (let i = 0; i < count; i++) {
                     const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
-                    const speed = 2.2 + Math.random() * 4.5;
+                    const speed = 2.4 + Math.random() * 4.8;
                     particles.push({
                         x: cx,
                         y: cy,
                         vx: Math.cos(angle) * speed,
                         vy: Math.sin(angle) * speed,
                         alpha: 1,
-                        decay: 0.015 + Math.random() * 0.012,
-                        radius: 2 + Math.random() * 2.5,
+                        decay: 0.014 + Math.random() * 0.012,
+                        radius: 2.2 + Math.random() * 2.6,
                         color: Math.random() > 0.35 ? baseColor : colors[Math.floor(Math.random() * colors.length)]
                     });
                 }
             }
 
+            // Διπλάσια βεγγαλικά (8 εκρήξεις σε όλο το πλάτος της οθόνης) με ακριβή συγχρονισμό ήχου
             const bursts = [
-                { t: 100, x: 0.32, y: 0.28 },
-                { t: 500, x: 0.68, y: 0.24 },
-                { t: 950, x: 0.50, y: 0.20 },
-                { t: 1350, x: 0.78, y: 0.34 }
+                { t: 80,   x: 0.26, y: 0.26 },
+                { t: 340,  x: 0.72, y: 0.22 },
+                { t: 620,  x: 0.48, y: 0.18 },
+                { t: 900,  x: 0.20, y: 0.34 },
+                { t: 1180, x: 0.80, y: 0.30 },
+                { t: 1480, x: 0.38, y: 0.24 },
+                { t: 1780, x: 0.62, y: 0.20 },
+                { t: 2100, x: 0.50, y: 0.28 }
             ];
-            bursts.forEach((b, idx) => {
+            bursts.forEach((b) => {
                 setTimeout(() => {
                     createBurst(canvas.width * b.x, canvas.height * b.y);
-                    playFireworkPop(0);
+                    playFireworkPop();
                 }, b.t);
             });
 
@@ -6125,7 +6132,7 @@ def render_welcome_fireworks():
                     ctx.fill();
                     ctx.restore();
                 }
-                if (now - startTime < 3100 || particles.length > 0) {
+                if (now - startTime < 4300 || particles.length > 0) {
                     win.requestAnimationFrame(animate);
                 } else {
                     if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
