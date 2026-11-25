@@ -2292,58 +2292,46 @@ def normalize_greek_upper_word(raw_word: str) -> str:
     return "".join(ch for ch in cleaned if ch in GREEK_ALPHABET_24)
 
 def render_hangman_svg(wrong_count: int) -> str:
-    """Επιστρέφει ρεαλιστικό SVG σχολικό μαυροπίνακα με ξύλινο πλαίσιο & ζωγραφιστό ανθρωπάκι κιμωλίας (6 στάδια)."""
+    """Επιστρέφει ρεαλιστικό SVG σχολικό μαυροπίνακα με ξύλινο πλαίσιο & ζωγραφιστό ανθρωπάκι κιμωλίας (6 στάδια, 100% συμβατό με Firefox)."""
     w = max(0, min(6, int(wrong_count)))
     parts = [
         # Κεφάλι (1ο λάθος)
-        '<circle cx="152" cy="64" r="16" stroke="#f8fafc" stroke-width="3.6" fill="none" filter="url(#chalkGlow)" />' if w >= 1 else "",
+        '<circle cx="152" cy="66" r="16" stroke="#ffffff" stroke-width="4" fill="none" />' if w >= 1 else "",
         # Σώμα (2ο λάθος)
-        '<line x1="152" y1="80" x2="152" y2="128" stroke="#f8fafc" stroke-width="3.6" stroke-linecap="round" filter="url(#chalkGlow)" />' if w >= 2 else "",
+        '<line x1="152" y1="82" x2="152" y2="130" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />' if w >= 2 else "",
         # Αριστερό χέρι (3ο λάθος)
-        '<line x1="152" y1="92" x2="126" y2="113" stroke="#f8fafc" stroke-width="3.5" stroke-linecap="round" filter="url(#chalkGlow)" />' if w >= 3 else "",
+        '<line x1="152" y1="94" x2="124" y2="115" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" />' if w >= 3 else "",
         # Δεξί χέρι (4ο λάθος)
-        '<line x1="152" y1="92" x2="178" y2="113" stroke="#f8fafc" stroke-width="3.5" stroke-linecap="round" filter="url(#chalkGlow)" />' if w >= 4 else "",
+        '<line x1="152" y1="94" x2="180" y2="115" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" />' if w >= 4 else "",
         # Αριστερό πόδι (5ο λάθος)
-        '<line x1="152" y1="128" x2="129" y2="160" stroke="#f8fafc" stroke-width="3.5" stroke-linecap="round" filter="url(#chalkGlow)" />' if w >= 5 else "",
+        '<line x1="152" y1="130" x2="128" y2="162" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" />' if w >= 5 else "",
         # Δεξί πόδι + X μάτια με κόκκινη κιμωλία (6ο λάθος)
-        ('<line x1="152" y1="128" x2="175" y2="160" stroke="#fda4af" stroke-width="3.6" stroke-linecap="round" filter="url(#chalkGlow)" />'
-         '<text x="145" y="67" font-size="10" font-weight="800" fill="#fda4af">x</text>'
-         '<text x="155" y="67" font-size="10" font-weight="800" fill="#fda4af">x</text>') if w >= 6 else "",
+        (
+            '<line x1="152" y1="130" x2="176" y2="162" stroke="#fda4af" stroke-width="4" stroke-linecap="round" />'
+            '<line x1="144" y1="61" x2="149" y2="66" stroke="#fda4af" stroke-width="2.2" stroke-linecap="round" />'
+            '<line x1="149" y1="61" x2="144" y2="66" stroke="#fda4af" stroke-width="2.2" stroke-linecap="round" />'
+            '<line x1="155" y1="61" x2="160" y2="66" stroke="#fda4af" stroke-width="2.2" stroke-linecap="round" />'
+            '<line x1="160" y1="61" x2="155" y2="66" stroke="#fda4af" stroke-width="2.2" stroke-linecap="round" />'
+            '<path d="M 146 74 Q 152 70 158 74" stroke="#fda4af" stroke-width="2.2" fill="none" stroke-linecap="round" />'
+        ) if w >= 6 else "",
     ]
-    return f"""
-    <div style="display:flex; justify-content:center; align-items:center; padding:4px;">
-        <svg width="230" height="210" viewBox="0 0 230 210" xmlns="http://www.w3.org/2000/svg" style="border-radius:14px; box-shadow:0 8px 20px rgba(15,23,42,0.22);">
-            <defs>
-                <linearGradient id="woodFrame" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#b45309" />
-                    <stop offset="50%" stop-color="#92400e" />
-                    <stop offset="100%" stop-color="#78350f" />
-                </linearGradient>
-                <radialGradient id="chalkBoard" cx="45%" cy="40%" r="65%">
-                    <stop offset="0%" stop-color="#1f5c47" />
-                    <stop offset="100%" stop-color="#0f3528" />
-                </radialGradient>
-                <filter id="chalkGlow" x="-10%" y="-10%" width="120%" height="120%">
-                    <feGaussianBlur stdDeviation="0.45" result="blur" />
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-            </defs>
-            <rect x="0" y="0" width="230" height="210" rx="14" fill="url(#woodFrame)" />
-            <rect x="10" y="10" width="210" height="184" rx="7" fill="url(#chalkBoard)" stroke="#5c2808" stroke-width="1.5" />
-            <!-- Ράφι & κιμωλίες -->
-            <rect x="18" y="191" width="194" height="7" rx="3" fill="#78350f" />
-            <rect x="34" y="187" width="24" height="5" rx="2" fill="#f8fafc" />
-            <rect x="64" y="187" width="18" height="5" rx="2" fill="#fde047" />
-            <!-- Κρεμάλα με κιμωλία -->
-            <line x1="28" y1="176" x2="122" y2="176" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" filter="url(#chalkGlow)" />
-            <line x1="58" y1="176" x2="58" y2="26" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" filter="url(#chalkGlow)" />
-            <line x1="58" y1="26" x2="152" y2="26" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" filter="url(#chalkGlow)" />
-            <line x1="58" y1="54" x2="88" y2="26" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" filter="url(#chalkGlow)" />
-            <line x1="152" y1="26" x2="152" y2="48" stroke="#fde68a" stroke-width="3" stroke-linecap="round" />
-            {''.join(parts)}
-        </svg>
-    </div>
-    """
+    svg_html = (
+        '<div style="display:flex; justify-content:center; align-items:center; padding:4px;">'
+        '<svg width="230" height="210" viewBox="0 0 230 210" xmlns="http://www.w3.org/2000/svg" style="border-radius:14px; box-shadow:0 8px 20px rgba(15,23,42,0.22);">'
+        '<rect x="0" y="0" width="230" height="210" rx="14" fill="#92400e" stroke="#78350f" stroke-width="3" />'
+        '<rect x="10" y="10" width="210" height="184" rx="7" fill="#14533c" stroke="#5c2808" stroke-width="2" />'
+        '<rect x="18" y="191" width="194" height="7" rx="3" fill="#78350f" />'
+        '<rect x="34" y="187" width="24" height="5" rx="2" fill="#f8fafc" />'
+        '<rect x="64" y="187" width="18" height="5" rx="2" fill="#fde047" />'
+        '<line x1="28" y1="176" x2="122" y2="176" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" />'
+        '<line x1="58" y1="176" x2="58" y2="26" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" />'
+        '<line x1="58" y1="26" x2="152" y2="26" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" />'
+        '<line x1="58" y1="54" x2="88" y2="26" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" />'
+        '<line x1="152" y1="26" x2="152" y2="50" stroke="#fde68a" stroke-width="3.2" stroke-linecap="round" />'
+        + "".join(parts)
+        + '</svg></div>'
+    )
+    return svg_html
 
 def generate_hangman_words_json(grade: str, subject: str, book_topics: str, support_level: str, chapter_focus: str = ""):
     """Παράγει σε 1 κλήση AI 3 ελληνικές λέξεις-κλειδιά από την ύλη ΙΕΠ για την Κρεμάλα Γνώσεων."""
