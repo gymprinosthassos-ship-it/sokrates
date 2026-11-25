@@ -781,26 +781,60 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 4. Όλα τα Dropdowns & Selectbox σε απαλό γαλάζιο & λειτουργικό ύψος */
-    div[data-baseweb="select"] > div,
+    /* 4. Όλα τα Dropdowns & Selectbox (React Aria & BaseWeb) σε γυαλιστερό γαλάζιο 3D με σκίαση */
+    [data-testid="stSelectbox"] {
+        overflow: visible !important;
+        padding-bottom: 5px !important;
+    }
     div[data-baseweb="select"] {
-        background-color: #cce5f9 !important;
-        border-color: #8bbfe6 !important;
-        color: #0f172a !important;
-        border-radius: 10px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+    [data-testid="stSelectbox"] [role="group"],
+    [data-testid="stSelectbox"] div:has(> input),
+    div[data-baseweb="select"] > div {
+        background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 52%, #7dd3fc 100%) !important;
+        background-color: #bae6fd !important;
+        border: 1.5px solid #0284c7 !important;
+        color: #0c4a6e !important;
+        border-radius: 12px !important;
         min-height: 2.35rem !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(2, 132, 199, 0.16), 0 4px 0 #0369a1, 0 7px 14px rgba(2, 132, 199, 0.24) !important;
+        transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease !important;
     }
+    [data-testid="stSelectbox"] [role="group"]:hover,
+    [data-testid="stSelectbox"] div:has(> input):hover,
+    div[data-baseweb="select"] > div:hover {
+        filter: brightness(1.04) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.96), 0 5px 0 #0369a1, 0 9px 16px rgba(2, 132, 199, 0.28) !important;
+    }
+    [data-testid="stSelectbox"] input,
+    [data-testid="stSelectbox"] button[aria-label="Open"],
+    div[data-baseweb="select"] > div > div {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    [data-testid="stSelectbox"] input,
+    [data-testid="stSelectbox"] button[aria-label="Open"],
+    [data-testid="stSelectbox"] button[aria-label="Open"] svg,
     div[data-baseweb="select"] * {
-        color: #0f172a !important;
+        color: #0c4a6e !important;
         font-size: 0.88rem !important;
+        font-weight: 700 !important;
     }
+    [data-testid="stSelectboxVirtualDropdown"],
     div[data-baseweb="popover"],
     ul[role="listbox"],
     li[role="option"] {
-        background-color: #d7ecfa !important;
-        color: #0f172a !important;
+        background-color: #e0f2fe !important;
+        color: #0c4a6e !important;
     }
 
     /* 5. Μηνύματα συνομιλίας: «γυάλινη» 3D ευκρίνεια & διακριτός τόνος Μαθητή vs Σωκράτη */
@@ -1126,19 +1160,32 @@ st.markdown("""
         transform: translateY(1px) !important;
         box-shadow: 0 1px 0 rgba(15, 52, 96, 0.14), inset 0 1px 2px rgba(15, 52, 96, 0.10) !important;
     }
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"],
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-        min-height: 2.3rem !important;
+    [data-testid="stSidebar"] .stSelectbox,
+    [data-testid="stSidebar"] [data-testid="stSelectbox"],
+    [data-testid="stSidebar"] .st-key-side_grade_select,
+    [data-testid="stSidebar"] .st-key-side_subject_select,
+    [data-testid="stSidebar"] .st-key-support_level_selector {
+        overflow: visible !important;
+        padding-bottom: 5px !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] [role="group"],
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] div:has(> input),
+    [data-testid="stSidebar"] div[data-baseweb="select"] > div {
+        min-height: 2.35rem !important;
         border-radius: 12px !important;
-        background: linear-gradient(180deg, #f0f9ff 0%, #bae6fd 52%, #7dd3fc 100%) !important;
+        background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 52%, #7dd3fc 100%) !important;
+        background-color: #bae6fd !important;
         border: 1.5px solid #0284c7 !important;
         color: #0c4a6e !important;
-        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(2, 132, 199, 0.16), 0 4px 0 #0369a1, 0 7px 14px rgba(2, 132, 199, 0.22) !important;
+        box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.92), inset 0 -2px 4px rgba(2, 132, 199, 0.16), 0 4px 0 #0369a1, 0 7px 14px rgba(2, 132, 199, 0.24) !important;
     }
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] > div > div {
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] input,
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] button[aria-label="Open"],
+    [data-testid="stSidebar"] div[data-baseweb="select"] > div > div {
         background: transparent !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] * {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
         color: #0c4a6e !important;
         font-weight: 700 !important;
     }
