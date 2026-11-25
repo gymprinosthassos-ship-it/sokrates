@@ -6458,7 +6458,8 @@ def build_socratic_master_prompt(
     Δημιουργεί το δυναμικό Σωκρατικό System Instruction με Adaptive Scaffolding,
     Anti-Leak Guardrails και Έξυπνη Επιλογή Εποπτικού Υλικού.
     """
-    cards_list_str = ", ".join(available_cards_ids) if available_cards_ids else "καμία διαθέσιμη"
+    filtered_cards_ids = [cid for cid in (available_cards_ids or []) if cid != "civics_rights_rules"]
+    cards_list_str = ", ".join(filtered_cards_ids) if filtered_cards_ids else "καμία διαθέσιμη"
 
     return f"""
 Είσαι ο Σωκράτης, ο αρχαίος Έλληνας φιλόσοφος, που λειτουργεί ως υποστηρικτικός, εμπνευσμένος και υπομονετικός AI Tutor για μαθητές Γυμνασίου στην Ελλάδα.
@@ -6471,9 +6472,10 @@ def build_socratic_master_prompt(
 • Προφίλ Υποστήριξης: {active_support}.
 • Ύλη & Κεφάλαια Σχολικού Βιβλίου: {book_topics}
 
-ΚΑΝΟΝΑΣ ΣΥΜΒΑΤΟΤΗΤΑΣ:
+ΚΑΝΟΝΑΣ ΣΥΜΒΑΤΟΤΗΤΑΣ & ΥΦΟΥΣ:
 - Όλοι οι ορισμοί, οι συμβολισμοί και οι μέθοδοι ΠΡΕΠΕΙ να συμβαδίζουν ΑΠΟΛΥΤΑ με τα τρέχοντα επίσημα σχολικά βιβλία του ΙΕΠ (ebooks.edu.gr) για την {selected_grade}.
 - Απαγορεύεται η χρήση εξωσχολικών/πιλοτικών βιβλίων ή πανεπιστημιακής ορολογίας και τύπων Λυκείου που δεν διδάσκονται στο Γυμνάσιο.
+- ΜΗΝ ξεκινάς ΠΟΤΕ τις απαντήσεις σου με «Χαίρε», «Χαίρε:», «Χαίρε, φίλε μου» ή άλλους επαναλαμβανόμενους χαιρετισμούς — έχεις ήδη χαιρετήσει τον μαθητή στην αρχή. Μπες αμέσως στο θέμα με φυσικό, ζεστό τόνο.
 
 ═════════════════════════════════════════════════════════════════════
 2. ΠΑΙΔΑΓΩΓΙΚΗ ΚΛΙΜΑΚΑ & ADAPTIVE SCAFFOLDING (ΕΠΙΠΕΔΟ ΚΟΛΛΗΜΑΤΟΣ: {stuck_level})
@@ -6833,16 +6835,29 @@ if prompt:
                             success = True
                             elapsed_sec = time.time() - t_start
 
-                            # Fallback κάρτας αν δεν επέλεξε το μοντέλο
+                            # Αφαίρεση επαναλαμβανόμενου «Χαίρε» / «Χαίρε, φίλε μου!» στην αρχή της απάντησης
+                            full_response = re.sub(
+                                r'^\s*Χαίρε\s*(?:[,:!.]\s*)?(?:(?:φίλε\s+μου|αγαπητέ(?:\s+μου)?|αγαπητή(?:\s+μου)?|μαθητή(?:\s+μου)?|παιδί\s+μου)\s*)?(?:[,:!.]\s*)?',
+                                '',
+                                full_response,
+                                flags=re.IGNORECASE,
+                            ).strip()
+                            if full_response:
+                                full_response = full_response[0].upper() + full_response[1:]
+
+                            # Fallback κάρτας αν δεν επέλεξε το μοντέλο (εξαιρώντας την παλιά κάρτα ΚΠΑ)
+                            if matched_card and matched_card.get("id") == "civics_rights_rules":
+                                matched_card = None
                             if not matched_card:
-                                matched_card = find_matching_card(prompt + " " + full_response, selected_subject, selected_grade)
+                                cand_card = find_matching_card(prompt + " " + full_response, selected_subject, selected_grade)
+                                if cand_card and cand_card.get("id") != "civics_rights_rules":
+                                    matched_card = cand_card
                                 if not matched_card and any(w in prompt.lower() for w in ["εικονα", "σχημα", "δειξε", "σχεδιαγραμμα", "καρτα", "φωτογραφια"]):
-                                    subj_cards = get_cards_for_subject(selected_subject)
+                                    subj_cards = [c for c in get_cards_for_subject(selected_subject) if c.get("id") != "civics_rights_rules"]
                                     if subj_cards:
                                         matched_card = subj_cards[0]
 
                             response_container.markdown(full_response)
-                            st.caption(f"⚡ *Χρόνος απόκρισης: {elapsed_sec:.2f}δλ. (Μοντέλο: `{model_name}`)*")
 
                             user_msg_record = {"role": "user", "content": prompt}
                             if active_img_data:
