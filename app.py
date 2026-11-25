@@ -1343,6 +1343,12 @@ st.markdown("""
     [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] summary {
         background: transparent !important;
         color: #0f172a !important;
+        padding: 0.36rem 0.42rem !important;
+        font-size: 0.77rem !important;
+    }
+    [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] summary p {
+        font-size: 0.77rem !important;
+        white-space: nowrap !important;
     }
     [data-testid="stSidebar"] .st-key-side_exp_settings [data-testid="stExpander"] div[role="region"] {
         background-color: #edf4fa !important;
