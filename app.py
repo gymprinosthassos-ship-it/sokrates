@@ -1156,11 +1156,18 @@ st.markdown("""
         color: #ffffff !important;
     }
     .st-key-btn_open_game_ladder5 button:hover { background-color: #0f766e !important; }
+    .st-key-btn_open_game_hangman button {
+        background-color: #e11d48 !important;
+        border: 1.5px solid #be123c !important;
+        color: #ffffff !important;
+    }
+    .st-key-btn_open_game_hangman button:hover { background-color: #be123c !important; }
     .st-key-btn_open_game_duel button p,
     .st-key-btn_open_game_detective button p,
     .st-key-btn_open_game_myth button p,
     .st-key-btn_open_game_escape button p,
-    .st-key-btn_open_game_ladder5 button p {
+    .st-key-btn_open_game_ladder5 button p,
+    .st-key-btn_open_game_hangman button p {
         color: #ffffff !important;
         font-weight: 700 !important;
     }
@@ -1922,6 +1929,135 @@ def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topic
                 items = parsed.get("items", []) if isinstance(parsed, dict) else []
                 if isinstance(items, list) and len(items) >= expected_len:
                     return items[:expected_len]
+            except Exception as err:
+                err_txt = str(err).lower()
+                if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
+                    continue
+                break
+    return None
+
+GREEK_ALPHABET_24 = list("ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ")
+
+def normalize_greek_upper_word(raw_word: str) -> str:
+    """Μετατρέπει μια ελληνική λέξη σε ΚΕΦΑΛΑΙΑ χωρίς τόνους (μόνο Α–Ω, ς→Σ) για την Κρεμάλα."""
+    trans = str.maketrans({
+        "ά": "α", "έ": "ε", "ή": "η", "ί": "ι", "ό": "ο", "ύ": "υ", "ώ": "ω",
+        "ϊ": "ι", "ΐ": "ι", "ϋ": "υ", "ΰ": "υ", "ς": "σ",
+        "Ά": "Α", "Έ": "Ε", "Ή": "Η", "Ί": "Ι", "Ό": "Ο", "Ύ": "Υ", "Ώ": "Ω",
+        "Ϊ": "Ι", "Ϋ": "Υ",
+    })
+    cleaned = (raw_word or "").strip().translate(trans).upper()
+    return "".join(ch for ch in cleaned if ch in GREEK_ALPHABET_24)
+
+def render_hangman_svg(wrong_count: int) -> str:
+    """Επιστρέφει καθαρό SVG σχέδιο Κρεμάλας με το κλασικό ανθρωπάκι (6 στάδια λαθών)."""
+    w = max(0, min(6, int(wrong_count)))
+    parts = [
+        # Κεφάλι (1ο λάθος)
+        '<circle cx="135" cy="56" r="16" stroke="#1e293b" stroke-width="3.5" fill="#fff1f2" />' if w >= 1 else "",
+        # Σώμα (2ο λάθος)
+        '<line x1="135" y1="72" x2="135" y2="122" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" />' if w >= 2 else "",
+        # Αριστερό χέρι (3ο λάθος)
+        '<line x1="135" y1="84" x2="110" y2="105" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" />' if w >= 3 else "",
+        # Δεξί χέρι (4ο λάθος)
+        '<line x1="135" y1="84" x2="160" y2="105" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" />' if w >= 4 else "",
+        # Αριστερό πόδι (5ο λάθος)
+        '<line x1="135" y1="122" x2="112" y2="154" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" />' if w >= 5 else "",
+        # Δεξί πόδι + X μάτια (6ο λάθος)
+        ('<line x1="135" y1="122" x2="158" y2="154" stroke="#e11d48" stroke-width="3.5" stroke-linecap="round" />'
+         '<text x="129" y="58" font-size="9" font-weight="800" fill="#e11d48">x</text>'
+         '<text x="137" y="58" font-size="9" font-weight="800" fill="#e11d48">x</text>') if w >= 6 else "",
+    ]
+    return f"""
+    <div style="display:flex; justify-content:center; align-items:center; background:#ffffff; border:2px solid #fda4af; border-radius:16px; padding:10px;">
+        <svg width="190" height="185" viewBox="0 0 190 185" xmlns="http://www.w3.org/2000/svg">
+            <line x1="20" y1="172" x2="110" y2="172" stroke="#475569" stroke-width="5" stroke-linecap="round" />
+            <line x1="50" y1="172" x2="50" y2="18" stroke="#475569" stroke-width="5" stroke-linecap="round" />
+            <line x1="50" y1="18" x2="135" y2="18" stroke="#475569" stroke-width="5" stroke-linecap="round" />
+            <line x1="50" y1="44" x2="76" y2="18" stroke="#475569" stroke-width="4" stroke-linecap="round" />
+            <line x1="135" y1="18" x2="135" y2="40" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+            {''.join(parts)}
+        </svg>
+    </div>
+    """
+
+def generate_hangman_words_json(grade: str, subject: str, book_topics: str, support_level: str, chapter_focus: str = ""):
+    """Παράγει σε 1 κλήση AI 3 ελληνικές λέξεις-κλειδιά από την ύλη ΙΕΠ για την Κρεμάλα Γνώσεων."""
+    client = get_genai_client(api_key)
+    models_to_try = [
+        st.session_state.get("active_model", "gemini-3.5-flash-lite"),
+        "gemini-3.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3.8-flash",
+    ]
+    seen_m = set()
+    ordered_models = [m for m in models_to_try if not (m in seen_m or seen_m.add(m))]
+
+    len_rule = (
+        "ΠΟΛΥ ΑΠΛΕΣ ελληνικές λέξεις 5 έως 8 γραμμάτων (Επίπεδο 1 / Ειδική Αγωγή), με πανεύκολο στοιχείο."
+        if support_level == "LEVEL_1"
+        else "Ελληνικές λέξεις-κλειδιά 6 έως 12 γραμμάτων από το επίσημο βιβλίο ΙΕΠ (μία μόνο λέξη, χωρίς κενά ή παύλες)."
+    )
+    focus_line = f"- Ειδικό κεφάλαιο/θέμα: {chapter_focus}" if (chapter_focus or "").strip() else ""
+
+    p_hang = f"""
+Είσαι ο Σωκράτης, εκπαιδευτικός Γυμνασίου στην Ελλάδα.
+Ετοίμασε ΑΚΡΙΒΩΣ 3 ελληνικές λέξεις-κλειδιά για το παιχνίδι «🔤 Κρεμάλα Γνώσεων» βασισμένες ΑΠΟΚΛΕΙΣΤΙΚΑ στα τρέχοντα επίσημα σχολικά βιβλία του ΙΕΠ (ebooks.edu.gr).
+- Τάξη: {grade}
+- Μάθημα: {subject}
+- Επίσημη ύλη: {book_topics}
+{focus_line}
+- Δυσκολία: {len_rule}
+
+ΚΑΝΟΝΕΣ:
+1. Κάθε "word" πρέπει να είναι ΑΚΡΙΒΩΣ ΜΙΑ ελληνική λέξη με ΚΕΦΑΛΑΙΑ ελληνικά γράμματα (Α–Ω), ΧΩΡΙΣ κενά, ΧΩΡΙΣ αριθμούς, ΧΩΡΙΣ λατινικά γράμματα (ακόμη και σε ξένη γλώσσα, βάλε ελληνικό γραμματικό/εκπαιδευτικό όρο π.χ. ΕΝΕΣΤΩΤΑΣ).
+2. Το "clue" δίνει ένα καθαρό, διασκεδαστικό στοιχείο/ορισμό ΧΩΡΙΣ να περιέχει την ίδια τη λέξη!
+3. ΕΠΕΣΤΡΕΨΕ ΑΠΟΚΛΕΙΣΤΙΚΑ ΕΓΚΥΡΟ JSON:
+{{
+  "words": [
+    {{
+      "word": "ΦΩΤΟΣΥΝΘΕΣΗ",
+      "clue": "Η διαδικασία με την οποία τα φυτά φτιάχνουν τροφή με το φως του ήλιου",
+      "explanation": "Μπράβο! Με τη φωτοσύνθεση τα φυτά παράγουν τροφή και οξυγόνο.",
+      "topic": "Φωτοσύνθεση"
+    }}
+  ]
+}}
+"""
+    for m_name in ordered_models:
+        for try_no_think in (True, False):
+            try:
+                cfg = build_fast_config(
+                    m_name,
+                    disable_thinking=try_no_think,
+                    temperature=0.65,
+                    max_output_tokens=1000,
+                    response_mime_type="application/json",
+                )
+                resp = client.models.generate_content(model=m_name, contents=p_hang, config=cfg)
+                raw = (resp.text or "").strip()
+                raw = re.sub(r'^```(?:json)?\s*', '', raw)
+                raw = re.sub(r'\s*```$', '', raw)
+                try:
+                    parsed = json.loads(raw)
+                except Exception:
+                    m_obj = re.search(r'\{[\s\S]*\}', raw)
+                    parsed = json.loads(m_obj.group(0)) if m_obj else None
+                raw_words = parsed.get("words", []) if isinstance(parsed, dict) else []
+                clean_items = []
+                for rw in raw_words:
+                    if not isinstance(rw, dict):
+                        continue
+                    w_norm = normalize_greek_upper_word(str(rw.get("word", "")))
+                    if 4 <= len(w_norm) <= 15:
+                        clean_items.append({
+                            "word": w_norm,
+                            "clue": str(rw.get("clue", "Λέξη-κλειδί από το μάθημα")).strip(),
+                            "explanation": str(rw.get("explanation", "")).strip(),
+                            "topic": str(rw.get("topic", subject)).strip(),
+                        })
+                if len(clean_items) >= 3:
+                    return clean_items[:3]
             except Exception as err:
                 err_txt = str(err).lower()
                 if try_no_think and ("thinking" in err_txt or "invalid_argument" in err_txt or "400" in err_txt):
@@ -4020,24 +4156,216 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
                 st.rerun()
 
         st.write("")
-        st.markdown("""
-        <div style="background:linear-gradient(135deg,#f0fdfa,#ffffff); border:2px solid #0d9488; border-radius:16px; padding:16px 20px; box-shadow:0 4px 12px rgba(13,148,136,0.10);">
-            <div style="font-size:1.2rem; font-weight:800; color:#0f766e; margin-bottom:6px;">🏔️ Πρόκληση 5 Επιπέδων</div>
-            <div style="font-size:0.92rem; color:#334155; line-height:1.45;">
-                Ανέβα τη σκάλα της γνώσης σε <b>5 σκαλοπάτια</b> (🌱 Ζέσταμα → 🧭 Εξερευνητής → 📚 Γνώστης → ♟️ Στρατηγός → 🏆 Δάσκαλος της Ενότητας) και κέρδισε παράσημο!
+        row3_c1, row3_c2 = st.columns(2)
+        with row3_c1:
+            st.markdown("""
+            <div style="background:linear-gradient(135deg,#f0fdfa,#ffffff); border:2px solid #0d9488; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(13,148,136,0.10); min-height:142px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#0f766e; margin-bottom:6px;">🏔️ Πρόκληση 5 Επιπέδων</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    Ανέβα <b>5 σκαλοπάτια</b> από το Ζέσταμα μέχρι τον Δάσκαλο της Ενότητας και κέρδισε παράσημο!
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("▶️ Παίξε: 🏔️ Πρόκληση 5 Επιπέδων", type="primary", use_container_width=True, key="btn_open_game_ladder5"):
-            st.session_state.active_game_id = "ladder5"
-            st.session_state.mini_game_state = None
-            st.rerun()
+            """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: 🏔️ Πρόκληση 5 Επιπέδων", type="primary", use_container_width=True, key="btn_open_game_ladder5"):
+                st.session_state.active_game_id = "ladder5"
+                st.session_state.mini_game_state = None
+                st.rerun()
+
+        with row3_c2:
+            st.markdown("""
+            <div style="background:linear-gradient(135deg,#fff1f2,#ffffff); border:2px solid #e11d48; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(225,29,72,0.10); min-height:142px;">
+                <div style="font-size:1.18rem; font-weight:800; color:#9f1239; margin-bottom:6px;">🔤 Κρεμάλα Γνώσεων</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
+                    Βρες <b>3 λέξεις-κλειδιά</b> από την ύλη με το ελληνικό αλφάβητο (Α–Ω) πριν ολοκληρωθεί το ανθρωπάκι!
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("▶️ Παίξε: 🔤 Κρεμάλα Γνώσεων", type="primary", use_container_width=True, key="btn_open_game_hangman"):
+                st.session_state.active_game_id = "hangman"
+                st.session_state.hangman_state = None
+                st.rerun()
 
         st.write("")
         if st.button("↩️ Επιστροφή στο Μάθημα", use_container_width=True, key="btn_hub_return"):
             st.session_state.duel_mode_active = False
             st.session_state.active_game_id = None
             st.rerun()
+        st.stop()
+
+    # ==============================================================
+    # ΠΑΙΧΝΙΔΙ 6: 🔤 ΚΡΕΜΑΛΑ ΓΝΩΣΕΩΝ (3 ΛΕΞΕΙΣ-ΚΛΕΙΔΙΑ ΜΕ ΚΛΑΣΙΚΟ ΑΝΘΡΩΠΑΚΙ)
+    # ==============================================================
+    if st.session_state.get("active_game_id") == "hangman":
+        h_state = st.session_state.get("hangman_state", None)
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,#9f1239,#e11d48); color:#fff; border-radius:16px; padding:14px 20px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:1.25rem; font-weight:800;">🔤 Κρεμάλα Γνώσεων — Σωκράτης</div>
+            <div style="font-size:0.86rem; font-weight:700; background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:999px;">{selected_grade} • {selected_subject}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if h_state is None:
+            st.markdown("""
+            <div style="background:#ffffff; border:1.5px solid #fda4af; border-radius:14px; padding:16px 20px; margin-bottom:12px; color:#1e293b;">
+                <b>🎯 Πώς παίζεται (3 λέξεις-κλειδιά από το μάθημα):</b><br>
+                • Διάβασε το στοιχείο και διάλεξε γράμματα από το ελληνικό αλφάβητο (Α–Ω) για να βρεις τη λέξη πριν συμπληρωθεί το ανθρωπάκι (6 λάθη)!<br>
+                • 0–2 λάθη = <b>+2 ⭐</b> • 3–5 λάθη = <b>+1 ⭐</b> • Στο Επίπεδο 1 το 1ο γράμμα είναι ήδη ανοιχτό!
+            </div>
+            """, unsafe_allow_html=True)
+            hang_chap = st.text_input(
+                "📌 Κεφάλαιο ή Θέμα (Προαιρετικό):",
+                placeholder="π.χ. Κλάσματα, Βυζάντιο, Κύτταρο, Παραβολές...",
+                key="hang_chap_in",
+            )
+            ch1, ch2 = st.columns([2, 1])
+            with ch1:
+                if st.button("🚀 Έναρξη: 🔤 Κρεμάλα Γνώσεων", type="primary", use_container_width=True, key="btn_start_hangman"):
+                    with st.spinner("🔤 Ο Σωκράτης διαλέγει 3 λέξεις-κλειδιά από το μάθημα..."):
+                        w_list = generate_hangman_words_json(selected_grade, selected_subject, book_topics, cur_lvl_duel, hang_chap)
+                    if w_list:
+                        first_guessed = [w_list[0]["word"][0]] if cur_lvl_duel == "LEVEL_1" else []
+                        st.session_state.hangman_state = {
+                            "words": w_list,
+                            "idx": 0,
+                            "score": 0,
+                            "guessed": first_guessed,
+                            "wrong": 0,
+                            "round_over": False,
+                            "round_won": False,
+                        }
+                        st.rerun()
+                    else:
+                        st.error("⚠️ Δεν ήταν δυνατή η δημιουργία λέξεων αυτή τη στιγμή. Δοκιμάστε ξανά.")
+            with ch2:
+                if st.button("↩️ Πίσω στα Παιχνίδια", use_container_width=True, key="btn_back_hub_hangman"):
+                    st.session_state.active_game_id = None
+                    st.session_state.hangman_state = None
+                    st.rerun()
+            st.stop()
+
+        total_w = len(h_state["words"])
+        if h_state["idx"] >= total_w:
+            stars = h_state["score"]
+            max_stars = total_w * 2
+            end_badge = "🏆 Άρχοντας των Λέξεων του Σωκράτη!" if stars >= max_stars - 1 else "🌟 Εξαιρετικός Λύτης της Κρεμάλας!"
+            st.markdown(f"""
+            <div style="background:#ffffff; border:2px solid #e11d48; border-radius:18px; padding:26px; text-align:center; box-shadow:0 6px 20px rgba(15,52,96,0.1); margin-bottom:16px;">
+                <div style="font-size:2.2rem; margin-bottom:6px;">🎉 🔤 🎉</div>
+                <h2 style="color:#0c335e; margin:0 0 8px 0;">Μπράβο! Ολοκλήρωσες την Κρεμάλα!</h2>
+                <div style="font-size:2rem; font-weight:800; color:#d97706; margin:10px 0;">{stars} / {max_stars} ⭐</div>
+                <div style="font-size:1.1rem; font-weight:800; color:#9f1239;">{end_badge}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if cur_duel_pol == "unlocked_all":
+                che1, che2 = st.columns(2)
+                with che1:
+                    if st.button("🔄 Παίξε Ξανά", type="primary", use_container_width=True, key="btn_hang_replay"):
+                        st.session_state.hangman_state = None
+                        st.rerun()
+                with che2:
+                    if st.button("↩️ Επιστροφή στο Μάθημα", use_container_width=True, key="btn_hang_exit_all"):
+                        st.session_state.duel_mode_active = False
+                        st.session_state.active_game_id = None
+                        st.session_state.hangman_state = None
+                        st.rerun()
+            else:
+                if st.button("↩️ Επιστροφή στο Μάθημα", type="primary", use_container_width=True, key="btn_hang_exit"):
+                    st.session_state.duel_mode_active = False
+                    st.session_state.active_game_id = None
+                    st.session_state.hangman_state = None
+                    st.session_state.duel_study_steps = 0
+                    st.session_state.duel_confirmed_correct = 0
+                    st.session_state.duel_warning_penalty = 0
+                    st.rerun()
+            st.stop()
+
+        # ΖΩΝΤΑΝΟΣ ΓΥΡΟΣ ΚΡΕΜΑΛΑΣ
+        cur_w_obj = h_state["words"][h_state["idx"]]
+        secret_word = cur_w_obj["word"]
+        guessed_set = set(h_state["guessed"])
+        wrong_cnt = int(h_state["wrong"])
+
+        st.markdown(f"""
+        <div style="background:#fff1f2; border:2px solid #fda4af; border-radius:12px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-weight:800; color:#9f1239;">Λέξη {h_state['idx'] + 1} από {total_w} • Λάθη: {wrong_cnt} / 6</span>
+            <span style="font-weight:800; color:#d97706; font-size:1.1rem;">Σκορ: {h_state['score']} ⭐</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col_h_svg, col_h_word = st.columns([1, 2])
+        with col_h_svg:
+            st.markdown(render_hangman_svg(wrong_cnt), unsafe_allow_html=True)
+        with col_h_word:
+            tiles = []
+            for ch in secret_word:
+                shown = ch if (ch in guessed_set or h_state["round_over"]) else "&nbsp;"
+                tile_bg = "#dcfce7" if (h_state["round_over"] and h_state["round_won"]) else ("#fee2e2" if (h_state["round_over"] and ch not in guessed_set) else "#ffffff")
+                tiles.append(
+                    f'<span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:42px; margin:3px; '
+                    f'background:{tile_bg}; border-bottom:3px solid #9f1239; border-radius:6px 6px 0 0; '
+                    f'font-size:1.35rem; font-weight:900; color:#0c335e;">{shown}</span>'
+                )
+            st.markdown(f"""
+            <div style="background:#ffffff; border:2px solid #fda4af; border-radius:16px; padding:18px 14px; text-align:center; margin-bottom:10px;">
+                <div style="margin-bottom:12px; line-height:1.4;">{''.join(tiles)}</div>
+                <div style="background:#fef9c3; border:1.5px solid #facc15; border-radius:10px; padding:10px 12px; color:#713f12; font-size:0.94rem; text-align:left;">
+                    💡 <b>Στοιχείο:</b> {html_lib.escape(cur_w_obj['clue'])}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        if h_state["round_over"]:
+            if h_state["round_won"]:
+                pts_won = 2 if wrong_cnt <= 2 else 1
+                st.success(f"🌟 Μπράβο! Βρήκες τη λέξη **{secret_word}** (+{pts_won} ⭐)! {cur_w_obj.get('explanation', '')}")
+            else:
+                st.info(f"📘 Η λέξη ήταν: **{secret_word}**. {cur_w_obj.get('explanation', '')}")
+            next_h_lbl = "🏁 Δες το Αποτέλεσμα!" if h_state["idx"] == total_w - 1 else "➡️ Επόμενη Λέξη"
+            if st.button(next_h_lbl, type="primary", use_container_width=True, key=f"btn_hang_next_{h_state['idx']}"):
+                h_state["idx"] += 1
+                h_state["wrong"] = 0
+                h_state["round_over"] = False
+                h_state["round_won"] = False
+                if h_state["idx"] < total_w and cur_lvl_duel == "LEVEL_1":
+                    h_state["guessed"] = [h_state["words"][h_state["idx"]]["word"][0]]
+                else:
+                    h_state["guessed"] = []
+                st.rerun()
+        else:
+            st.caption("🔤 Πάτησε ένα γράμμα από το ελληνικό αλφάβητο:")
+            for r_i in range(3):
+                row_letters = GREEK_ALPHABET_24[r_i * 8 : (r_i + 1) * 8]
+                l_cols = st.columns(8)
+                for c_i, ltr in enumerate(row_letters):
+                    already = ltr in guessed_set
+                    if already:
+                        lbl = f"✅{ltr}" if ltr in secret_word else f"✖{ltr}"
+                    else:
+                        lbl = ltr
+                    with l_cols[c_i]:
+                        if st.button(lbl, key=f"hk_{h_state['idx']}_{ltr}", disabled=already, use_container_width=True):
+                            h_state["guessed"].append(ltr)
+                            if ltr not in secret_word:
+                                h_state["wrong"] += 1
+                                if h_state["wrong"] >= 6:
+                                    h_state["round_over"] = True
+                                    h_state["round_won"] = False
+                                    record_misconception(
+                                        selected_grade,
+                                        selected_subject,
+                                        cur_w_obj.get("topic", "Κρεμάλα"),
+                                        f"Κρεμάλα: δεν βρέθηκε η λέξη {secret_word}",
+                                        "CAUGHT",
+                                    )
+                            else:
+                                if all(c in h_state["guessed"] for c in secret_word):
+                                    pts_won = 2 if h_state["wrong"] <= 2 else 1
+                                    h_state["score"] += pts_won
+                                    add_effort_points(pts_won * 4)
+                                    h_state["round_over"] = True
+                                    h_state["round_won"] = True
+                            st.rerun()
         st.stop()
 
     # ==============================================================
