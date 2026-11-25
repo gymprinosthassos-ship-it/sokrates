@@ -2965,7 +2965,8 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
         components.html(
             f"""
-            <div style="margin-top: 2px;">
+            <style>html, body {{ margin: 0; padding: 2px 0 0 2px; overflow: hidden; background: transparent; }}</style>
+            <div>
                 <audio id="soc_audio_{msg_idx}" style="display: none;">
                     <source src="data:audio/mpeg;base64,{b64_audio}" type="audio/mpeg">
                 </audio>
@@ -3006,7 +3007,7 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
             }})();
             </script>
             """,
-            height=42,
+            height=48,
         )
     else:
         _render_browser_fallback_tts(text_content, auto_play=True)
