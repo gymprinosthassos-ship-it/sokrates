@@ -575,14 +575,21 @@ if "welcome_fireworks_shown" not in st.session_state:
 # -------------------------------------------------------------
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap');
+
     :root {
         color-scheme: light !important;
     }
     
-    /* 1. Γέμισμα με γαλάζιο της κορυφής του παραθύρου */
+    /* 1. Γέμισμα με γαλάζιο & καθαρή σύγχρονη ελληνική τυπογραφία υψηλής ευκρίνειας */
+    html, body, .stApp, button, input, textarea, select {
+        font-family: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
     html, body, .stApp {
         background-color: #d3e6fa !important;
-        background: linear-gradient(180deg, #d3e6fa 0%, #bddcf7 100%) !important;
+        background: radial-gradient(circle at 15% 10%, #e4f2fe 0%, #cde3f9 48%, #b8d8f6 100%) !important;
         color: #0f172a !important;
     }
     header,
@@ -2025,32 +2032,54 @@ def normalize_greek_upper_word(raw_word: str) -> str:
     return "".join(ch for ch in cleaned if ch in GREEK_ALPHABET_24)
 
 def render_hangman_svg(wrong_count: int) -> str:
-    """Επιστρέφει καθαρό SVG σχέδιο Κρεμάλας με το κλασικό ανθρωπάκι (6 στάδια λαθών)."""
+    """Επιστρέφει ρεαλιστικό SVG σχολικό μαυροπίνακα με ξύλινο πλαίσιο & ζωγραφιστό ανθρωπάκι κιμωλίας (6 στάδια)."""
     w = max(0, min(6, int(wrong_count)))
     parts = [
         # Κεφάλι (1ο λάθος)
-        '<circle cx="135" cy="56" r="16" stroke="#1e293b" stroke-width="3.5" fill="#fff1f2" />' if w >= 1 else "",
+        '<circle cx="152" cy="64" r="16" stroke="#f8fafc" stroke-width="3.6" fill="none" filter="url(#chalkGlow)" />' if w >= 1 else "",
         # Σώμα (2ο λάθος)
-        '<line x1="135" y1="72" x2="135" y2="122" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" />' if w >= 2 else "",
+        '<line x1="152" y1="80" x2="152" y2="128" stroke="#f8fafc" stroke-width="3.6" stroke-linecap="round" filter="url(#chalkGlow)" />' if w >= 2 else "",
         # Αριστερό χέρι (3ο λάθος)
-        '<line x1="135" y1="84" x2="110" y2="105" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" />' if w >= 3 else "",
+        '<line x1="152" y1="92" x2="126" y2="113" stroke="#f8fafc" stroke-width="3.5" stroke-linecap="round" filter="url(#chalkGlow)" />' if w >= 3 else "",
         # Δεξί χέρι (4ο λάθος)
-        '<line x1="135" y1="84" x2="160" y2="105" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" />' if w >= 4 else "",
+        '<line x1="152" y1="92" x2="178" y2="113" stroke="#f8fafc" stroke-width="3.5" stroke-linecap="round" filter="url(#chalkGlow)" />' if w >= 4 else "",
         # Αριστερό πόδι (5ο λάθος)
-        '<line x1="135" y1="122" x2="112" y2="154" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" />' if w >= 5 else "",
-        # Δεξί πόδι + X μάτια (6ο λάθος)
-        ('<line x1="135" y1="122" x2="158" y2="154" stroke="#e11d48" stroke-width="3.5" stroke-linecap="round" />'
-         '<text x="129" y="58" font-size="9" font-weight="800" fill="#e11d48">x</text>'
-         '<text x="137" y="58" font-size="9" font-weight="800" fill="#e11d48">x</text>') if w >= 6 else "",
+        '<line x1="152" y1="128" x2="129" y2="160" stroke="#f8fafc" stroke-width="3.5" stroke-linecap="round" filter="url(#chalkGlow)" />' if w >= 5 else "",
+        # Δεξί πόδι + X μάτια με κόκκινη κιμωλία (6ο λάθος)
+        ('<line x1="152" y1="128" x2="175" y2="160" stroke="#fda4af" stroke-width="3.6" stroke-linecap="round" filter="url(#chalkGlow)" />'
+         '<text x="145" y="67" font-size="10" font-weight="800" fill="#fda4af">x</text>'
+         '<text x="155" y="67" font-size="10" font-weight="800" fill="#fda4af">x</text>') if w >= 6 else "",
     ]
     return f"""
-    <div style="display:flex; justify-content:center; align-items:center; background:#ffffff; border:2px solid #fda4af; border-radius:16px; padding:10px;">
-        <svg width="190" height="185" viewBox="0 0 190 185" xmlns="http://www.w3.org/2000/svg">
-            <line x1="20" y1="172" x2="110" y2="172" stroke="#475569" stroke-width="5" stroke-linecap="round" />
-            <line x1="50" y1="172" x2="50" y2="18" stroke="#475569" stroke-width="5" stroke-linecap="round" />
-            <line x1="50" y1="18" x2="135" y2="18" stroke="#475569" stroke-width="5" stroke-linecap="round" />
-            <line x1="50" y1="44" x2="76" y2="18" stroke="#475569" stroke-width="4" stroke-linecap="round" />
-            <line x1="135" y1="18" x2="135" y2="40" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+    <div style="display:flex; justify-content:center; align-items:center; padding:4px;">
+        <svg width="230" height="210" viewBox="0 0 230 210" xmlns="http://www.w3.org/2000/svg" style="border-radius:14px; box-shadow:0 8px 20px rgba(15,23,42,0.22);">
+            <defs>
+                <linearGradient id="woodFrame" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#b45309" />
+                    <stop offset="50%" stop-color="#92400e" />
+                    <stop offset="100%" stop-color="#78350f" />
+                </linearGradient>
+                <radialGradient id="chalkBoard" cx="45%" cy="40%" r="65%">
+                    <stop offset="0%" stop-color="#1f5c47" />
+                    <stop offset="100%" stop-color="#0f3528" />
+                </radialGradient>
+                <filter id="chalkGlow" x="-10%" y="-10%" width="120%" height="120%">
+                    <feGaussianBlur stdDeviation="0.45" result="blur" />
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+            </defs>
+            <rect x="0" y="0" width="230" height="210" rx="14" fill="url(#woodFrame)" />
+            <rect x="10" y="10" width="210" height="184" rx="7" fill="url(#chalkBoard)" stroke="#5c2808" stroke-width="1.5" />
+            <!-- Ράφι & κιμωλίες -->
+            <rect x="18" y="191" width="194" height="7" rx="3" fill="#78350f" />
+            <rect x="34" y="187" width="24" height="5" rx="2" fill="#f8fafc" />
+            <rect x="64" y="187" width="18" height="5" rx="2" fill="#fde047" />
+            <!-- Κρεμάλα με κιμωλία -->
+            <line x1="28" y1="176" x2="122" y2="176" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" filter="url(#chalkGlow)" />
+            <line x1="58" y1="176" x2="58" y2="26" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" filter="url(#chalkGlow)" />
+            <line x1="58" y1="26" x2="152" y2="26" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" filter="url(#chalkGlow)" />
+            <line x1="58" y1="54" x2="88" y2="26" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" filter="url(#chalkGlow)" />
+            <line x1="152" y1="26" x2="152" y2="48" stroke="#fde68a" stroke-width="3" stroke-linecap="round" />
             {''.join(parts)}
         </svg>
     </div>
@@ -2141,13 +2170,12 @@ def generate_hangman_words_json(grade: str, subject: str, book_topics: str, supp
     return None
 
 def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = None, animate_spin: bool = False, spin_id: int = 0) -> str:
-    """Επιστρέφει καθαρό πολύχρωμο SVG Τροχό της Τύχης (6 φέτες) με πραγματική περιστροφή & επιβράδυνση."""
+    """Επιστρέφει 3D στούντιο SVG Τροχό της Τύχης με μεταλλικό χρυσό στεφάνι, 12 φωτάκια, γυαλάδα & περιστροφή."""
     import math
     done_set = done_indices or set()
-    colors = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"]
+    colors = ["#4f46e5", "#0284c7", "#059669", "#d97706", "#db2777", "#7c3aed"]
     n = max(1, len(wedges))
-    cx, cy, r = 120, 120, 102
-    # Περιστροφή ώστε η επιλεγμένη φέτα να κάθεται ακριβώς κάτω από τον κόκκινο δείκτη (κορυφή = -90°)
+    cx, cy, r = 135, 140, 106
     rot_deg = 0.0
     if 0 <= active_idx < n:
         slice_deg = 360.0 / n
@@ -2174,28 +2202,61 @@ def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = Non
         x0, y0 = cx + r * math.cos(a0), cy + r * math.sin(a0)
         x1, y1 = cx + r * math.cos(a1), cy + r * math.sin(a1)
         fill_c = "#cbd5e1" if i in done_set else colors[i % len(colors)]
-        stroke_w = "4" if i == active_idx else "2"
+        stroke_w = "3.5" if i == active_idx else "2"
         slices_svg.append(
             f'<path d="M {cx} {cy} L {x0:.1f} {y0:.1f} A {r} {r} 0 0 1 {x1:.1f} {y1:.1f} Z" '
             f'fill="{fill_c}" stroke="#ffffff" stroke-width="{stroke_w}" />'
         )
         amid = (a0 + a1) / 2.0
-        tx, ty = cx + (r * 0.62) * math.cos(amid), cy + (r * 0.62) * math.sin(amid)
+        tx, ty = cx + (r * 0.64) * math.cos(amid), cy + (r * 0.64) * math.sin(amid)
         lbl = "✅" if i in done_set else str(i + 1)
         slices_svg.append(
-            f'<text x="{tx:.1f}" y="{ty:.1f}" fill="#ffffff" font-size="17" font-weight="900" '
-            f'text-anchor="middle" dominant-baseline="central">{lbl}</text>'
+            f'<text x="{tx:.1f}" y="{ty:.1f}" fill="#ffffff" font-size="19" font-weight="900" '
+            f'text-anchor="middle" dominant-baseline="central" style="text-shadow:0 2px 3px rgba(0,0,0,0.35);">{lbl}</text>'
         )
+    # 12 χρυσά φωτάκια γύρω από το μεταλλικό στεφάνι
+    bulbs_svg = []
+    for b in range(12):
+        ang = math.radians(b * 30.0)
+        bx, by = cx + (r + 10) * math.cos(ang), cy + (r + 10) * math.sin(ang)
+        b_col = "#fef08a" if b % 2 == 0 else "#ffffff"
+        bulbs_svg.append(f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="4.2" fill="{b_col}" stroke="#92400e" stroke-width="1" />')
+
     return f"""
     {anim_css}
     <div style="display:flex; justify-content:center; align-items:center; margin-bottom:10px;">
-        <svg width="240" height="245" viewBox="0 0 240 245" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="120,24 109,4 131,4" fill="#dc2626" stroke="#ffffff" stroke-width="2" />
+        <svg width="270" height="275" viewBox="0 0 270 275" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 10px 18px rgba(15,23,42,0.22));">
+            <defs>
+                <linearGradient id="goldRim" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#fef08a" />
+                    <stop offset="45%" stop-color="#f59e0b" />
+                    <stop offset="100%" stop-color="#92400e" />
+                </linearGradient>
+                <radialGradient id="wheelGloss" cx="35%" cy="28%" r="65%">
+                    <stop offset="0%" stop-color="rgba(255,255,255,0.32)" />
+                    <stop offset="60%" stop-color="rgba(255,255,255,0.03)" />
+                    <stop offset="100%" stop-color="rgba(15,23,42,0.16)" />
+                </radialGradient>
+                <radialGradient id="centerHub" cx="35%" cy="30%" r="70%">
+                    <stop offset="0%" stop-color="#ffffff" />
+                    <stop offset="65%" stop-color="#fde68a" />
+                    <stop offset="100%" stop-color="#b45309" />
+                </radialGradient>
+            </defs>
+            <!-- Εξωτερικό χρυσό μεταλλικό στεφάνι & φωτάκια -->
+            <circle cx="{cx}" cy="{cy}" r="{r + 18}" fill="url(#goldRim)" stroke="#78350f" stroke-width="2.5" />
+            {''.join(bulbs_svg)}
+            <!-- Περιστρεφόμενος δίσκος -->
             <g style="{g_style}">
                 {''.join(slices_svg)}
+                <circle cx="{cx}" cy="{cy}" r="{r}" fill="url(#wheelGloss)" pointer-events="none" />
             </g>
-            <circle cx="{cx}" cy="{cy}" r="18" fill="#ffffff" stroke="#1e293b" stroke-width="3" />
-            <text x="{cx}" y="{cy}" fill="#1e293b" font-size="13" font-weight="900" text-anchor="middle" dominant-baseline="central">🎡</text>
+            <!-- Κεντρικός 3D μεταλλικός άξονας -->
+            <circle cx="{cx}" cy="{cy}" r="22" fill="url(#centerHub)" stroke="#78350f" stroke-width="2.5" />
+            <text x="{cx}" y="{cy}" fill="#78350f" font-size="14" font-weight="900" text-anchor="middle" dominant-baseline="central">★</text>
+            <!-- Κόκκινος 3D δείκτης κορυφής -->
+            <polygon points="{cx},42 {cx-14},10 {cx+14},10" fill="#dc2626" stroke="#ffffff" stroke-width="2.5" />
+            <circle cx="{cx}" cy="14" r="5" fill="#fef08a" stroke="#991b1b" stroke-width="1.5" />
         </svg>
     </div>
     """
@@ -2361,6 +2422,66 @@ def generate_wordwall_game_json(game_type: str, grade: str, subject: str, book_t
                 break
     return None
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def fetch_wikipedia_card_photo(query: str):
+    """Αναζητά δωρεάν, ελεύθερη εκπαιδευτική φωτογραφία υψηλής ανάλυσης από την ελληνική Βικιπαίδεια."""
+    q = (query or "").strip()
+    if not q or len(q) < 2:
+        return None
+    import urllib.request
+    import urllib.parse
+    headers = {"User-Agent": "SocratesAITutor/1.0 (Gymnasio Prinou Educational App)"}
+
+    def _try_summary(lang: str, title: str):
+        url = f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(title.replace(' ', '_'))}"
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            thumb = (data.get("thumbnail") or {}).get("source", "")
+            orig = (data.get("originalimage") or {}).get("source", "")
+            img_u = thumb or orig
+            if img_u and not img_u.lower().endswith(".svg"):
+                return {
+                    "img_url": img_u,
+                    "caption": str(data.get("title", title)),
+                    "page_url": str((data.get("content_urls") or {}).get("desktop", {}).get("page", "")),
+                }
+        return None
+
+    try:
+        hit = _try_summary("el", q)
+        if hit:
+            return hit
+        # Εφεδρική αναζήτηση τίτλου στην ελληνική Βικιπαίδεια
+        s_url = f"https://el.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(q)}&srlimit=2&format=json"
+        req = urllib.request.Request(s_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            s_data = json.loads(resp.read().decode("utf-8"))
+            for item in (s_data.get("query") or {}).get("search", []):
+                t_found = item.get("title", "")
+                if t_found:
+                    hit2 = _try_summary("el", t_found)
+                    if hit2:
+                        return hit2
+    except Exception:
+        pass
+    return None
+
+@st.cache_data(show_spinner=False)
+def get_game_art_uri(game_id: str) -> str:
+    """Φορτώνει & κωδικοποιεί σε data URI την HD εικονογράφηση ενός παιχνιδιού από τον φάκελο game_art/."""
+    for ext in ("webp", "png", "jpg"):
+        p = os.path.join(BASE_DIR, "game_art", f"{game_id}.{ext}")
+        if os.path.exists(p):
+            try:
+                mime = "image/webp" if ext == "webp" else ("image/png" if ext == "png" else "image/jpeg")
+                with open(p, "rb") as f:
+                    b64 = base64.b64encode(f.read()).decode("utf-8")
+                return f"data:{mime};base64,{b64}"
+            except Exception:
+                pass
+    return ""
+
 def generate_live_visual_card_json(
     grade: str,
     subject: str,
@@ -2411,7 +2532,8 @@ def generate_live_visual_card_json(
     {{"icon": "3️⃣", "heading": "Σύντομος τίτλος 3", "text": "Πολύ σύντομη εξήγηση (έως 12 λέξεις)"}}
   ],
   "everyday_example": "1 απτό, ζωντανό παράδειγμα από την καθημερινή ζωή (1 πρόταση)",
-  "remember_rule": "1 χρυσός κανόνας για να το θυμάται εύκολα ο μαθητής"
+  "remember_rule": "1 χρυσός κανόνας για να το θυμάται εύκολα ο μαθητής",
+  "wiki_query": "1-3 λέξεις-κλειδιά στα ελληνικά για αναζήτηση σχετικής φωτογραφίας στη Βικιπαίδεια (π.χ. Παρθενώνας, Κύτταρο, Ιουστινιανός, Κλάσμα)"
 }}
 """
     for m_name in ordered_models:
@@ -2436,6 +2558,10 @@ def generate_live_visual_card_json(
                 if isinstance(parsed, dict) and parsed.get("title") and parsed.get("steps"):
                     parsed["_grade"] = grade
                     parsed["_subject"] = subject
+                    wq = str(parsed.get("wiki_query") or parsed.get("title") or "").strip()
+                    w_photo = fetch_wikipedia_card_photo(wq)
+                    if w_photo:
+                        parsed["wiki_photo"] = w_photo
                     return parsed
             except Exception as err:
                 err_txt = str(err).lower()
@@ -2478,15 +2604,30 @@ def render_live_visual_card_markdown(card: dict, fallback_grade: str = "", fallb
         )
     flow_html = '<div style="display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:#64748b; font-weight:800;">➡️</div>'.join(step_blocks)
 
+    wiki_photo = card.get("wiki_photo") if isinstance(card.get("wiki_photo"), dict) else None
+    photo_block = ""
+    if wiki_photo and wiki_photo.get("img_url"):
+        p_url = html_lib.escape(str(wiki_photo["img_url"]))
+        p_cap = html_lib.escape(str(wiki_photo.get("caption", c_title)))
+        photo_block = (
+            f'<div style="flex:0 0 auto; text-align:center;">'
+            f'<img src="{p_url}" alt="{p_cap}" style="max-width:170px; max-height:130px; width:auto; height:auto; border-radius:12px; border:2px solid #93c5fd; box-shadow:0 4px 10px rgba(15,52,96,0.12); object-fit:cover; display:block;" />'
+            f'<div style="font-size:0.7rem; color:#64748b; margin-top:3px;">📷 {p_cap} (Βικιπαίδεια)</div>'
+            f'</div>'
+        )
+
     st.markdown(f"""
-    <div style="background:#ffffff; border:2px solid #93c5fd; border-radius:16px; overflow:hidden; box-shadow:0 4px 14px rgba(15,52,96,0.09); margin:10px 0 8px 0;">
+    <div style="background:#ffffff; border:2px solid #93c5fd; border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(15,52,96,0.10); margin:10px 0 8px 0;">
         <div style="background:linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%); border-bottom:1.5px solid #93c5fd; color:#0c335e; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
             <div style="font-size:1.08rem; font-weight:800; color:#0c335e !important;">{c_icon} {c_title}</div>
             <div style="font-size:0.78rem; font-weight:700; background:#ffffff; border:1px solid #93c5fd; padding:3px 10px; border-radius:999px; color:#1e3a8a !important;">{c_grade} • {c_subj}</div>
         </div>
         <div style="padding:14px 16px;">
-            <div style="background:#f8fafc; border-left:4px solid #2563eb; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:0.93rem; color:#0f172a;">
-                <b>🎯 Κεντρική Ιδέα:</b> {c_idea}
+            <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:12px;">
+                <div style="flex:1 1 240px; background:#f8fafc; border-left:4px solid #2563eb; border-radius:8px; padding:10px 12px; font-size:0.93rem; color:#0f172a;">
+                    <b>🎯 Κεντρική Ιδέα:</b> {c_idea}
+                </div>
+                {photo_block}
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; margin-bottom:12px;">
                 {flow_html}
@@ -4393,30 +4534,34 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         </div>
         """, unsafe_allow_html=True)
 
-        row1_c1, row1_c2 = st.columns(2)
-        with row1_c1:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#eff6ff,#ffffff); border:2px solid #2563eb; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(29,78,216,0.09); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#1e3a8a; margin-bottom:6px;">⚔️ Μονομαχία 2 Παικτών</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    3 γύροι ανά παίκτη (6 ερωτήσεις) εναλλάξ! Σωστό με την 1η = <b>+2 ⭐</b>, 2η ευκαιρία με σωκρατικό στοιχείο = <b>+1 ⭐</b>.
+        def _render_hub_card(gid: str, title: str, desc_html: str, bg_tint: str, brd_c: str, title_c: str, sh_rgba: str):
+            art_uri = get_game_art_uri(gid)
+            art_img = (
+                f'<img src="{art_uri}" alt="{html_lib.escape(title)}" '
+                f'style="width:74px; height:74px; min-width:74px; border-radius:14px; object-fit:cover; '
+                f'border:2px solid {brd_c}; box-shadow:0 4px 10px {sh_rgba}; display:block;" />'
+                if art_uri else ""
+            )
+            st.markdown(f"""
+            <div style="background:linear-gradient(135deg,{bg_tint},#ffffff); border:2px solid {brd_c}; border-radius:16px; padding:14px 16px; box-shadow:0 5px 14px {sh_rgba}; min-height:126px; display:flex; align-items:center; gap:14px;">
+                {art_img}
+                <div style="flex:1;">
+                    <div style="font-size:1.12rem; font-weight:800; color:{title_c}; margin-bottom:5px; line-height:1.2;">{title}</div>
+                    <div style="font-size:0.87rem; color:#334155; line-height:1.38;">{desc_html}</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
+
+        row1_c1, row1_c2 = st.columns(2)
+        with row1_c1:
+            _render_hub_card("duel", "⚔️ Μονομαχία 2 Παικτών", "3 γύροι ανά παίκτη (6 γρήγορες ερωτήσεις) με χρονόμετρο! Σωστό με την 1η = <b>+2 ⭐</b>, 2η ευκαιρία = <b>+1 ⭐</b>.", "#eff6ff", "#2563eb", "#1e3a8a", "rgba(29,78,216,0.12)")
             if st.button("▶️ Παίξε: ⚔️ Μονομαχία 2 Παικτών", type="primary", use_container_width=True, key="btn_open_game_duel"):
                 st.session_state.active_game_id = "duel"
                 st.session_state.duel_state = None
                 st.rerun()
 
         with row1_c2:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#f5f3ff,#ffffff); border:2px solid #7c3aed; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(124,58,237,0.09); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#4c1d95; margin-bottom:6px;">🕵️ Βρες το Λάθος του Σωκράτη!</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    5 προτάσεις όπου ο Σωκράτης έκανε <b>επίτηδες 1 πονηρό λάθος</b>. Γίνε εσύ ο δάσκαλος και διόρθωσέ τον!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("detective", "🕵️ Βρες το Λάθος του Σωκράτη!", "5 προτάσεις όπου ο Σωκράτης έκανε <b>επίτηδες 1 πονηρό λάθος</b>. Γίνε εσύ ο δάσκαλος και διόρθωσέ τον!", "#f5f3ff", "#7c3aed", "#4c1d95", "rgba(124,58,237,0.12)")
             if st.button("▶️ Παίξε: 🕵️ Βρες το Λάθος!", type="primary", use_container_width=True, key="btn_open_game_detective"):
                 st.session_state.active_game_id = "detective"
                 st.session_state.mini_game_state = None
@@ -4425,28 +4570,14 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         st.write("")
         row2_c1, row2_c2 = st.columns(2)
         with row2_c1:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#ecfdf5,#ffffff); border:2px solid #059669; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(5,150,105,0.09); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#065f46; margin-bottom:6px;">⚖️ Μύθος ή Αλήθεια;</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    5 γρήγορες δηλώσεις από την ύλη με 2 μεγάλα κουμπιά (<b>✅ Αλήθεια</b> / <b>❌ Μύθος</b>) και άμεση εξήγηση!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("myth_truth", "⚖️ Μύθος ή Αλήθεια;", "5 γρήγορες δηλώσεις από την ύλη με 2 μεγάλα κουμπιά (<b>✅ Αλήθεια</b> / <b>❌ Μύθος</b>) και άμεση εξήγηση!", "#ecfdf5", "#059669", "#065f46", "rgba(5,150,105,0.12)")
             if st.button("▶️ Παίξε: ⚖️ Μύθος ή Αλήθεια;", type="primary", use_container_width=True, key="btn_open_game_myth"):
                 st.session_state.active_game_id = "myth_truth"
                 st.session_state.mini_game_state = None
                 st.rerun()
 
         with row2_c2:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#fffbeb,#ffffff); border:2px solid #d97706; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(217,119,6,0.09); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#78350f; margin-bottom:6px;">🔐 Απόδραση από τη Βιβλιοθήκη</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    Άνοιξε <b>4 διαδοχικά λουκέτα-γρίφους</b> από το μάθημα για να κερδίσεις το Χρυσό Κλειδί της Βιβλιοθήκης!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("escape", "🔐 Απόδραση από τη Βιβλιοθήκη", "Άνοιξε <b>4 διαδοχικά λουκέτα-γρίφους</b> από το μάθημα για να κερδίσεις το Χρυσό Κλειδί της Βιβλιοθήκης!", "#fffbeb", "#d97706", "#78350f", "rgba(217,119,6,0.12)")
             if st.button("▶️ Παίξε: 🔐 Απόδραση!", type="primary", use_container_width=True, key="btn_open_game_escape"):
                 st.session_state.active_game_id = "escape"
                 st.session_state.mini_game_state = None
@@ -4455,28 +4586,14 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         st.write("")
         row3_c1, row3_c2 = st.columns(2)
         with row3_c1:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#f0fdfa,#ffffff); border:2px solid #0d9488; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(13,148,136,0.10); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#0f766e; margin-bottom:6px;">🏔️ Πρόκληση 5 Επιπέδων</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    Ανέβα <b>5 σκαλοπάτια</b> από το Ζέσταμα μέχρι τον Δάσκαλο της Ενότητας και κέρδισε παράσημο!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("ladder5", "🏔️ Πρόκληση 5 Επιπέδων", "Ανέβα <b>5 σκαλοπάτια</b> από το Ζέσταμα μέχρι τον Δάσκαλο της Ενότητας και κέρδισε παράσημο!", "#f0fdfa", "#0d9488", "#0f766e", "rgba(13,148,136,0.12)")
             if st.button("▶️ Παίξε: 🏔️ Πρόκληση 5 Επιπέδων", type="primary", use_container_width=True, key="btn_open_game_ladder5"):
                 st.session_state.active_game_id = "ladder5"
                 st.session_state.mini_game_state = None
                 st.rerun()
 
         with row3_c2:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#fff1f2,#ffffff); border:2px solid #e11d48; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(225,29,72,0.10); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#9f1239; margin-bottom:6px;">🔤 Κρεμάλα Γνώσεων</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    Βρες <b>3 λέξεις-κλειδιά</b> από την ύλη με το ελληνικό αλφάβητο (Α–Ω) πριν ολοκληρωθεί το ανθρωπάκι!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("hangman", "🔤 Κρεμάλα Γνώσεων", "Βρες <b>3 λέξεις-κλειδιά</b> από την ύλη στον μαυροπίνακα με το ελληνικό αλφάβητο (Α–Ω)!", "#fff1f2", "#e11d48", "#9f1239", "rgba(225,29,72,0.12)")
             if st.button("▶️ Παίξε: 🔤 Κρεμάλα Γνώσεων", type="primary", use_container_width=True, key="btn_open_game_hangman"):
                 st.session_state.active_game_id = "hangman"
                 st.session_state.hangman_state = None
@@ -4485,28 +4602,14 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         st.write("")
         row4_c1, row4_c2 = st.columns(2)
         with row4_c1:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#eef2ff,#ffffff); border:2px solid #4f46e5; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(79,70,229,0.10); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#3730a3; margin-bottom:6px;">🎡 Τροχός της Τύχης</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    Γύρισε τον <b>πολύχρωμο τροχό</b>! Κάθε φέτα κρύβει μια ζωντανή ερώτηση του μαθήματος για +2 ⭐!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("wheel", "🎡 Τροχός της Τύχης", "Γύρισε τον <b>3D πολύχρωμο τροχό</b>! Κάθε φέτα κρύβει μια ζωντανή ερώτηση του μαθήματος για +2 ⭐!", "#eef2ff", "#4f46e5", "#3730a3", "rgba(79,70,229,0.12)")
             if st.button("▶️ Παίξε: 🎡 Τροχός της Τύχης", type="primary", use_container_width=True, key="btn_open_game_wheel"):
                 st.session_state.active_game_id = "wheel"
                 st.session_state.ww_state = None
                 st.rerun()
 
         with row4_c2:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#fff7ed,#ffffff); border:2px solid #ea580c; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(234,88,12,0.10); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#9a3412; margin-bottom:6px;">📦 Άνοιξε το Κουτί</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    Διάλεξε από <b>6 κλειστά κουτιά</b> — τα 5 κρύβουν ερωτήσεις από την ύλη και το 1 είναι <b>🎁 Κουτί-Έκπληξη</b>!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("open_box", "📦 Άνοιξε το Κουτί", "Διάλεξε από <b>6 κλειστά κουτιά</b> — τα 5 κρύβουν ερωτήσεις από την ύλη και το 1 είναι <b>🎁 Κουτί-Έκπληξη</b>!", "#fff7ed", "#ea580c", "#9a3412", "rgba(234,88,12,0.12)")
             if st.button("▶️ Παίξε: 📦 Άνοιξε το Κουτί", type="primary", use_container_width=True, key="btn_open_game_open_box"):
                 st.session_state.active_game_id = "open_box"
                 st.session_state.ww_state = None
@@ -4515,28 +4618,14 @@ if st.session_state.active_mode == "student" and st.session_state.get("duel_mode
         st.write("")
         row5_c1, row5_c2 = st.columns(2)
         with row5_c1:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#f0f9ff,#ffffff); border:2px solid #0284c7; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(2,132,199,0.10); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#075985; margin-bottom:6px;">🗂️ Ταξινόμηση σε 2 Καλάθια</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    Ρίξε <b>6 κάρτες</b> στο σωστό καλάθι-κατηγορία με 1 κλικ! Ιδανικό για γρήγορη κατανόηση & ΕΑΕ.
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("group_sort", "🗂️ Ταξινόμηση σε 2 Καλάθια", "Ρίξε <b>6 κάρτες</b> στο σωστό καλάθι-κατηγορία με 1 κλικ! Ιδανικό για γρήγορη κατανόηση & ΕΑΕ.", "#f0f9ff", "#0284c7", "#075985", "rgba(2,132,199,0.12)")
             if st.button("▶️ Παίξε: 🗂️ Ταξινόμηση σε 2 Καλάθια", type="primary", use_container_width=True, key="btn_open_game_group_sort"):
                 st.session_state.active_game_id = "group_sort"
                 st.session_state.ww_state = None
                 st.rerun()
 
         with row5_c2:
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#fdf4ff,#ffffff); border:2px solid #c026d3; border-radius:16px; padding:16px; box-shadow:0 4px 12px rgba(192,38,211,0.10); min-height:142px;">
-                <div style="font-size:1.18rem; font-weight:800; color:#86198f; margin-bottom:6px;">🧩 Αντιστοίχιση Ζευγαριών</div>
-                <div style="font-size:0.9rem; color:#334155; line-height:1.4;">
-                    Ένωσε <b>5 όρους</b> με τις σωστές τους εξηγήσεις με 2 απλά κλικ (αριστερά ↔ δεξιά)!
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            _render_hub_card("match_up", "🧩 Αντιστοίχιση Ζευγαριών", "Ένωσε <b>5 όρους</b> με τις σωστές τους εξηγήσεις με 2 απλά κλικ (αριστερά ↔ δεξιά)!", "#fdf4ff", "#c026d3", "#86198f", "rgba(192,38,211,0.12)")
             if st.button("▶️ Παίξε: 🧩 Αντιστοίχιση Ζευγαριών", type="primary", use_container_width=True, key="btn_open_game_match_up"):
                 st.session_state.active_game_id = "match_up"
                 st.session_state.ww_state = None
