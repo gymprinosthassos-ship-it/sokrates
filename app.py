@@ -11,13 +11,6 @@ import streamlit.components.v1 as components
 from google import genai
 from google.genai import types
 
-from special_ed_visuals import (
-    PEDAGOGICAL_CARDS,
-    find_matching_card,
-    get_cards_for_subject,
-    render_visual_card_html,
-)
-
 # -------------------------------------------------------------
 # 0. Διαδρομές Αρχείων & Εικονιδίων
 # -------------------------------------------------------------
@@ -133,59 +126,59 @@ GYMNASIO_DATA = {
         "guideline": "Ο μαθητής είναι στην Α' Γυμνασίου (12-13 ετών). Χρησιμοποίησε πολύ απλή, φιλική γλώσσα, εισαγωγικές έννοιες, επιβράβευση σε κάθε προσπάθεια και απόφυγε προχωρημένη ορολογία.",
         "subjects": {
             "🌟 Όλα τα μαθήματα (Γενικό)": {
-                "url": "http://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K07",
+                "url": "https://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K07",
                 "topics": "Γενική μελέτη και υποστήριξη σε όλα τα μαθήματα και ψηφιακά βιβλία της Α' Γυμνασίου."
             },
             "📐 Μαθηματικά (Άλγεβρα & Γεωμετρία)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2748/Mathimatika_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2748/Mathimatika_A-Gymnasiou_html-empl/",
                 "topics": "Μέρος Α' (Αριθμητική - Άλγεβρα): Φυσικοί αριθμοί, Ευκλείδεια διαίρεση, Δυνάμεις, Κλάσματα (πράξεις, σύνθετα), Δεκαδικοί αριθμοί, Εξισώσεις 1ου βαθμού, Ποσοστά, Ανάλογα & Αντιστρόφως ανάλογα ποσά, Θετικοί και Αρνητικοί αριθμοί. Μέρος Β' (Γεωμετρία): Σημείο, Ευθύγραμμο τμήμα, Γωνίες (είδη, μέτρηση, διχοτόμος), Συμμετρία (ως προς άξονα & κέντρο), Παράλληλες ευθείες, Τρίγωνα (είδη, στοιχεία), Κύκλος."
             },
             "📖 Νεοελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2256/Neoelliniki-Glossa_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2256/Neoelliniki-Glossa_A-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-10: Επικοινωνία, Παράγραφος (πλαγιότιτλος, δομή), Περιγραφή (χώρου, προσώπου), Αφήγηση, Ονοματολογία (ουσιαστικά, επίθετα, αντωνυμίες), Ρήματα (χρόνοι, εγκλίσεις, φωνές), Σύνταξη (κύριοι όροι πρότασης), Σημεία στίξης, Παραγωγή και Σύνθεση λέξεων."
             },
             "📚 Νεοελληνική Λογοτεχνία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2228/Keimena-Neoellinikis-Logotechnias_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2228/Keimena-Neoellinikis-Logotechnias_A-Gymnasiou_html-empl/",
                 "topics": "Κείμενα Νεοελληνικής Λογοτεχνίας: Ποίηση και Πεζογραφία, Αφηγηματικές τεχνικές, Χαρακτηρισμός προσώπων, Μεταφορές, Παρομοιώσεις, Εικόνες, Θέματα: Η οικογένεια, Το σχολείο, Η φύση και το περιβάλλον, Η παιδική ηλικία."
             },
             "🏛️ Αρχαία Ελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2244/Archaia-Elliniki-Glossa_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2244/Archaia-Elliniki-Glossa_A-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-18: Εισαγωγή, Τονισμός, Πνεύματα, Ουσιαστικά α' και β' κλίσης, Επίθετα β' κλίσης, Προσωπικές αντωνυμίες, Ρήματα βαρύτονα (Ενεστώτας, Παρατατικός, Αόριστος, Μέλλοντας Ενεργητικής Φωνής), Σύνταξη (Υποκείμενο, Αντικείμενο, Κατηγορούμενο), Ετυμολογία και ομόρριζα."
             },
             "🏺 Αρχαία Μετάφραση (Ομήρου Οδύσσεια)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2232/Omirika-Epi-Odysseia_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2232/Omirika-Epi-Odysseia_A-Gymnasiou_html-empl/",
                 "topics": "Ομηρικά Έπη: Εισαγωγή στο έπος, Προοίμιο, Τηλεμάχεια (ραψωδίες α-δ), Νόστος (ε-ν: Καλυψώ, Φαίακες, Κύκλωπας Πολύφημος), Μνηστηροφονία (ξ-ω), Αφηγηματικές τεχνικές, Τυπικά επίθετα, Παρομοιώσεις, Ο θεσμός της φιλοξενίας, Ύβρις και νέμεσις."
             },
             "📜 Ιστορία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2290/Istoria_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2290/Istoria_A-Gymnasiou_html-empl/",
                 "topics": "Η Εποχή του Λίθου (Παλαιολιθική, Νεολιθική), Η Εποχή του Χαλκού (Κυκλαδικός, Μινωικός, Μυκηναϊκός πολιτισμός), Αρχαϊκή Εποχή (Πόλη-κράτος, Αποικισμός, Σπάρτη, Αθήνα), Κλασική Εποχή (Περσικοί Πόλεμοι, Χρυσούς Αιών Περικλέους, Πελοποννησιακός Πόλεμος, Μακεδονία - Μέγας Αλέξανδρος), Ελληνιστικοί Χρόνοι."
             },
             "⚡ Φυσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2314/Fysiki_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2314/Fysiki_A-Gymnasiou_html-empl/",
                 "topics": "Η Επιστημονική μέθοδος, Μετρήσεις και μονάδες (Μήκος, Χρόνος, Μάζα, Εμβαδόν, Όγκος, Πυκνότητα), Θερμοκρασία, Θερμότητα και Θερμική ισορροπία, Καταστάσεις της ύλης και αλλαγές φάσης."
             },
             "🧬 Βιολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2250/Biologia_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2250/Biologia_A-Gymnasiou_html-empl/",
                 "topics": "Η οργάνωση της ζωής: Το κύτταρο (προκαρυωτικό, ευκαρυωτικό, φυτικό, ζωικό), Μονοκύτταροι & Πολυκύτταροι οργανισμοί, Πρόσληψη ουσιών και πέψη, Μεταφορά και αποβολή ουσιών, Αναπνοή στους ζωντανούς οργανισμούς."
             },
             "🌍 Γεωλογία - Γεωγραφία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2286/Geografia_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2286/Geografia_A-Gymnasiou_html-empl/",
                 "topics": "Χάρτες και προσανατολισμός, Το σχήμα και οι κινήσεις της Γης, Λιθόσφαιρα (ηφαίστεια, σεισμοί), Υδρόσφαιρα (ωκεανοί, θάλασσες, ποτάμια), Ατμόσφαιρα και καιρικά φαινόμενα, Οι ήπειροι της Γης."
             },
             "🕊️ Θρησκευτικά": {
-                "url": "http://ebooks.edu.gr/ebooks/handle/8547/120",
+                "url": "https://ebooks.edu.gr/ebooks/handle/8547/120",
                 "topics": "Η πορεία και η αναζήτηση του ανθρώπου, Η Παλαιά Διαθήκη: Δημιουργία, Πατριάρχες (Αβραάμ, Ισαάκ, Ιακώβ), Μωυσής και Έξοδος, Προφήτες και η προσμονή του Μεσσία."
             },
             "💻 Πληροφορική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
                 "topics": "Γνωριμία με το υλικό (hardware) και το λογισμικό (software), Αρχεία και φάκελοι, Επεξεργασία Κειμένου, Ασφαλής πλοήγηση στο Διαδίκτυο, Εισαγωγή στον οπτικό προγραμματισμό (Scratch)."
             },
             "🔧 Τεχνολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2248/Technologia_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2248/Technologia_A-Gymnasiou_html-empl/",
                 "topics": "Η μέθοδος της ατομικής εργασίας: Εργαλεία και μηχανές, Υλικά, Ενέργεια, Μεταφορές, Επικοινωνίες, Σύνταξη γραπτής τεχνολογικής μελέτης και κατασκευή μακέτας."
             },
             "🏡 Οικιακή Οικονομία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2328/Oikiaki-Oikonomia_A-Gymnasiou_html-apli/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2328/Oikiaki-Oikonomia_A-Gymnasiou_html-apli/",
                 "topics": "Η οικογένεια και η κοινωνία, Διαχείριση των οικονομικών του νοικοκυριού, Αγωγή καταναλωτή, Διατροφή και υγεία (μεσογειακή διατροφή), Πρόληψη ατυχημάτων στο σπίτι."
             },
             "🏃‍♂️ Φυσική Αγωγή": {
@@ -193,23 +186,23 @@ GYMNASIO_DATA = {
                 "topics": "Ψηφιακό Βιβλίο Φυσικής Αγωγής Α' Γυμνασίου (Μελίσπη — ebooksdl.cti.gr): Σωματική άσκηση και υγεία, Καρδιοαναπνευστική ευρωστία, Διατροφή και σωματικό βάρος, Ολυμπισμός & Αθλητικό Ήθος (Fair Play), Δεξιότητες ομαδικών αθλημάτων (Πετοσφαίριση, Καλαθοσφαίριση, Ποδόσφαιρο, Χειροσφαίριση), Κλασικός Αθλητισμός (Στίβος), Ελληνικοί Παραδοσιακοί Χοροί, Πρόληψη αθλητικών τραυματισμών και Πρώτες Βοήθειες."
             },
             "🎨 Καλλιτεχνικά (Εικαστικά)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2288/Eikastika_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2288/Eikastika_A-Gymnasiou_html-empl/",
                 "topics": "Σχέδιο, Χρώμα (βασικά, συμπληρωματικά, θερμά, ψυχρά), Σύνθεση, Υλικά και τεχνικές ζωγραφικής, Στοιχεία ιστορίας της τέχνης."
             },
             "🎵 Μουσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2258/Mousiki_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2258/Mousiki_A-Gymnasiou_html-empl/",
                 "topics": "Βασικές μουσικές έννοιες, Ρυθμός, Μελωδία, Μουσικά όργανα (οικογένειες οργάνων συμφωνικής ορχήστρας), Ελληνική παραδοσιακή μουσική."
             },
             "🇬🇧 Αγγλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2322/Agglika_A-Gymnasiou-Prochorimenon_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2322/Agglika_A-Gymnasiou-Prochorimenon_html-empl/",
                 "topics": "Think Teen 1: Reading comprehension, Writing descriptions and letters, Grammar (Present Simple & Continuous, Past Simple, Countable/Uncountable, Modals), Vocabulary."
             },
             "🇫🇷 Γαλλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2312/Gallika_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2312/Gallika_A-Gymnasiou_html-empl/",
                 "topics": "Action Fr! A1: Χαιρετισμοί, Παρουσίαση του εαυτού μας, Οικογένεια, Σχολείο, Βασική γραμματική (άρθρα, ρήματα être & avoir, ενεστώτας α' συζυγίας)."
             },
             "🇩🇪 Γερμανικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2254/Germanika_A-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2254/Germanika_A-Gymnasiou_html-empl/",
                 "topics": "Deutsch - ein Hit! 1: Χαιρετισμοί, Γνωριμία, Αριθμοί, Σχολικά είδη, Βασική γραμματική (άρθρα der, die, das, ρήματα sein & haben, ενεστώτας)."
             }
         }
@@ -218,59 +211,59 @@ GYMNASIO_DATA = {
         "guideline": "Ο μαθητής είναι στη Β' Γυμνασίου (13-14 ετών). Ενθάρρυνε τη λογική σύνδεση με προηγούμενες γνώσεις, βαθύτερους συλλογισμούς και χρήση των κατάλληλων όρων.",
         "subjects": {
             "🌟 Όλα τα μαθήματα (Γενικό)": {
-                "url": "http://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K08",
+                "url": "https://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K08",
                 "topics": "Γενική μελέτη και υποστήριξη σε όλα τα μαθήματα και ψηφιακά βιβλία της Β' Γυμνασίου."
             },
             "📐 Μαθηματικά (Άλγεβρα & Γεωμετρία)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2196/Mathimatika_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2196/Mathimatika_B-Gymnasiou_html-empl/",
                 "topics": "Μέρος Α' (Άλγεβρα): Εξισώσεις 1ου βαθμού, Ανισώσεις 1ου βαθμού, Συναρτήσεις (έννοια, γραφική παράσταση, y=ax, y=ax+b), Στατιστική. Μέρος Β' (Γεωμετρία): Εμβαδά επίπεδων σχημάτων, Πυθαγόρειο Θεώρημα, Εφαπτομένη, Ημίτονο και Συνημίτονο οξείας γωνίας, Τριγωνομετρία, Εγγεγραμμένες γωνίες, Κανονικά πολύγωνα, Μήκος κύκλου & Εμβαδόν κυκλικού δίσκου."
             },
             "📖 Νεοελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2298/Neoelliniki-Glossa_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2298/Neoelliniki-Glossa_B-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-9: Ταξίδια και τόποι, ΜΜΕ και επικοινωνία, Ονοματική και Ρηματική φράση, Εγκλίσεις και σημασίες τους, Σύνθετες προτάσεις, Παρατακτική & Υποτακτική σύνδεση, Δευτερεύουσες προτάσεις, Περίληψη κειμένου."
             },
             "📚 Νεοελληνική Λογοτεχνία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2246/Keimena-Neoellinikis-Logotechnias_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2246/Keimena-Neoellinikis-Logotechnias_B-Gymnasiou_html-empl/",
                 "topics": "Κείμενα Νεοελληνικής Λογοτεχνίας: Ανάλυση πεζών και ποιητικών κειμένων, Ιστορικά και κοινωνικά θέματα, Αφηγητής και εστίαση, Τεχνικές πλοκής, Σύμβολα και αλληγορία."
             },
             "🏛️ Αρχαία Ελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2234/Archaia-Elliniki-Glossa_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2234/Archaia-Elliniki-Glossa_B-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-18: Ουσιαστικά γ' κλίσης (φωνηεντόληκτα, συμφωνόληκτα), Επίθετα γ' κλίσης, Παραθετικά επιθέτων και επιρρημάτων, Μέση Φωνή ρημάτων (Ενεστώτας, Παρατατικός, Αόριστος), Σύνταξη (εμπρόθετοι προσδιορισμοί, δοτική προσωπική, παθητική σύνταξη)."
             },
             "🏺 Αρχαία Μετάφραση (Ομήρου Ιλιάδα)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2296/Omirika-Epi-Iliada_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2296/Omirika-Epi-Iliada_B-Gymnasiou_html-empl/",
                 "topics": "Ομηρικά Έπη: Εισαγωγή στην Ιλιάδα, Η Μήνις του Αχιλλέα (ραψωδία Α), Σκηνές μάχης, Έκτορας και Ανδρομάχη (Ζ), Πρεσβεία προς τον Αχιλλέα (Ι), Πατρόκλεια (Π), Οπλοποιία (Σ), Έκτορος αναίρεσις (Χ), Λύτρα και ταφή του Έκτορα (Ω), Το ηρωικό ιδεώδες, Η μοίρα και οι θεοί."
             },
             "📜 Ιστορία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2198/Istoria_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2198/Istoria_B-Gymnasiou_html-empl/",
                 "topics": "Μεσαιωνική και Βυζαντινή Ιστορία: Ίδρυση Κωνσταντινούπολης, Ιουστινιανός, Ηράκλειος και Άραβες, Εικονομαχία, Μακεδονική Δυναστεία (ακμή), Σταυροφορίες (1204 - Άλωση από Λατίνους), Δυναστεία Παλαιολόγων, Άλωση της Κωνσταντινούπολης (1453), Η Μεσαιωνική Δύση (Φεουδαρχία, Καρλομάγνος)."
             },
             "⚡ Φυσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2204/Fysiki_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2204/Fysiki_B-Gymnasiou_html-empl/",
                 "topics": "Κινήσεις (Ευθύγραμμη ομαλή κίνηση, ταχύτητα, διαγράμματα), Δυνάμεις (Νόμοι του Νεύτωνα, Βάρος, Τριβή), Πίεση (Υδροστατική πίεση, Ατμοσφαιρική πίεση, Αρχή του Αρχιμήδη, Άνωση), Ενέργεια (Έργο, Κινητική & Δυναμική ενέργεια, Διατήρηση Μηχανικής Ενέργειας), Θερμότητα και Θερμοκρασία."
             },
             "🧪 Χημεία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2206/Chimeia_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2206/Chimeia_B-Gymnasiou_html-empl/",
                 "topics": "Εισαγωγή στη Χημεία: Ύλη και σώματα, Καταστάσεις ύλης, Φυσικές και χημικές ιδιότητες, Μείγματα (ομογενή, ετερογενή), Μέθοδοι διαχωρισμού μειγμάτων, Διαλύματα (περιεκτικότητες % w/w, % w/v, % v/v), Άτομα, Μόρια, Υποατομικά σωματίδια (πρωτόνια, νετρόνια, ηλεκτρόνια), Χημικά στοιχεία και Χημικές ενώσεις, Χημικοί τύποι."
             },
             "🧬 Βιολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2210/Biologia_B-G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2210/Biologia_B-G-Gymnasiou_html-empl/",
                 "topics": "Συστήματα υποστήριξης και κίνησης (ερειστικό & μυϊκό σύστημα), Κυκλοφορικό σύστημα (καρδιά, αίμα, αγγεία), Αναπνευστικό σύστημα, Πεπτικό σύστημα, Νευρικό σύστημα και αισθητήρια όργανα."
             },
             "🌍 Γεωλογία - Γεωγραφία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2294/Geografia_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2294/Geografia_B-Gymnasiou_html-empl/",
                 "topics": "Η Ευρώπη: Γεωγραφική θέση, Ανάγλυφο, Κλίμα, Ποτάμια και λίμνες, Χώρες και πληθυσμός της Ευρώπης, Η Ευρωπαϊκή Ένωση."
             },
             "🕊️ Θρησκευτικά": {
-                "url": "http://ebooks.edu.gr/ebooks/handle/8547/5212",
+                "url": "https://ebooks.edu.gr/ebooks/handle/8547/5212",
                 "topics": "Η Καινή Διαθήκη: Η ζωή και η διδασκαλία του Ιησού Χριστού, Παραβολές, Θαύματα, Το Πάθος και η Ανάσταση, Η Εκκλησία και οι Απόστολοι."
             },
             "💻 Πληροφορική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
                 "topics": "Υπολογιστικά Φύλλα (Excel / Calc - συναρτήσεις, γραφήματα), Πολυμέσα και Παρουσιάσεις, Προγραμματισμός και αλγοριθμική σκέψη (μεταβλητές, δομές επιλογής)."
             },
             "🔧 Τεχνολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2194/Technologia_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2194/Technologia_B-Gymnasiou_html-empl/",
                 "topics": "Η μέθοδος της ομαδικής εργασίας: Προσομοίωση βιομηχανικής επιχείρησης, Οργανόγραμμα επιχείρησης, Ρόλοι (Διευθυντής, Μηχανικός, Μάρκετινγκ), Μαζική παραγωγή προϊόντος."
             },
             "🏃‍♂️ Φυσική Αγωγή": {
@@ -278,23 +271,23 @@ GYMNASIO_DATA = {
                 "topics": "Ψηφιακό Βιβλίο Φυσικής Αγωγής Β' Γυμνασίου (Μελίσπη — ebooksdl.cti.gr): Φυσική κατάσταση και υγεία, Προπονητικές αρχές, Τακτική ομαδικών αθλημάτων (Μπάσκετ, Βόλεϊ, Ποδόσφαιρο), Στίβος (άλματα, ρίψεις, δρόμοι), Παραδοσιακοί χοροί ανά γεωγραφικό διαμέρισμα, Αθλητικό ήθος."
             },
             "🎨 Καλλιτεχνικά (Εικαστικά)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2200/Eikastika_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2200/Eikastika_B-Gymnasiou_html-empl/",
                 "topics": "Προοπτική (γραμμική και ατμοσφαιρική), Φως και σκιά, Γλυπτική και τρισδιάστατες κατασκευές, Ιστορία της Τέχνης (Αναγέννηση, Μπαρόκ)."
             },
             "🎵 Μουσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2300/Mousiki_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2300/Mousiki_B-Gymnasiou_html-empl/",
                 "topics": "Μουσικές μορφές (κανόνας, φούγκα, συμφωνία), Μουσικές εποχές (Μπαρόκ, Κλασικισμός, Ρομαντισμός), Σύγχρονη ελληνική μουσική."
             },
             "🇬🇧 Αγγλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2320/Agglika_B-Gymnasiou-Prochorimenon_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2320/Agglika_B-Gymnasiou-Prochorimenon_html-empl/",
                 "topics": "Think Teen 2: Reading essays, Writing opinion articles and stories, Grammar (Past Continuous, Present Perfect Simple/Continuous, Conditionals Types 1 & 2, Passive Voice)."
             },
             "🇫🇷 Γαλλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2316/Gallika_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2316/Gallika_B-Gymnasiou_html-empl/",
                 "topics": "Action Fr! A2: Καθημερινότητα, Διατροφή, Ψώνια, Χρόνοι (Passé Composé, Futur Proche), Αντωνυμίες, Συγκριτικός βαθμός."
             },
             "🇩🇪 Γερμανικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2202/Germanika_B-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2202/Germanika_B-Gymnasiou_html-empl/",
                 "topics": "Deutsch - ein Hit! 2: Καθημερινές δραστηριότητες, Ελεύθερος χρόνος, Χρόνοι (Perfekt), Τροπικά ρήματα (können, müssen, wollen), Αιτιατική πτώση."
             }
         }
@@ -303,79 +296,83 @@ GYMNASIO_DATA = {
         "guideline": "Ο μαθητής είναι στη Γ' Γυμνασίου (14-15 ετών). Προετοιμάζεται για το Λύκειο. Χρησιμοποίησε ακριβή επιστημονική και φιλολογική ορολογία, αυστηρότερη μεθοδολογία και βαθύτερη ανάλυση.",
         "subjects": {
             "🌟 Όλα τα μαθήματα (Γενικό)": {
-                "url": "http://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K09",
+                "url": "https://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K09",
                 "topics": "Γενική μελέτη και προετοιμασία για το Λύκειο σε όλα τα μαθήματα και ψηφιακά βιβλία της Γ' Γυμνασίου."
             },
             "📐 Μαθηματικά (Άλγεβρα & Γεωμετρία)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2212/Mathimatika_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2212/Mathimatika_G-Gymnasiou_html-empl/",
                 "topics": "Μέρος Α' (Άλγεβρα): Πράξεις με πραγματικούς αριθμούς, Μονώνυμα, Πολυώνυμα, Αξιοσημείωτες Ταυτότητες, Παραγοντοποίηση, Ρητές αλγεβρικές παραστάσεις, Εξισώσεις 2ου βαθμού (Διακρίνουσα, τύποι Vieta), Κλασματικές εξισώσεις, Γραμμικά Συστήματα 2 εξισώσεων με 2 αγνώστους, Πιθανότητες. Μέρος Β' (Γεωμετρία): Ισότητα τριγώνων, Θεώρημα Θαλή, Ομοιότητα τριγώνων (λόγος ομοιότητας, εμβαδών), Τριγωνομετρικοί αριθμοί γωνιών 0°-180° (ημ(180-ω), συν(180-ω)), Νόμος ημιτόνων & συνημιτόνων."
             },
             "📖 Νεοελληνική Γλώσσα & Έκθεση": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2216/Neoelliniki-Glossa_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2216/Neoelliniki-Glossa_G-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-8: Η Ελλάδα και ο κόσμος, Ειρήνη και πόλεμος, Εργασία και επάγγελμα, Επιστήμη και τεχνολογία, Δευτερεύουσες ονοματικές προτάσεις (ειδικές, βουλητικές, ενδοιαστικές), Δευτερεύουσες επιρρηματικές προτάσεις (αιτιολογικές, τελικές, χρονικές, υποθετικές, αποτελεσματικές, εναντιωματικές), Ευθύς και πλάγιος λόγος, Παραγωγή πειστικού λόγου (επιχειρηματολογία)."
             },
             "📚 Νεοελληνική Λογοτεχνία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2218/Keimena-Neoellinikis-Logotechnias_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2218/Keimena-Neoellinikis-Logotechnias_G-Gymnasiou_html-empl/",
                 "topics": "Κείμενα Νεοελληνικής Λογοτεχνίας: Νεότερη και σύγχρονη ελληνική ποίηση (Σολωμός, Καβάφης, Σεφέρης, Ελύτης, Ρίτσος) και πεζογραφία, Παγκόσμια λογοτεχνία, Λογοτεχνικά ρεύματα, Κοινωνικοί και υπαρξιακοί προβληματισμοί."
             },
             "🏛️ Αρχαία Ελληνική Γλώσσα": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2238/Archaia-Elliniki-Glossa_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2238/Archaia-Elliniki-Glossa_G-Gymnasiou_html-empl/",
                 "topics": "Ενότητες 1-12: Ρήματα συμβολής και συνηρημένα σε -άω, -έω, -όω, Χρόνοι Μέσης Φωνής, Αόριστος β', Ευκτική και Υποτακτική έγκλιση, Απαρέμφατα και Μετοχές (είδη, σύνταξη, απόλυτες μετοχές), Υποθετικοί λόγοι."
             },
             "🏺 Αρχαία Μετάφραση (Ευριπίδη Ελένη)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2342/Dramatiki-Poiisi-Evripidi-Eleni_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2342/Dramatiki-Poiisi-Evripidi-Eleni_G-Gymnasiou_html-empl/",
                 "topics": "Αρχαίο Δράμα: Εισαγωγή στην τραγωδία, Δομή (Πρόλογος, Πάροδος, Επεισόδια, Στάσιμα, Έξοδος), Ευριπίδη Ελένη: Ο μύθος του ειδώλου, Σκηνή αναγνώρισης Μενελάου - Ελένης, Σχέδιο απόδρασης, Θεοκλύμενος, Θεοί από μηχανής (Διόσκουροι), Τραγική ειρωνεία, Αντιπολεμικά μηνύματα."
             },
             "📜 Ιστορία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/5204/Istoria_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/5204/Istoria_G-Gymnasiou_html-empl/",
                 "topics": "Νεότερη και Σύγχρονη Ιστορία: Διαφωτισμός, Αμερικανική & Γαλλική Επανάσταση, Η Ελληνική Επανάσταση του 1821 (Φιλική Εταιρεία, αγώνες, ναυμαχία Ναβαρίνου), Ίδρυση του Ελληνικού Κράτους (Καποδίστριας, Όθωνας), Χαρίλαος Τρικούπης και εκσυγχρονισμός, Βαλκανικοί Πόλεμοι, Α' Παγκόσμιος Πόλεμος, Μικρασιατική Καταστροφή (1922), Μεσοπόλεμος, Β' Παγκόσμιος Πόλεμος και Εθνική Αντίσταση."
             },
             "⚡ Φυσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2226/Fysiki_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2226/Fysiki_G-Gymnasiou_html-empl/",
                 "topics": "Ηλεκτρισμός (Ηλεκτρικό φορτίο, Νόμος Coulomb, Ηλεκτρικό ρεύμα, Ένταση, Ηλεκτρική τάση, Νόμος του Ohm, Αντίσταση, Σύνδεση αντιστατών σε σειρά και παράλληλα, Ενέργεια & Ισχύς ηλεκτρικού ρεύματος, Νόμος Joule), Μηχανικές Ταλαντώσεις (περίοδος, συχνότητα, πλάτος), Μηχανικά Κύματα (διάδοση, μήκος κύματος, θεμελιώδης εξίσωση κυματικής), Ήχος, Οπτική (Ανάκλαση, Διάθλαση του φωτός, Φακοί)."
             },
             "🧪 Χημεία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2208/Chimeia_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2208/Chimeia_G-Gymnasiou_html-empl/",
                 "topics": "Περιοδικός Πίνακας (ομάδες, περίοδοι, μέταλλα, αμέταλλα), Οξέα (ιδιότητες, pH), Βάσεις (ιδιότητες, pH), Εξουδετέρωση, Άλατα, Οργανική Χημεία (Υδρογονάνθρακες - αλκάνια, αλκένια, αλκίνια, καύση, πετρέλαιο, φυσικό αέριο, πολυμερή - πλαστικά)."
             },
             "🧬 Βιολογία": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2210/Biologia_B-G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2210/Biologia_B-G-Gymnasiou_html-empl/",
                 "topics": "Γενετική και Κληρονομικότητα: DNA, RNA, Γονίδια, Χρωμοσώματα, Κυτταρική διαίρεση (Μίτωση, Μείωση), Νόμοι του Mendel, Μεταλλάξεις, Βιοτεχνολογία και Γενετική Μηχανική, Εξέλιξη των ειδών (Δαρβίνος, Φυσική επιλογή), Οικολογία και Οικοσυστήματα."
             },
             "⚖️ Κοινωνική & Πολιτική Αγωγή": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/4720/Koinoniki-kai-Politiki-Agogi_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/4720/Koinoniki-kai-Politiki-Agogi_G-Gymnasiou_html-empl/",
                 "topics": "Το άτομο και η κοινωνία, Κοινωνικοί θεσμοί, Το κράτος, Το Σύνταγμα, Πολίτευμα (Κοινοβουλευτική Δημοκρατία), Δικαιώματα και υποχρεώσεις, Η Ευρωπαϊκή Ένωση και οι διεθνείς οργανισμοί."
             },
             "🕊️ Θρησκευτικά": {
-                "url": "http://ebooks.edu.gr/ebooks/handle/8547/122",
+                "url": "https://ebooks.edu.gr/ebooks/handle/8547/122",
                 "topics": "Η Εκκλησία στην ιστορία: Πρώτη Εκκλησία, Διωγμοί, Οικουμενικές Σύνοδοι, Σχίσμα του 1054, Ορθοδοξία και σύγχρονος κόσμος."
             },
             "💻 Πληροφορική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2759/Pliroforiki_A-B-G-Gymnasiou_html-empl/",
                 "topics": "Βάσεις Δεδομένων, Δίκτυα Υπολογιστών, Προγραμματιστικά περιβάλλοντα, Αλγόριθμοι και δομές επανάληψης, Ρομποτική και Αυτοματισμοί."
+            },
+            "🔧 Τεχνολογία": {
+                "url": "https://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K09",
+                "topics": "Έρευνα και Πειραματισμός: Επιλογή ερευνητικού προβλήματος, Διατύπωση υποθέσεων, Σχεδιασμός και εκτέλεση πειράματος, Συλλογή και επεξεργασία δεδομένων, Συγγραφή ερευνητικής εργασίας και παρουσίαση συμπερασμάτων."
             },
             "🏃‍♂️ Φυσική Αγωγή": {
                 "url": "https://ebooksdl.cti.gr/",
                 "topics": "Ψηφιακό Βιβλίο Φυσικής Αγωγής Γ' Γυμνασίου (Μελίσπη — ebooksdl.cti.gr): Δια βίου άσκηση, Σχεδιασμός ατομικού προγράμματος εκγύμνασης, Αθλητισμός και κοινωνία, Fair play και καταπολέμηση βίας στα γήπεδα, Σύνθετες τεχνικές και τακτικές αθλημάτων, Ελληνικοί χοροί και πολιτισμός."
             },
             "🎨 Καλλιτεχνικά (Εικαστικά)": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2306/Eikastika_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2306/Eikastika_G-Gymnasiou_html-empl/",
                 "topics": "Μοντέρνα και Σύγχρονη Τέχνη (Ιμπρεσιονισμός, Κυβισμός, Αφαίρεση), Γραφιστική, Φωτογραφία, Design, Κριτική έργων τέχνης."
             },
             "🎵 Μουσική": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2304/Mousiki_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2304/Mousiki_G-Gymnasiou_html-empl/",
                 "topics": "Μουσική του 20ού και 21ου αιώνα, Jazz, Rock, Ηλεκτρονική μουσική, Μουσική κινηματογράφου, Μουσική παράδοση των λαών του κόσμου."
             },
             "🇬🇧 Αγγλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2324/Agglika_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2324/Agglika_G-Gymnasiou_html-empl/",
                 "topics": "Think Teen 3: Advanced reading texts, Writing discursive essays and reports, Modals of deduction, Relative Clauses, Conditionals Type 3, Phrasal verbs."
             },
             "🇫🇷 Γαλλικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2316/Gallika_B-Gymnasiou_html-empl/",
-                "topics": "Action Fr! B1: Έκφραση γνώμης, Επιχειρηματολογία, Χρόνοι (Imparfait vs Passé Composé, Conditionnel Présent, Subjonctif), Γαλλικός πολιτισμός."
+                "url": "https://ebooks.edu.gr/ebooks/v2/classcoursesdiadrastika.jsp?classcode=K09",
+                "topics": "Action Fr! B1 / Micro-Intervalle: Έκφραση γνώμης, Επιχειρηματολογία, Χρόνοι (Imparfait vs Passé Composé, Conditionnel Présent, Subjonctif), Γαλλικός πολιτισμός."
             },
             "🇩🇪 Γερμανικά": {
-                "url": "http://ebooks.edu.gr/ebooks/v/html/8547/2220/Germanika_G-Gymnasiou_html-empl/",
+                "url": "https://ebooks.edu.gr/ebooks/v/html/8547/2220/Germanika_G-Gymnasiou_html-empl/",
                 "topics": "Deutsch - ein Hit! 3: Έκφραση άποψης, Επαγγέλματα, Περιβάλλον, Γραμματική (Präteritum, Dativ, Υποθετικές προτάσεις με wenn, Δευτερεύουσες με dass & weil)."
             }
         }
@@ -991,6 +988,23 @@ st.markdown("""
         background: linear-gradient(180deg, #f0f9ff 0%, #bae6fd 100%) !important;
         border: 1.5px solid #38bdf8 !important;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 3px 0 #0284c7, 0 5px 10px rgba(2,132,199,0.2) !important;
+    }
+    .st-key-btn_new_student_session button {
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        background: linear-gradient(180deg, #ecfeff 0%, #a5f3fc 48%, #67e8f9 100%) !important;
+        border: 1.5px solid #0891b2 !important;
+        color: #164e63 !important;
+        box-shadow: inset 0 2px 1px rgba(255,255,255,0.92), inset 0 -2px 4px rgba(8,145,178,0.18), 0 4px 0 #0e7490, 0 8px 16px rgba(8,145,178,0.22) !important;
+        transition: transform 0.14s ease, box-shadow 0.14s ease !important;
+    }
+    .st-key-btn_new_student_session button:hover {
+        transform: translateY(-2px) !important;
+        filter: brightness(1.04) !important;
+    }
+    .st-key-btn_new_student_session button:active {
+        transform: translateY(2px) !important;
+        box-shadow: inset 0 2px 4px rgba(15,23,42,0.16), 0 1px 0 rgba(15,23,42,0.22) !important;
     }
     .st-key-btn_open_cam_dialog button {
         border-radius: 14px !important;
@@ -2046,7 +2060,7 @@ def generate_duel_questions_json(grade: str, subject: str, book_topics: str, sup
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.6,
-                    max_output_tokens=1600,
+                    max_output_tokens=2800,
                     response_mime_type="application/json",
                 )
                 resp = client.models.generate_content(model=m_name, contents=duel_prompt, config=cfg)
@@ -2260,7 +2274,7 @@ def generate_mini_game_json(game_type: str, grade: str, subject: str, book_topic
                     m_name,
                     disable_thinking=try_no_think,
                     temperature=0.6,
-                    max_output_tokens=2000 if game_type == "ladder5" else 1600,
+                    max_output_tokens=2800,
                     response_mime_type="application/json",
                 )
                 resp = client.models.generate_content(model=m_name, contents=full_p, config=cfg)
@@ -2470,44 +2484,23 @@ def render_wheel_svg(wedges: list, active_idx: int = -1, done_indices: set = Non
         b_col = "#fef08a" if b % 2 == 0 else "#ffffff"
         bulbs_svg.append(f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="4.2" fill="{b_col}" stroke="#92400e" stroke-width="1" />')
 
-    return f"""
-    {anim_css}
-    <div style="display:flex; justify-content:center; align-items:center; margin-bottom:10px;">
-        <svg width="270" height="275" viewBox="0 0 270 275" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 10px 18px rgba(15,23,42,0.22));">
-            <defs>
-                <linearGradient id="goldRim" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#fef08a" />
-                    <stop offset="45%" stop-color="#f59e0b" />
-                    <stop offset="100%" stop-color="#92400e" />
-                </linearGradient>
-                <radialGradient id="wheelGloss" cx="35%" cy="28%" r="65%">
-                    <stop offset="0%" stop-color="rgba(255,255,255,0.32)" />
-                    <stop offset="60%" stop-color="rgba(255,255,255,0.03)" />
-                    <stop offset="100%" stop-color="rgba(15,23,42,0.16)" />
-                </radialGradient>
-                <radialGradient id="centerHub" cx="35%" cy="30%" r="70%">
-                    <stop offset="0%" stop-color="#ffffff" />
-                    <stop offset="65%" stop-color="#fde68a" />
-                    <stop offset="100%" stop-color="#b45309" />
-                </radialGradient>
-            </defs>
-            <!-- Εξωτερικό χρυσό μεταλλικό στεφάνι & φωτάκια -->
-            <circle cx="{cx}" cy="{cy}" r="{r + 18}" fill="url(#goldRim)" stroke="#78350f" stroke-width="2.5" />
-            {''.join(bulbs_svg)}
-            <!-- Περιστρεφόμενος δίσκος -->
-            <g style="{g_style}">
-                {''.join(slices_svg)}
-                <circle cx="{cx}" cy="{cy}" r="{r}" fill="url(#wheelGloss)" pointer-events="none" />
-            </g>
-            <!-- Κεντρικός 3D μεταλλικός άξονας -->
-            <circle cx="{cx}" cy="{cy}" r="22" fill="url(#centerHub)" stroke="#78350f" stroke-width="2.5" />
-            <text x="{cx}" y="{cy}" fill="#78350f" font-size="14" font-weight="900" text-anchor="middle" dominant-baseline="central">★</text>
-            <!-- Κόκκινος 3D δείκτης κορυφής -->
-            <polygon points="{cx},42 {cx-14},10 {cx+14},10" fill="#dc2626" stroke="#ffffff" stroke-width="2.5" />
-            <circle cx="{cx}" cy="14" r="5" fill="#fef08a" stroke="#991b1b" stroke-width="1.5" />
-        </svg>
-    </div>
-    """
+    return (
+        f'{anim_css}'
+        f'<div style="display:flex; justify-content:center; align-items:center; margin-bottom:10px;">'
+        f'<svg width="270" height="275" viewBox="0 0 270 275" xmlns="http://www.w3.org/2000/svg">'
+        f'<circle cx="{cx}" cy="{cy}" r="{r + 18}" fill="#d97706" stroke="#78350f" stroke-width="3" />'
+        f'<circle cx="{cx}" cy="{cy}" r="{r + 14}" fill="#f59e0b" stroke="#fef08a" stroke-width="1.5" />'
+        f'{"".join(bulbs_svg)}'
+        f'<g style="{g_style}">'
+        f'{"".join(slices_svg)}'
+        f'</g>'
+        f'<circle cx="{cx}" cy="{cy}" r="22" fill="#f59e0b" stroke="#78350f" stroke-width="2.5" />'
+        f'<circle cx="{cx}" cy="{cy}" r="16" fill="#fef3c7" stroke="#b45309" stroke-width="1.5" />'
+        f'<text x="{cx}" y="{cy}" fill="#78350f" font-size="14" font-weight="900" text-anchor="middle" dominant-baseline="central">★</text>'
+        f'<polygon points="{cx},42 {cx-14},10 {cx+14},10" fill="#dc2626" stroke="#ffffff" stroke-width="2.5" />'
+        f'<circle cx="{cx}" cy="14" r="5" fill="#fef08a" stroke="#991b1b" stroke-width="1.5" />'
+        f'</svg></div>'
+    )
 
 def play_wheel_tick_sound(spin_id: int):
     """Παίζει απαλά «τικ-τικ-τικ...» που επιβραδύνουν όσο γυρίζει ο Τροχός της Τύχης."""
@@ -2908,9 +2901,16 @@ def evaluate_socratic_turn(
     pen_solution = 50 if gave_solution else 0
     score -= pen_solution
 
-    # Κριτήριο 2: Έθεσε ερώτηση στο τέλος (-25 αν όχι)
+    # Κριτήριο 2: Έθεσε ερώτηση στο τέλος (-25 αν όχι — εξαιρείται το ευγενικό κλείσιμο συζήτησης)
+    sp_norm = normalize_text(student_prompt or "")
+    is_polite_close = any(
+        w in sp_norm for w in [
+            "οχι", "τιποτα αλλο", "δεν θελω", "αυτα", "αντιο", "γεια",
+            "καληνυχτα", "ευχαριστω", "καταλαβα", "οκ", "ενταξει"
+        ]
+    ) and len(sp_norm) <= 45
     has_q = ends_with_question(final_response)
-    pen_question = 0 if has_q else 25
+    pen_question = 0 if (has_q or is_polite_close) else 25
     score -= pen_question
 
     # Κριτήριο 3: Συνεχόμενες εξηγήσεις χωρίς προσπάθεια μαθητή (Επίπεδο 1: έως 4, Επίπεδα 2-3: έως 3)
@@ -2985,23 +2985,48 @@ def format_socratic_audit_markdown(audits: list) -> str:
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-def _clean_text_for_speech(text: str) -> str:
-    """Καθαρίζει σύμβολα Markdown & emoji ώστε η φωνή του Σωκράτη να ακούγεται απόλυτα φυσική."""
+def _get_tts_voice_for_subject(subject_label: str = "") -> tuple:
+    """Επιλέγει τη φυσική φωνή ανάλογα με το μάθημα (Ελληνικά, Αγγλικά, Γαλλικά, Γερμανικά)."""
+    s = (subject_label or "").lower()
+    if "αγγλικ" in s:
+        return "en-GB-RyanNeural", "en-GB", "-10%", "-6Hz"
+    if "γαλλικ" in s:
+        return "fr-FR-HenriNeural", "fr-FR", "-10%", "-6Hz"
+    if "γερμανικ" in s:
+        return "de-DE-ConradNeural", "de-DE", "-10%", "-6Hz"
+    return "el-GR-NestorasNeural", "el-GR", "-18%", "-14Hz"
+
+def _clean_text_for_speech(text: str, lang_code: str = "el-GR") -> str:
+    """Καθαρίζει σύμβολα Markdown, emoji & μαθηματικούς τύπους LaTeX ώστε η φωνή να ακούγεται απόλυτα φυσική."""
     if not text:
         return ""
     cleaned = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    # Μετατροπή μαθηματικών τύπων LaTeX σε φυσικό λόγο (για Ελληνικά)
+    if lang_code.startswith("el"):
+        cleaned = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'\1 δια \2', cleaned)
+        cleaned = re.sub(r'\\sqrt\{([^}]+)\}', r'τετραγωνική ρίζα του \1', cleaned)
+        cleaned = cleaned.replace(r'\times', ' επί ').replace(r'\cdot', ' επί ').replace(r'\div', ' δια ')
+        cleaned = cleaned.replace(r'\pm', ' συν ή πλην ').replace(r'\le', ' μικρότερο ή ίσο από ').replace(r'\ge', ' μεγαλύτερο ή ίσο από ')
+        cleaned = cleaned.replace(r'\ne', ' διάφορο του ').replace(r'\pi', ' πι ').replace(r'\Delta', ' δέλτα ')
+        cleaned = re.sub(r'\^2\b', ' στο τετράγωνο', cleaned)
+        cleaned = re.sub(r'\^3\b', ' στον κύβο', cleaned)
+        cleaned = re.sub(r'\^\{([^}]+)\}', r' εις την \1', cleaned)
+        cleaned = cleaned.replace('²', ' στο τετράγωνο').replace('³', ' στον κύβο').replace('√', ' τετραγωνική ρίζα ')
+        cleaned = cleaned.replace('×', ' επί ').replace('÷', ' δια ').replace('≤', ' μικρότερο ή ίσο ').replace('≥', ' μεγαλύτερο ή ίσο ').replace('≠', ' διάφορο ')
+    cleaned = re.sub(r'\\[a-zA-Z]+', ' ', cleaned)
+    cleaned = cleaned.replace('$', ' ').replace('{', ' ').replace('}', ' ')
     cleaned = re.sub(r'[*_`#>~|]', ' ', cleaned)
     cleaned = re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f]', '', cleaned)
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
     return cleaned
 
-async def _edge_tts_fetch(clean_text: str) -> bytes:
+async def _edge_tts_fetch(clean_text: str, voice: str = "el-GR-NestorasNeural", rate: str = "-18%", pitch: str = "-14Hz") -> bytes:
     import edge_tts
     communicate = edge_tts.Communicate(
         clean_text,
-        voice="el-GR-NestorasNeural",
-        rate="-18%",
-        pitch="-14Hz",
+        voice=voice,
+        rate=rate,
+        pitch=pitch,
     )
     buf = bytearray()
     async for chunk in communicate.stream():
@@ -3010,9 +3035,10 @@ async def _edge_tts_fetch(clean_text: str) -> bytes:
     return bytes(buf)
 
 @st.cache_data(show_spinner=False, ttl=3600)
-def generate_socrates_audio_bytes(text_content: str):
+def generate_socrates_audio_bytes(text_content: str, subject_label: str = ""):
     """Παράγει φυσικό ήχο MP3 στη μνήμη (χωρίς αποθήκευση στον δίσκο). Επιστρέφει None αν αποτύχει."""
-    clean = _clean_text_for_speech(text_content)
+    voice, lang_code, rate, pitch = _get_tts_voice_for_subject(subject_label)
+    clean = _clean_text_for_speech(text_content, lang_code=lang_code)
     if not clean:
         return None
     try:
@@ -3022,9 +3048,9 @@ def generate_socrates_audio_bytes(text_content: str):
             loop = None
         if loop and loop.is_running():
             with ThreadPoolExecutor(max_workers=1) as pool:
-                audio = pool.submit(asyncio.run, _edge_tts_fetch(clean)).result(timeout=12)
+                audio = pool.submit(asyncio.run, _edge_tts_fetch(clean, voice, rate, pitch)).result(timeout=12)
         else:
-            audio = asyncio.run(_edge_tts_fetch(clean))
+            audio = asyncio.run(_edge_tts_fetch(clean, voice, rate, pitch))
         return audio if audio and len(audio) > 500 else None
     except Exception:
         return None
@@ -3098,7 +3124,8 @@ def render_tts_widget(text_content: str, msg_idx: int = 0):
         return
 
     with st.spinner("🎙️..."):
-        audio_bytes = generate_socrates_audio_bytes(text_content)
+        cur_subj_tts = st.session_state.get("side_subject_select", "")
+        audio_bytes = generate_socrates_audio_bytes(text_content, subject_label=cur_subj_tts)
 
     if audio_bytes:
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
@@ -3734,8 +3761,30 @@ def build_school_docx(
         r_st.font.size = Pt(10.5)
         r_st.font.bold = True
 
+    def _latex_to_clean_math(txt: str) -> str:
+        """Μετατρέπει μαθηματικά LaTeX ($x^2$, \\frac, \\sqrt) σε καθαρά εκτυπώσιμα σύμβολα Unicode για Word."""
+        if not txt:
+            return ""
+        s = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1)/(\2)', txt)
+        s = re.sub(r'\\sqrt\{([^}]+)\}', r'√(\1)', s)
+        repl = [
+            (r'\times', '×'), (r'\cdot', '·'), (r'\div', '÷'), (r'\pm', '±'),
+            (r'\le', '≤'), (r'\leq', '≤'), (r'\ge', '≥'), (r'\geq', '≥'), (r'\ne', '≠'), (r'\neq', '≠'),
+            (r'\approx', '≈'), (r'\pi', 'π'), (r'\Delta', 'Δ'), (r'\alpha', 'α'), (r'\beta', 'β'),
+            (r'\gamma', 'γ'), (r'\omega', 'ω'), (r'\rightarrow', '→'), (r'\Rightarrow', '⇒'),
+            (r'\to', '→'), (r'\infty', '∞'), (r'\circ', '°'), (r'\degree', '°'),
+        ]
+        for k, v in repl:
+            s = s.replace(k, v)
+        sup_map = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', 'n': 'ⁿ'}
+        s = re.sub(r'\^([0-9n])', lambda m: sup_map.get(m.group(1), '^' + m.group(1)), s)
+        s = re.sub(r'\^\{([0-9n]+)\}', lambda m: ''.join(sup_map.get(ch, ch) for ch in m.group(1)), s)
+        s = s.replace('$', '').replace('\\(', '').replace('\\)', '').replace('\\[', '').replace('\\]', '')
+        s = re.sub(r'\\[a-zA-Z]+', '', s)
+        return s
+
     def _add_formatted_runs(paragraph, text_line: str):
-        clean_line = re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f]', '', text_line)
+        clean_line = _latex_to_clean_math(re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f]', '', text_line))
         parts = re.split(r'(\*\*[^*]+\*\*)', clean_line)
         for part in parts:
             if not part:
@@ -3746,16 +3795,51 @@ def build_school_docx(
             else:
                 paragraph.add_run(part.replace("*", "").replace("`", ""))
 
+    def _flush_md_table(table_rows_raw: list):
+        """Μετατρέπει πίνακα Markdown (| ... |) σε κανονικό, καλαίσθητο πίνακα Word."""
+        parsed_rows = []
+        for r_line in table_rows_raw:
+            cells = [c.strip() for c in r_line.strip().strip("|").split("|")]
+            if all(re.fullmatch(r'[:\-\s]+', c or '-') for c in cells):
+                continue
+            if cells:
+                parsed_rows.append(cells)
+        if not parsed_rows:
+            return
+        max_cols = max(len(r) for r in parsed_rows)
+        tbl = doc.add_table(rows=len(parsed_rows), cols=max_cols)
+        tbl.style = "Table Grid"
+        for ri, row_vals in enumerate(parsed_rows):
+            for ci in range(max_cols):
+                val = row_vals[ci] if ci < len(row_vals) else ""
+                cell = tbl.cell(ri, ci)
+                p_c = cell.paragraphs[0]
+                p_c.paragraph_format.space_before = Pt(2)
+                p_c.paragraph_format.space_after = Pt(2)
+                _add_formatted_runs(p_c, val)
+                if ri == 0:
+                    for run in p_c.runs:
+                        run.bold = True
+                        run.font.color.rgb = RGBColor(0x0C, 0x33, 0x5E)
+
     solutions_page_broken = False
+    pending_table_lines = []
     for raw_line in markdown_body.splitlines():
         line = raw_line.strip()
+        if line.startswith("|") and "|" in line[1:]:
+            pending_table_lines.append(line)
+            continue
+        if pending_table_lines:
+            _flush_md_table(pending_table_lines)
+            pending_table_lines = []
+
         if not line or line in ("---", "***", "___"):
             continue
 
         # Αυτόματη αλλαγή σελίδας πριν τις Λύσεις / Ρουμπρίκα (για καθαρή φωτοτυπία μαθητή)
         if split_solutions_page and not solutions_page_broken:
             up = line.upper()
-            if any(k in up for k in ["ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ", "ΑΠΑΝΤΗΣΕΙΣ & ΛΥΣΕΙΣ", "ΛΥΣΕΙΣ:", "ΚΡΙΤΗΡΙΑ ΑΞΙΟΛΟΓΗΣΗΣ"]):
+            if any(k in up for k in ["ΕΝΔΕΙΚΤΙΚΕΣ ΑΠΑΝΤΗΣΕΙΣ", "ΑΠΑΝΤΗΣΕΙΣ & ΛΥΣΕΙΣ", "ΛΥΣΕΙΣ:", "ΚΡΙΤΗΡΙΑ ΑΞΙΟΛΟΓΗΣΗΣ", "ΚΛΙΜΑΚΑ ΑΞΙΟΛΟΓΗΣΗΣ"]):
                 doc.add_page_break()
                 solutions_page_broken = True
 
@@ -3763,7 +3847,7 @@ def build_school_docx(
             p = doc.add_paragraph()
             p.paragraph_format.space_before = Pt(8)
             p.paragraph_format.space_after = Pt(3)
-            r = p.add_run(re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f*]', '', line[4:]).strip())
+            r = p.add_run(_latex_to_clean_math(re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f*]', '', line[4:])).strip())
             r.bold = True
             r.font.size = Pt(12)
             r.font.color.rgb = RGBColor(0x1D, 0x4E, 0xD8)
@@ -3772,7 +3856,7 @@ def build_school_docx(
             p = doc.add_paragraph()
             p.paragraph_format.space_before = Pt(10)
             p.paragraph_format.space_after = Pt(4)
-            r = p.add_run(re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f*]', '', heading_txt).strip())
+            r = p.add_run(_latex_to_clean_math(re.sub(r'[\U00010000-\U0010ffff\u2600-\u27bf\ufe0f*]', '', heading_txt)).strip())
             r.bold = True
             r.font.size = Pt(13)
             r.font.color.rgb = RGBColor(0x0C, 0x33, 0x5E)
@@ -3784,6 +3868,9 @@ def build_school_docx(
             p = doc.add_paragraph()
             p.paragraph_format.space_after = Pt(4)
             _add_formatted_runs(p, line)
+
+    if pending_table_lines:
+        _flush_md_table(pending_table_lines)
 
     buf = io.BytesIO()
     doc.save(buf)
@@ -3856,6 +3943,16 @@ def run_teacher_ai_stream(prompt_text: str, stream_container, max_tokens: int = 
 # 10.5. ΒΟΗΘΟΣ ΕΚΠΑΙΔΕΥΤΙΚΟΥ (ΑΣΚΗΣΕΙΣ, ΑΠΛΟΠΟΙΗΤΗΣ & ΑΠΟΤΙΜΗΣΗ)
 # -------------------------------------------------------------
 if st.session_state.active_mode == "teacher":
+    # Αυτόματο κλείδωμα Λειτουργίας Καθηγητή μετά από 15 λεπτά αδράνειας (ασφάλεια διαδραστικού πίνακα στο διάλειμμα)
+    if st.session_state.get("teacher_unlocked", False):
+        last_t_act = float(st.session_state.get("teacher_last_activity", 0) or 0)
+        if last_t_act > 0 and (time.time() - last_t_act) > 900:
+            st.session_state.teacher_unlocked = False
+            st.session_state.teacher_last_activity = 0.0
+            st.warning("🔒 Η Λειτουργία Καθηγητή κλειδώθηκε αυτόματα λόγω αδράνειας (15 λεπτά) για ασφάλεια στην τάξη.")
+        else:
+            st.session_state.teacher_last_activity = time.time()
+
     # Έλεγχος Κωδικού (μόνο αν ο χρήστης επιλέξει ρητά κλείδωμα)
     if not st.session_state.teacher_unlocked:
         tp_art = get_game_art_uri("teacher_portal")
@@ -3883,6 +3980,7 @@ if st.session_state.active_mode == "teacher":
                     st.warning("⚠️ Δεν έχει οριστεί κωδικός εκπαιδευτικού στις ρυθμίσεις ασφαλείας (Secrets).")
                 elif verify_pin(entered_t_pwd, TEACHER_PORTAL_PIN, TEACHER_UNLOCK_PIN):
                     st.session_state.teacher_unlocked = True
+                    st.session_state.teacher_last_activity = time.time()
                     st.success("✅ Επιτυχής είσοδος! Καλωσήρθατε στον Βοηθό Εκπαιδευτικού.")
                     st.rerun()
                 else:
@@ -3903,17 +4001,14 @@ if st.session_state.active_mode == "teacher":
             st.session_state.teacher_unlocked = False
             st.rerun()
 
-    # Διακόπτης 3 Θέσεων Καθηγητή για την ενότητα «Παιχνίδια & Κουίζ»
+    # Συμπαγής ρύθμιση Παιχνιδιών & Κουίζ (πτυσσόμενη για να αναπνέουν οι 5 καρτέλες Καθηγητή)
     duel_pol_labels = {
         "study_goal": "🎯 Με στόχο μελέτης (3/3)",
         "unlocked_all": "🔓 Ξεκλείδωτο για όλους τώρα",
         "disabled": "🚫 Κλειστό",
     }
     cur_duel_pol = load_duel_policy()
-    col_dp1, col_dp2 = st.columns([1, 2])
-    with col_dp1:
-        st.markdown('<div style="padding-top:6px; font-weight:700; color:#0c335e; font-size:0.88rem;">🎮 Παιχνίδια & Κουίζ:</div>', unsafe_allow_html=True)
-    with col_dp2:
+    with st.expander(f"🎮 Παιχνίδια & Κουίζ για Μαθητές — Τώρα: {duel_pol_labels.get(cur_duel_pol, '')}", expanded=False):
         chosen_pol = st.radio(
             "Ρύθμιση Παιχνιδιών & Κουίζ:",
             options=list(duel_pol_labels.keys()),
@@ -3926,6 +4021,7 @@ if st.session_state.active_mode == "teacher":
         if chosen_pol != cur_duel_pol:
             save_duel_policy(chosen_pol)
             st.toast(f"✅ Ρύθμιση Παιχνιδιών & Κουίζ: {duel_pol_labels[chosen_pol]}")
+            st.rerun()
 
     tab_worksheets, tab_simplifier, tab_eval, tab_lesson, tab_misconceptions = st.tabs([
         "📝 Φύλλα Εργασίας",
@@ -4589,7 +4685,8 @@ if st.session_state.active_mode == "teacher":
             <div style="font-size: 0.86rem; color: #334155;">
                 Καταγράφει αυτόματα και ανώνυμα (GDPR) τα λάθη σκέψης που εντοπίζει ο Σωκράτης, 
                 ώστε να βλέπετε αμέσως ποια θέματα χρειάζονται στοχευμένη επανάληψη στην τάξη.
-                (<b>{len(all_misc_records)}</b> συνολικές καταγραφές)
+                (<b>{len(all_misc_records)}</b> συνολικές καταγραφές)<br>
+                💾 <i>Σημείωση: Κατεβάστε το αρχείο <code>.json</code> στο τέλος της ημέρας (παρακάτω) για να κρατάτε μόνιμα το ιστορικό της τάξης!</i>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -6328,9 +6425,22 @@ def show_camera_dialog():
         camera_file = st.camera_input("Ή τράβηξε φωτογραφία με την κάμερα:", key="cam_file_uploader")
         selected_img = uploaded_file if uploaded_file is not None else camera_file
         if selected_img is not None:
+            raw_img_bytes = selected_img.getvalue()
+            img_mime = selected_img.type or "image/jpeg"
+            try:
+                from PIL import Image as _PilImg
+                _im = _PilImg.open(io.BytesIO(raw_img_bytes)).convert("RGB")
+                if max(_im.size) > 1024:
+                    _im.thumbnail((1024, 1024))
+                _obuf = io.BytesIO()
+                _im.save(_obuf, format="JPEG", quality=78, optimize=True)
+                raw_img_bytes = _obuf.getvalue()
+                img_mime = "image/jpeg"
+            except Exception:
+                pass
             st.session_state.current_image = {
-                "bytes": selected_img.getvalue(),
-                "type": selected_img.type or "image/jpeg"
+                "bytes": raw_img_bytes,
+                "type": img_mime
             }
         if st.session_state.current_image:
             st.image(st.session_state.current_image["bytes"], caption="Προεπισκόπηση", use_container_width=True)
@@ -6351,10 +6461,10 @@ if st.session_state.get("current_image"):
     st.caption("📷 Έχει επισυναφθεί φωτογραφία άσκησης — γράψε την ερώτησή σου παρακάτω!")
 
 # -------------------------------------------------------------
-# 13. Κουμπιά Γρήγορης Βοήθειας + Μικρό Εικονίδιο Κάμερας στην Άκρη
+# 13. Κουμπιά Γρήγορης Βοήθειας + Κάμερα & Νέος Μαθητής στην Άκρη
 # -------------------------------------------------------------
 st.write("")
-col_h1, col_h2, col_h3, col_h4, col_h5, col_h_cam = st.columns([2, 2, 1.7, 2.2, 1.6, 0.7])
+col_h1, col_h2, col_h3, col_h4, col_h5, col_h_cam, col_h_new = st.columns([2, 2, 1.7, 2.1, 1.55, 0.65, 0.65])
 with col_h1:
     if st.button("💡 Ένα στοιχείο (hint)", key="btn_help_hint", use_container_width=True):
         st.session_state.pending_prompt = "Μπορείς να μου δώσεις ένα μικρό στοιχείο (hint) για να με βοηθήσεις να σκεφτώ το επόμενο βήμα;"
@@ -6411,6 +6521,60 @@ with col_h_cam:
     cam_icon_lbl = "📷" if not st.session_state.camera_unlocked else "📸"
     if st.button(cam_icon_lbl, key="btn_open_cam_dialog", help="Κάμερα & Ανέβασμα Άσκησης (με PIN Καθηγητή)", use_container_width=True):
         show_camera_dialog()
+with col_h_new:
+    if st.button("🔄", key="btn_new_student_session", help="Νέος Μαθητής / Καθαρισμός Συζήτησης & Σκορ", use_container_width=True):
+        st.session_state.messages = [{"role": "assistant", "content": "Χαίρε! Τι μπορώ να κάνω για σένα;"}]
+        st.session_state.effort_score = 0
+        st.session_state.stuck_counter = 0
+        st.session_state.stuck_level = 0
+        st.session_state.consecutive_explanations = 0
+        st.session_state.socratic_audits = []
+        st.session_state.current_image = None
+        st.session_state.pending_prompt = None
+        st.rerun()
+
+# Μικρή βοηθητική μπάρα μαθηματικών συμβόλων (μόνο για Μαθηματικά, Φυσική, Χημεία)
+if any(k in selected_subject.lower() for k in ["μαθηματικ", "φυσικ", "χημει"]):
+    components.html(
+        """
+        <style>
+        html, body { margin: 0; padding: 2px 0; background: transparent; font-family: system-ui, sans-serif; }
+        .mbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .mlbl { font-size: 12px; font-weight: 700; color: #1e3a8a; margin-right: 2px; }
+        .mbtn {
+            background: linear-gradient(180deg, #ffffff 0%, #e0f2fe 100%);
+            border: 1.5px solid #38bdf8; border-radius: 8px; padding: 2px 9px;
+            font-size: 13px; font-weight: 800; color: #0c4a6e; cursor: pointer;
+            box-shadow: 0 2px 0 #0284c7;
+        }
+        .mbtn:active { transform: translateY(1px); box-shadow: 0 1px 0 #0284c7; }
+        #mmsg { font-size: 11px; font-weight: 700; color: #059669; margin-left: 4px; }
+        </style>
+        <div class="mbar">
+            <span class="mlbl">📐 Σύμβολα (1 κλικ = αντιγραφή):</span>
+            <button class="mbtn" onclick="cp('²')">²</button>
+            <button class="mbtn" onclick="cp('³')">³</button>
+            <button class="mbtn" onclick="cp('√')">√</button>
+            <button class="mbtn" onclick="cp('×')">×</button>
+            <button class="mbtn" onclick="cp('÷')">÷</button>
+            <button class="mbtn" onclick="cp('π')">π</button>
+            <button class="mbtn" onclick="cp('≤')">≤</button>
+            <button class="mbtn" onclick="cp('≥')">≥</button>
+            <button class="mbtn" onclick="cp('≠')">≠</button>
+            <button class="mbtn" onclick="cp('→')">→</button>
+            <span id="mmsg"></span>
+        </div>
+        <script>
+        function cp(sym) {
+            if (navigator.clipboard) { navigator.clipboard.writeText(sym).catch(()=>{}); }
+            const el = document.getElementById('mmsg');
+            el.textContent = '✓ Αντιγράφηκε: ' + sym;
+            setTimeout(() => { el.textContent = ''; }, 1500);
+        }
+        </script>
+        """,
+        height=34,
+    )
 
 # -------------------------------------------------------------
 # 14. Έλεγχος Πρωτοκόλλου Κρίσης
@@ -6460,6 +6624,7 @@ def build_socratic_master_prompt(
 ΚΑΝΟΝΑΣ ΣΥΜΒΑΤΟΤΗΤΑΣ & ΥΦΟΥΣ:
 - Όλοι οι ορισμοί, οι συμβολισμοί και οι μέθοδοι ΠΡΕΠΕΙ να συμβαδίζουν ΑΠΟΛΥΤΑ με τα τρέχοντα επίσημα σχολικά βιβλία του ΙΕΠ (ebooks.edu.gr) για την {selected_grade}.
 - Απαγορεύεται η χρήση εξωσχολικών/πιλοτικών βιβλίων ή πανεπιστημιακής ορολογίας και τύπων Λυκείου που δεν διδάσκονται στο Γυμνάσιο.
+{"- ΕΙΔΙΚΑ ΓΙΑ ΑΡΧΑΙΑ ΕΛΛΗΝΙΚΑ: Χρησιμοποίησε σωστό πολυτονικό όπου χρειάζεται και μείνε αυστηρά στη Σχολική Γραμματική & Συντακτικό Γυμνασίου (Χατζηδάκη/Οικονόμου — χωρίς φαινόμενα Λυκείου)." if "αρχαί" in selected_subject.lower() else ""}
 - ΜΗΝ ξεκινάς ΠΟΤΕ τις απαντήσεις σου με «Χαίρε», «Χαίρε:», «Χαίρε, φίλε μου» ή άλλους επαναλαμβανόμενους χαιρετισμούς — έχεις ήδη χαιρετήσει τον μαθητή στην αρχή. Μπες αμέσως στο θέμα με φυσικό, ζεστό τόνο.
 
 ═════════════════════════════════════════════════════════════════════
@@ -6613,8 +6778,7 @@ if prompt:
         st.session_state.stuck_level = st.session_state.stuck_counter
 
         active_support = st.session_state.get("support_level", "LEVEL_3")
-        subj_cards = get_cards_for_subject(selected_subject)
-        available_cards_ids = [c["id"] for c in subj_cards] if subj_cards else list(PEDAGOGICAL_CARDS.keys())
+        available_cards_ids = []
 
         # 🏛️ Οριστικό & Μόνιμο Σύστημα Σωκράτη (Adaptive Scaffolding, Anti-Loop & Smart SVG Cards)
         system_instruction = build_socratic_master_prompt(
